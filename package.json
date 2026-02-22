@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "waypay_react_library": "github:omenofsunrise/waypay_react_library"
+  }
+}
