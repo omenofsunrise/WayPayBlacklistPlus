@@ -6,6 +6,7 @@ import CalculatorPage from "./pages/CalculatorPage";
 import BlacklistPage from "./pages/BlacklistPage";
 import ProfilePage from "./pages/ProfilePage";
 import Layout from "./components/Layout";
+import BlackCatalogPage from "./pages/BlackCatalog";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -67,7 +68,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Navigate to="/calculator" replace />} />
             <Route path="/calculator" element={<CalculatorPage />} />
-            <Route path="/blacklist" element={<BlacklistPage />} />
+            <Route path="/blacklist" element={<BlackCatalogPage />} />
             <Route path="/profile" element={<ProfilePage />} />
           </Routes>
         </Layout>

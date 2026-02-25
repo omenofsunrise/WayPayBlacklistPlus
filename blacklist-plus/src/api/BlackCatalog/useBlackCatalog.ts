@@ -1,20 +1,16 @@
-// hooks/useBlackCatalog.ts
 import { useState, useCallback } from 'react';
-import type { SearchBlackCatalogResponse, CreateBlackCatalogRequest, SearchParams, BlackCatalogItem } from './blackCatalog';
+import type { SearchBlackCatalogResponse, CreateBlackCatalogRequest, SearchParams } from './blackCatalog';
 import { blackCatalogService } from './BlackCatalogService';
 
 interface UseBlackCatalogReturn {
-  // Состояния
   isLoading: boolean;
   error: string | null;
   searchResults: SearchBlackCatalogResponse | null;
   count: number | null;
   
-  // Методы
   createEntry: (data: CreateBlackCatalogRequest['black_catalog']) => Promise<{ id: number; success: boolean } | null>;
   searchEntries: (params: SearchParams) => Promise<SearchBlackCatalogResponse | null>;
   getTotalCount: () => Promise<number | null>;
-  getEntryById: (id: number) => Promise<BlackCatalogItem | null>;
   reset: () => void;
   clearError: () => void;
 }
@@ -80,20 +76,6 @@ const useBlackCatalog = (): UseBlackCatalogReturn => {
     }
   }, []);
 
-  const getEntryById = useCallback(async (id: number) => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const entry = await blackCatalogService.getById(id);
-      return entry;
-    } catch (err) {
-      return handleError(err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
   const reset = useCallback(() => {
     setSearchResults(null);
     setCount(null);
@@ -106,17 +88,14 @@ const useBlackCatalog = (): UseBlackCatalogReturn => {
   }, []);
 
   return {
-    // Состояния
     isLoading,
     error,
     searchResults,
     count,
     
-    // Методы
     createEntry,
     searchEntries,
     getTotalCount,
-    getEntryById,
     reset,
     clearError
   };

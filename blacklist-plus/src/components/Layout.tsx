@@ -120,6 +120,7 @@ const LayoutContainer = styled.div<{ $isMobile: boolean }>`
 const ContentArea = styled.main<{ $isMobile: boolean }>`
   flex: 1;
   overflow-y: auto;
+  padding: 15px;
   background-color: #ffffff;
   padding-bottom: ${({ $isMobile }) => ($isMobile ? '70px' : '0')}; /* Отступ для Bottom Navigation */
   height: ${({ $isMobile }) => ($isMobile ? 'calc(100vh - 70px)' : '100vh')}; /* Учитываем высоту Bottom Navigation */

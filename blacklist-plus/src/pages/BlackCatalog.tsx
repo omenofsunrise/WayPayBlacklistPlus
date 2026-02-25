@@ -1,7 +1,9 @@
-import { useState, type useEffect, type useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import styled from "styled-components";
-import { CountInfoTitle, formatDate, CustomTitle, CustomInput, PhoneModalInput } from "waypay_react_library";
-
+import { CountInfoTitle, CustomTitle, CustomInput, PhoneModalInput, DefaultButton } from "waypay_react_library";
+import useBlackCatalog from "../api/BlackCatalog/useBlackCatalog";
+import type { BlackCatalogItem } from "../api/BlackCatalog/blackCatalog";
+import BlackCatalogCard from "../components/BlackCatalogCard";
 
 export const TitleContainer = styled.div`
   display: flex;
@@ -19,6 +21,7 @@ const EmptyStateContainer = styled.div`
   padding: 60px 20px;
   text-align: center;
   color: #6B7280;
+  padding: 15px;
 `;
 
 const EmptyStateIcon = styled.div`
@@ -110,42 +113,111 @@ const Backdrop = styled.div`
   z-index: 1000;
 `;
 
-const InfoBadge = styled.span<{ variant?: 'default' | 'warning' | 'danger' }>`
-  background-color: ${props => {
-    switch (props.variant) {
-      case 'warning': return '#F59E0B';
-      case 'danger': return '#EF4444';
-      default: return '#6B7280';
-    }
-  }};
-  color: white;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 600;
-  margin-left: 8px;
-`;
-
 const StyledCountInfo = styled(CountInfoTitle)`
     margin-left: auto;
 `;
 
-interface BlacklistClient {
-  id: number;
-  fullName: string;
-  phone: string;
-  birthdate: Date | null;
-  debt: number;
-  secondPhone?: string;
-  doc?: string;
-  docIssueDate?: Date | null;
-  docIssueYear?: number;
-  address?: string | null;
-  registrationAddress?: string | null;
-  creditIds?: string[];
-  creditRestTerms?: string[];
-  hasPassportPhoto?: boolean;
-}
+const Container = styled.div`
+    display: flex;
+    flex-direction: row;
+    width: 50vw;
+    gap: 15px;
+`;
+
+const DarkCyanButton = styled(DefaultButton)`
+    background-color: #008B8B;
+    
+    &:hover {
+        background-color: #006666;
+    }
+`;
+
+// Модальное окно для создания/редактирования записи
+const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+`;
+
+const ModalContent = styled.div`
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+`;
+
+const ModalTitle = styled.h2`
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: #333;
+`;
+
+const FormField = styled.div`
+  margin-bottom: 16px;
+`;
+
+const Label = styled.label`
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 4px;
+  color: #374151;
+`;
+
+const Input = styled.input`
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #D1D5DB;
+  border-radius: 6px;
+  font-size: 14px;
+  
+  &:focus {
+    outline: none;
+    border-color: #008B8B;
+    box-shadow: 0 0 0 2px rgba(0, 139, 139, 0.1);
+  }
+`;
+
+const TextArea = styled.textarea`
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #D1D5DB;
+  border-radius: 6px;
+  font-size: 14px;
+  min-height: 80px;
+  resize: vertical;
+  
+  &:focus {
+    outline: none;
+    border-color: #008B8B;
+    box-shadow: 0 0 0 2px rgba(0, 139, 139, 0.1);
+  }
+`;
+
+const ModalButtons = styled.div`
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+`;
+
+const CancelButton = styled(DefaultButton)`
+  background-color: #6B7280;
+  
+  &:hover {
+    background-color: #4B5563;
+  }
+`;
 
 const BlackCatalogPage = () => {
     const [nameFilter, setNameFilter] = useState('');
@@ -153,49 +225,35 @@ const BlackCatalogPage = () => {
     const [searchTriggered, setSearchTriggered] = useState(false);
     const [hasSearched, setHasSearched] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingClient, setEditingClient] = useState<Partial<BlacklistClient> | null>(null);
-    const [selectedClientDossier, setSelectedClientDossier] = useState<BlacklistClient | null>(null);
-    
-    const [totalBlackCatalogCount, setTotalBlackCatalogCount] = useState<number>(0);
+    const [editingItem, setEditingItem] = useState<Partial<BlackCatalogItem> | null>(null);
+    const [selectedItemDossier, setSelectedItemDossier] = useState<BlackCatalogItem | null>(null);
+    const [totalCount, setTotalCount] = useState<number>(0);
     
     const { 
         isLoading, 
         error, 
-        data: blacklistData, 
-        getBlackCatalog,
-        addBlackCatalog,
-        updateBlackCatalog,
-        deleteFromBlackCatalog
-    } = useBlacklist();
+        searchResults,
+        createEntry,
+        searchEntries,
+        getTotalCount
+    } = useBlackCatalog();
     
     const [contextMenu, setContextMenu] = useState<{
         x: number;
         y: number;
-        client: BlacklistClient | null;
+        item: BlackCatalogItem | null;
     } | null>(null);
 
-    // Загружаем общее количество клиентов в черном каталоге при инициализации
+    // Загружаем общее количество при монтировании
     useEffect(() => {
-        const loadTotalBlackCatalogCount = async () => {
-            try {
-                // Делаем запрос с минимальными параметрами только для получения количества
-                const params = {
-                    page: 1,
-                    pageSize: 0,
-                    fullName: undefined,
-                    phone: undefined
-                };
-
-                const response = await getBlackCatalog(params);
-                setTotalBlackCatalogCount(response.totalCount || 0);
-            } catch (err) {
-                console.error('Ошибка при загрузке общего количества клиентов в черном каталоге:', err);
-                setTotalBlackCatalogCount(0);
+        const loadTotalCount = async () => {
+            const total = await getTotalCount();
+            if (total !== null) {
+                setTotalCount(total);
             }
         };
-
-        loadTotalBlackCatalogCount();
-    }, []); // Пустой массив зависимостей - выполнится только при монтировании
+        loadTotalCount();
+    }, [getTotalCount]);
 
     const resetFilters = useCallback(() => {
         setNameFilter('');
@@ -205,25 +263,21 @@ const BlackCatalogPage = () => {
     }, []);
 
     const loadBlacklist = useCallback(async () => {
-        const shouldSearch = searchTriggered && (
-            nameFilter.length >= 3 || 
-            (phoneFilter.replace(/\D/g, '').length >= 11 && phoneFilter.replace(/\D/g, '').length <= 15)
-        );
-
-        if (!shouldSearch && searchTriggered) {
-            return;
+        const params: {
+            name?: string;
+            phone?: string;
+        } = {};
+        
+        if (nameFilter && nameFilter.length >= 5) {
+            params.name = nameFilter;
+        }
+        if (phoneFilter && phoneFilter.replace(/\D/g, '').length >= 11) {
+            params.phone = phoneFilter;
         }
 
-        const params: any = {
-            page: 1,
-            pageSize: 1000,
-            fullName: nameFilter || undefined,
-            phone: phoneFilter || undefined
-        };
-
-        await getBlackCatalog(params);
+        await searchEntries(params);
         setHasSearched(true);
-    }, [nameFilter, phoneFilter, getBlackCatalog, searchTriggered]);
+    }, [nameFilter, phoneFilter, searchEntries]);
 
     useEffect(() => {
         if (searchTriggered) {
@@ -234,23 +288,22 @@ const BlackCatalogPage = () => {
     const handlePhoneFilterChange = (value: string) => {
         setPhoneFilter(value);
         setSearchTriggered(false);
-        
-        if (!value && !nameFilter) {
-            resetFilters();
-        }
+        setHasSearched(false);
     };
 
     const handleFilterChange = (value: string) => {
         setNameFilter(value);
         setSearchTriggered(false);
-        
-        if (!value && !phoneFilter) {
-            resetFilters();
-        }
+        setHasSearched(false);
     };
 
     const handleSearch = () => {
-        setSearchTriggered(true);
+        const isNameValid = nameFilter.length >= 5;
+        const isPhoneValid = phoneFilter.replace(/\D/g, '').length >= 11;
+        
+        if (isNameValid || isPhoneValid) {
+            setSearchTriggered(true);
+        }
     };
 
     const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -259,24 +312,13 @@ const BlackCatalogPage = () => {
         }
     };
 
-    const handleCardRightClick = useCallback((e: React.MouseEvent, client: BlacklistClient) => {
-        e.preventDefault();
-        if (isSuperAdminCompany()) {
-            setContextMenu({
-                x: e.clientX,
-                y: e.clientY,
-                client
-            });
-        }
-    }, [isSuperAdminCompany]);
-
     const handleContextMenuAction = useCallback((action: 'edit' | 'delete') => {
-        if (!contextMenu?.client) return;
+        if (!contextMenu?.item) return;
 
         if (action === 'edit') {
-            handleEditClient(contextMenu.client);
+            handleEditItem(contextMenu.item);
         } else if (action === 'delete') {
-            handleDeleteFromBlackCatalog(contextMenu.client);
+            handleDeleteFromBlackCatalog(contextMenu.item);
         }
 
         setContextMenu(null);
@@ -300,81 +342,88 @@ const BlackCatalogPage = () => {
     }, [contextMenu]);
 
     const handleAddToBlacklist = () => {
-        setEditingClient(null);
+        setEditingItem(null);
         setIsModalOpen(true);
     };
 
-    const handleEditClient = (client: BlacklistClient) => {
-        setEditingClient(client);
+    const handleEditItem = (item: BlackCatalogItem) => {
+        setEditingItem(item);
         setIsModalOpen(true);
     };
 
-    const handleSaveClient = async (clientData: Partial<BlacklistClient>) => {
+    const handleSaveItem = async (itemData: Partial<BlackCatalogItem>) => {
         try {
-            if (editingClient?.id) {
-                await updateBlackCatalog(editingClient.id, clientData);
-            } else {
-                await addBlackCatalog(clientData);
-                // Обновляем общее количество после добавления
-                setTotalBlackCatalogCount(prev => prev + 1);
+            // Проверяем обязательные поля
+            if (!itemData.fullname || !itemData.phone || !itemData.doc || !itemData.address) {
+                alert('Все поля обязательны для заполнения');
+                return;
             }
-            loadBlacklist();
+
+            const result = await createEntry({
+                fullname: itemData.fullname,
+                phone: itemData.phone,
+                doc: itemData.doc,
+                address: itemData.address
+            });
+            
+            if (result) {
+                // Обновляем общее количество
+                const total = await getTotalCount();
+                if (total !== null) {
+                    setTotalCount(total);
+                }
+                // Обновляем результаты поиска
+                if (hasSearched) {
+                    loadBlacklist();
+                }
+            }
+            
             setIsModalOpen(false);
-            setEditingClient(null);
+            setEditingItem(null);
         } catch (err) {
-            console.error('Ошибка при сохранении клиента:', err);
+            console.error('Ошибка при сохранении записи:', err);
         }
     };
 
-    const handleDeleteFromBlackCatalog = async (client: BlacklistClient) => {
-        if (window.confirm('Вы уверены, что хотите убрать этого клиента из чёрного каталога?')) {
+    const handleDeleteFromBlackCatalog = async (item: BlackCatalogItem) => {
+        if (window.confirm(`Вы уверены, что хотите удалить ${item.fullname} из чёрного каталога?`)) {
             try {
-                await deleteFromBlackCatalog(client.id);
-                loadBlacklist();
-                // Обновляем общее количество после удаления
-                setTotalBlackCatalogCount(prev => prev - 1);
+                // API не поддерживает удаление, показываем сообщение
+                alert('API не поддерживает удаление записей');
+                
+                // В реальном API здесь должен быть вызов delete
+                // После удаления обновляем список
+                if (hasSearched) {
+                    loadBlacklist();
+                }
+                
+                // Обновляем общее количество
+                const total = await getTotalCount();
+                if (total !== null) {
+                    setTotalCount(total);
+                }
             } catch (err) {
-                console.error('Ошибка при удалении клиента:', err);
+                console.error('Ошибка при удалении записи:', err);
             }
         }
     };
 
-    const handleOpenDossier = useCallback((client: BlacklistClient) => {
-        // setSelectedClientDossier(client);
-    }, []);
-
-    const handleCardClick = (client: BlacklistClient) => {
-        setSelectedClientDossier(client);
+    const handleCardRightClick = (e: React.MouseEvent, item: BlackCatalogItem) => {
+        e.preventDefault();
+        setContextMenu({
+            x: e.clientX,
+            y: e.clientY,
+            item
+        });
     };
 
-    const getClientInfoBadges = (client: BlacklistClient) => {
-        const badges = [];
-        
-        if (client.debt && client.debt > 0) {
-            badges.push(
-                <InfoBadge key="debt" variant="danger">
-                    Долг: {client.debt.toLocaleString('ru-RU')} ₽
-                </InfoBadge>
-            );
-        }
-        
-        if (client.doc) {
-            badges.push(
-                <InfoBadge key="doc" variant="warning">
-                    Док: {client.doc}
-                </InfoBadge>
-            );
-        }
-        
-        if (client.birthdate) {
-            badges.push(
-                <InfoBadge key="birthdate">
-                    {formatDate(client.birthdate)}
-                </InfoBadge>
-            );
-        }
-        
-        return badges;
+    const handleOpenDossier = (item: BlackCatalogItem) => {
+        setSelectedItemDossier(item);
+    };
+
+    const isSuperAdminCompany = () => {
+        // Заглушка для проверки прав администратора
+        return true;
     };
 
     const renderContent = () => {
@@ -383,7 +432,7 @@ const BlackCatalogPage = () => {
         }
 
         if (error) {
-            return <div>{error}</div>;
+            return <div>Ошибка: {error}</div>;
         }
 
         if (!hasSearched) {
@@ -392,29 +441,29 @@ const BlackCatalogPage = () => {
                     <EmptyStateIcon>📋</EmptyStateIcon>
                     <EmptyStateTitle>Чёрный каталог</EmptyStateTitle>
                     <EmptyStateText>
-                        Введите ФИО клиента (минимум 3 символа) или полный номер телефона для поиска в чёрном каталоге.
+                        Введите ФИО клиента (минимум 5 символов) или полный номер телефона для поиска в чёрном каталоге.
                     </EmptyStateText>
                     {isSuperAdminCompany() && (
-                        <DarkCyanButton onClick={handleAddToBlacklist}>
+                        <DefaultButton onClick={handleAddToBlacklist}>
                             + Добавить в чёрный каталог
-                        </DarkCyanButton>
+                        </DefaultButton>
                     )}
                 </EmptyStateContainer>
             );
         }
 
-        if (blacklistData && blacklistData.items.length === 0) {
+        if (searchResults && searchResults.black_catalogs.length === 0) {
             return (
                 <EmptyStateContainer>
                     <EmptyStateIcon>🔍</EmptyStateIcon>
-                    <EmptyStateTitle>Клиент в чёрном каталоге не найден</EmptyStateTitle>
+                    <EmptyStateTitle>Запись в чёрном каталоге не найдена</EmptyStateTitle>
                     <EmptyStateText>
-                        По вашему запросу "{nameFilter || phoneFilter}" ничего не найдено в чёрном каталоге.
+                        По вашему запросу "{nameFilter || phoneFilter}" ничего не найдено.
                     </EmptyStateText>
                     {isSuperAdminCompany() && (
-                        <DarkCyanButton onClick={handleAddToBlacklist}>
+                        <DefaultButton onClick={handleAddToBlacklist}>
                             + Добавить в чёрный каталог
-                        </DarkCyanButton>
+                        </DefaultButton>
                     )}
                     <ResetButton onClick={resetFilters} style={{ marginTop: '16px' }}>
                         Сбросить фильтры
@@ -425,62 +474,133 @@ const BlackCatalogPage = () => {
 
         return (
             <div>
-                {blacklistData?.items.map((client) => (
-                    <ClientCard 
-                        key={client.id} 
-                        client={{
-                            ...client,
-                            secondPhone: client.secondPhone || '',
-                            doc: client.doc || '',
-                            docIssueDate: client.docIssueDate || null,
-                            docIssueYear: client.docIssueYear || 0,
-                            registrationAddress: client.address || client.registrationAddress || '',
-                            birthdate: client.birthdate || null,
-                            creditIds: client.creditIds || [],
-                            creditRestTerms: client.creditRestTerms || []
-                        }}
-                        onEdit={() => handleEditClient(client)}
-                        onDelete={() => handleDeleteFromBlackCatalog(client)}
-                        onRightClick={(e) => handleCardRightClick(e, client)}
-                        showMenu={isSuperAdminCompany()}
+                {searchResults?.black_catalogs.map((item) => (
+                    <BlackCatalogCard
+                        key={item.id}
+                        item={item}
+                        onEdit={() => handleEditItem(item)}
+                        onDelete={() => handleDeleteFromBlackCatalog(item)}
+                        onRightClick={(e) => handleCardRightClick(e, item)}
                         onOpenDossier={handleOpenDossier}
-                        additionalInfo={getClientInfoBadges(client)}
+                        showMenu={isSuperAdminCompany()}
                     />
                 ))}
             </div>
         );
     };
 
+    const renderModal = () => {
+        if (!isModalOpen) return null;
+
+        const formData = editingItem || {
+            fullname: '',
+            phone: '',
+            doc: '',
+            address: ''
+        };
+
+        const handleSubmit = (e: React.FormEvent) => {
+            e.preventDefault();
+            handleSaveItem(formData);
+        };
+
+        return (
+            <ModalOverlay onClick={() => setIsModalOpen(false)}>
+                <ModalContent onClick={e => e.stopPropagation()}>
+                    <ModalTitle>
+                        {editingItem ? 'Редактировать запись' : 'Добавить в чёрный каталог'}
+                    </ModalTitle>
+                    
+                    <form onSubmit={handleSubmit}>
+                        <FormField>
+                            <Label>ФИО *</Label>
+                            <Input
+                                type="text"
+                                value={formData.fullname || ''}
+                                onChange={e => setEditingItem({...formData, fullname: e.target.value})}
+                                placeholder="Иванов Иван Иванович"
+                                required
+                            />
+                        </FormField>
+                        
+                        <FormField>
+                            <Label>Телефон *</Label>
+                            <PhoneModalInput
+                                placeholder="+7 (999) 999-99-99"
+                                value={formData.phone || ''}
+                                onChange={(e) => setEditingItem({...formData, phone: e.target.value})}
+                                name="phone"
+                            />
+                        </FormField>
+                        
+                        <FormField>
+                            <Label>Документ *</Label>
+                            <Input
+                                type="text"
+                                value={formData.doc || ''}
+                                onChange={e => setEditingItem({...formData, doc: e.target.value})}
+                                placeholder="Паспорт: 4510 123456"
+                                required
+                            />
+                        </FormField>
+                        
+                        <FormField>
+                            <Label>Адрес *</Label>
+                            <TextArea
+                                value={formData.address || ''}
+                                onChange={e => setEditingItem({...formData, address: e.target.value})}
+                                placeholder="Адрес регистрации/проживания"
+                                required
+                            />
+                        </FormField>
+                        
+                        <ModalButtons>
+                            <DarkCyanButton type="submit">
+                                {editingItem ? 'Сохранить' : 'Добавить'}
+                            </DarkCyanButton>
+                            <CancelButton type="button" onClick={() => setIsModalOpen(false)}>
+                                Отмена
+                            </CancelButton>
+                        </ModalButtons>
+                    </form>
+                </ModalContent>
+            </ModalOverlay>
+        );
+    };
+
     return (
-        <PageLayout onClick={closeContextMenu}>
-            {selectedClientDossier ? (
-                <ClientDossier
-                    client={selectedClientDossier}
-                    comments={[]}
-                    installments={[]}
-                    onBack={() => setSelectedClientDossier(null)}
-                    onAddComment={(comment) => console.log('Add comment:', comment)}
-                    onUploadPassport={(file) => console.log('Upload passport:', file)}
-                />
+        <div onClick={closeContextMenu}>
+            {renderModal()}
+            
+            {selectedItemDossier ? (
+                <div>
+                    <button onClick={() => setSelectedItemDossier(null)}>← Назад</button>
+                    <div style={{ marginTop: '20px' }}>
+                        <h2>Детальная информация</h2>
+                        <p><strong>ID:</strong> {selectedItemDossier.id}</p>
+                        <p><strong>ФИО:</strong> {selectedItemDossier.fullname}</p>
+                        <p><strong>Телефон:</strong> {selectedItemDossier.phone}</p>
+                        <p><strong>Документ:</strong> {selectedItemDossier.doc}</p>
+                        <p><strong>Адрес:</strong> {selectedItemDossier.address}</p>
+                    </div>
+                </div>
             ) : (
                 <>
                     <TitleContainer style={{ position: "sticky"}}>
                         <TitleContainer style={{maxWidth: "290px"}}>
                             <CustomTitle>Чёрный каталог</CustomTitle>
-                            {blacklistData && blacklistData.items.length > 0 && (
-                                <ClientCount>({blacklistData.totalItemsCount})</ClientCount>
+                            {searchResults && searchResults.black_catalogs.length > 0 && (
+                                <span>({searchResults.count})</span>
                             )}
                         </TitleContainer>
-                        <StyledCountInfo
-                            total={totalBlackCatalogCount} 
-                        />
+                        <StyledCountInfo total={totalCount} />
                     </TitleContainer>
                     
                     <StickyFilterField>
-                        <Container style={{display: "flex", flexDirection: "row", width: "50vw", gap: "15px" }}>
+                        <Container>
                             <CustomInput 
                                 inputType="fullname"
-                                placeholder="ФИО клиента (минимум 3 символа)"
+                                placeholder="ФИО (минимум 5 символов)"
                                 value={nameFilter}
                                 onChange={(e) => handleFilterChange(e.target.value)}
                                 onKeyPress={handleKeyPress}
@@ -493,11 +613,11 @@ const BlackCatalogPage = () => {
                                 name="phone"
                             />
                             <ResetButton onClick={resetFilters}>
-                                Сбросить фильтры
+                                Сбросить
                             </ResetButton>
                             <DarkCyanButton 
                                 onClick={handleSearch}
-                                disabled={!(nameFilter.length >= 3 || phoneFilter.replace(/\D/g, '').length >= 11)}
+                                disabled={!(nameFilter.length >= 5 || phoneFilter.replace(/\D/g, '').length >= 11)}
                             >
                                 Поиск
                             </DarkCyanButton>
@@ -513,39 +633,23 @@ const BlackCatalogPage = () => {
                     </StickyFilterField>
                     
                     {renderContent()}
-                    
-                    {isSuperAdminCompany() && (
-                        <BlackCatalogModal
-                            mode={editingClient?.id ? 'edit' : 'create'}
-                            isOpen={isModalOpen}
-                            onClose={() => {
-                                setIsModalOpen(false);
-                                setEditingClient(null);
-                            }}
-                            onSubmit={handleSaveClient}
-                            initialData={editingClient || undefined}
-                        />
-                    )}
-
-                    {contextMenu && isSuperAdminCompany() && (
-                        <>
-                            <Backdrop onClick={closeContextMenu} />
-                            <ContextMenu x={contextMenu.x} y={contextMenu.y}>
-                                <MenuItem onClick={() => handleContextMenuAction('edit')}>
-                                    Редактировать
-                                </MenuItem>
-                                <MenuItem 
-                                    danger 
-                                    onClick={() => handleContextMenuAction('delete')}
-                                >
-                                    Удалить из чёрного каталога
-                                </MenuItem>
-                            </ContextMenu>
-                        </>
-                    )}
                 </>
             )}
-        </PageLayout>
+
+            {contextMenu && (
+                <>
+                    <Backdrop onClick={closeContextMenu} />
+                    <ContextMenu x={contextMenu.x} y={contextMenu.y}>
+                        <MenuItem onClick={() => handleContextMenuAction('edit')}>
+                            ✏️ Редактировать
+                        </MenuItem>
+                        <MenuItem danger onClick={() => handleContextMenuAction('delete')}>
+                            🗑️ Удалить
+                        </MenuItem>
+                    </ContextMenu>
+                </>
+            )}
+        </div>
     );
 };
 

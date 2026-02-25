@@ -46,22 +46,6 @@ class BlackCatalogService {
       method: 'GET'
     });
   }
-
-  /**
-   * Получить конкретную запись по ID (если нужен отдельный эндпоинт)
-   * Возможно такого эндпоинта нет в API, добавил для полноты
-   */
-  async getById(id: number): Promise<BlackCatalogItem | null> {
-    try {
-      // Так как отдельного эндпоинта нет, используем поиск по имени
-      // Это не идеально, но пока как пример
-      const results = await this.search({ name: id.toString() });
-      return results.black_catalogs.find(item => item.id === id) || null;
-    } catch {
-      return null;
-    }
-  }
 }
 
-// Экспортируем единственный экземпляр сервиса
 export const blackCatalogService = new BlackCatalogService();
