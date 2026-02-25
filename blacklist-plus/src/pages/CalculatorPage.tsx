@@ -302,13 +302,14 @@ const CalculatorPage = () => {
 
 const PageContainer = styled.div`
   min-height: 100vh;
-  padding: 20px;
+  padding: 12px;
   display: flex;
   justify-content: center;
   align-items: flex-start;
+  background: #f5f5f5;
 
-  @media (max-width: 768px) {
-    padding: 10px;
+  @media (max-width: 480px) {
+    padding: 0px;
   }
 `;
 
@@ -319,6 +320,11 @@ const ContentWrapper = styled.div`
   border-radius: 20px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
   overflow: hidden;
+
+  @media (max-width: 768px) {
+    border-radius: 16px;
+    margin: 0px;
+  }
 `;
 
 const Header = styled.div`
@@ -333,6 +339,13 @@ const Header = styled.div`
 
   @media (max-width: 768px) {
     padding: 16px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  @media (max-width: 480px) {
+    padding: 12px;
+    gap: 12px;
   }
 `;
 
@@ -340,6 +353,10 @@ const ActionsContainer = styled.div`
   display: flex;
   gap: 12px;
   background: white;
+
+  @media (max-width: 768px) {
+    width: 100%;
+  }
 `;
 
 const SelectWrapper = styled.div`
@@ -347,6 +364,11 @@ const SelectWrapper = styled.div`
 
   @media (max-width: 768px) {
     min-width: 100%;
+    width: 100%;
+    
+    & > div {
+      width: 100%;
+    }
   }
 `;
 
@@ -360,6 +382,12 @@ const MainContent = styled.div`
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
     padding: 16px;
+    gap: 20px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 12px;
+    gap: 16px;
   }
 `;
 
@@ -368,6 +396,10 @@ const InputsSection = styled.div`
   flex-direction: column;
   gap: 20px;
   background: white;
+
+  @media (max-width: 480px) {
+    gap: 16px;
+  }
 `;
 
 const InputRow = styled.div`
@@ -376,9 +408,13 @@ const InputRow = styled.div`
   gap: 16px;
   background: white;
 
-  @media (max-width: 480px) {
+  @media (max-width: 640px) {
     grid-template-columns: 1fr;
     gap: 12px;
+  }
+
+  @media (max-width: 480px) {
+    gap: 10px;
   }
 `;
 
@@ -387,6 +423,10 @@ const InputGroup = styled.div`
   flex-direction: column;
   gap: 8px;
   background: white;
+
+  @media (max-width: 480px) {
+    gap: 6px;
+  }
 `;
 
 const Label = styled.label`
@@ -395,6 +435,10 @@ const Label = styled.label`
   font-weight: 500;
   text-align: left;
   background: white;
+
+  @media (max-width: 480px) {
+    font-size: 13px;
+  }
 `;
 
 const ResultsSection = styled.div`
@@ -414,16 +458,33 @@ const ResultsCard = styled.div`
 
   @media (max-width: 768px) {
     padding: 20px;
+    gap: 14px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 16px;
+    gap: 12px;
+    border-radius: 12px;
   }
 `;
 
 const ResultsTitle = styled.h3`
-  margin: 0;
+  margin: 0 0 8px 0;
   font-size: 18px;
   font-weight: 600;
   color: #111827;
   background: white;
   text-align: left;
+
+  @media (max-width: 768px) {
+    font-size: 17px;
+    margin-bottom: 6px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 16px;
+    margin-bottom: 4px;
+  }
 `;
 
 const ResultItem = styled.div`
@@ -437,6 +498,11 @@ const ResultItem = styled.div`
   &:last-of-type {
     border-bottom: none;
   }
+
+  @media (max-width: 480px) {
+    padding: 6px 0;
+    gap: 6px;
+  }
 `;
 
 const ResultLabel = styled.span`
@@ -445,12 +511,20 @@ const ResultLabel = styled.span`
   flex: 1;
   background: white;
   text-align: left;
+
+  @media (max-width: 480px) {
+    font-size: 13px;
+  }
 `;
 
 const ResultValue = styled.span`
   color: #111827;
   font-weight: 500;
   font-size: 14px;
+
+  @media (max-width: 480px) {
+    font-size: 13px;
+  }
 `;
 
 const ColorIndicator = styled.div<{ color: 'primary' | 'secondary' }>`
@@ -462,6 +536,12 @@ const ColorIndicator = styled.div<{ color: 'primary' | 'secondary' }>`
       ? 'rgba(0, 125, 136, 1)' 
       : 'rgba(37, 203, 161, 1)'};
   flex-shrink: 0;
+
+  @media (max-width: 480px) {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+  }
 `;
 
 const RatioBar = styled.div<{ percentage: number }>`
@@ -482,6 +562,12 @@ const RatioBar = styled.div<{ percentage: number }>`
     width: ${props => props.percentage}%;
     background: rgba(0, 125, 136, 1);
     transition: width 0.3s ease;
+  }
+
+  @media (max-width: 480px) {
+    height: 8px;
+    border-radius: 4px;
+    margin-top: 6px;
   }
 `;
 
