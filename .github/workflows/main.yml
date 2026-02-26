@@ -1,4 +1,4 @@
-name: Deploy to Server
+name: Deploy Vite SPA to Server
 
 on:
   push:
@@ -6,39 +6,48 @@ on:
       - main
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Deploy to server
+      - uses: actions/checkout@v3
+      
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          
+      - name: Build
+        run: |
+          npm ci
+          npm run build
+          
+      - name: Clean remote directory and deploy
         uses: appleboy/ssh-action@master
         with:
           host: 89.104.69.24
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            echo "Starting deployment..."
-            
-            # Сначала очищаем папку
-            echo "Cleaning /var/www/blacklist.waypay.one..."
+            # Очищаем папку назначения
             rm -rf /var/www/blacklist.waypay.one/*
-            
-            # Создаем папку если она была удалена
             mkdir -p /var/www/blacklist.waypay.one
             
-            echo "Waiting for file transfer..."
-            
-          script_stop: true
-          
-      - name: Sync files via SCP
+      - name: Copy built files
         uses: appleboy/scp-action@master
         with:
           host: 89.104.69.24
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "./"
+          source: "dist/*"
           target: "/var/www/blacklist.waypay.one"
           strip_components: 1
+          
+      - name: Set permissions
+        uses: appleboy/ssh-action@master
+        with:
+          host: 89.104.69.24
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            chmod -R 755 /var/www/blacklist.waypay.one
