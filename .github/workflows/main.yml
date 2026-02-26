@@ -46,8 +46,8 @@ jobs:
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            rm -rf /var/www/blacklist.waypay.one/*
-            mkdir -p /var/www/blacklist.waypay.one
+            rm -rf /var/www/blacklist/*
+            mkdir -p /var/www/blacklist
             
       - name: Copy built files
         uses: appleboy/scp-action@master
@@ -56,7 +56,7 @@ jobs:
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "blacklist-plus/dist/*"
-          target: "/var/www/blacklist.waypay.one"
+          target: "/var/www/blacklist"
           strip_components: 2
           
       - name: Set permissions
@@ -66,4 +66,4 @@ jobs:
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            chmod -R 755 /var/www/blacklist.waypay.one
+            chmod -R 755 /var/www/blacklist
