@@ -1,0 +1,44 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy to server
+        uses: appleboy/ssh-action@master
+        with:
+          host: 89.104.69.24
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo "Starting deployment..."
+            
+            # Сначала очищаем папку
+            echo "Cleaning /var/www/blacklist.waypay.one..."
+            rm -rf /var/www/blacklist.waypay.one/*
+            
+            # Создаем папку если она была удалена
+            mkdir -p /var/www/blacklist.waypay.one
+            
+            echo "Waiting for file transfer..."
+            
+          script_stop: true
+          
+      - name: Sync files via SCP
+        uses: appleboy/scp-action@master
+        with:
+          host: 95.163.226.24
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "./"
+          target: "/var/www/blacklist.waypay.one"
+          strip_components: 1
