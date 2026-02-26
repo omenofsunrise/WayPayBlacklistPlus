@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
-import styled from "styled-components";
-import { BaseModal, CustomInput, InputContainer, InputLabel, InputRow, PhoneModalInput, type ModalMode } from "waypay_react_library";
+import { BaseModal, CustomInput, InputRow, PhoneModalInput, type ModalMode } from "waypay_react_library";
 import type { BlackCatalogItem } from "../api/BlackCatalog/blackCatalog";
 
 interface BlackCatalogModalProps {
@@ -10,34 +9,6 @@ interface BlackCatalogModalProps {
   editingItem: Partial<BlackCatalogItem> | null;
   mode?: ModalMode;
 }
-
-const FormField = styled.div`
-  margin-bottom: 16px;
-`;
-
-const Label = styled.label`
-  display: block;
-  font-size: 14px;
-  font-weight: 500;
-  margin-bottom: 4px;
-  color: #374151;
-`;
-
-const TextArea = styled.textarea`
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px solid #D1D5DB;
-  border-radius: 6px;
-  font-size: 14px;
-  min-height: 80px;
-  resize: vertical;
-  
-  &:focus {
-    outline: none;
-    border-color: #008B8B;
-    box-shadow: 0 0 0 2px rgba(0, 139, 139, 0.1);
-  }
-`;
 
 export const BlackCatalogModal: React.FC<BlackCatalogModalProps> = ({
   isOpen,

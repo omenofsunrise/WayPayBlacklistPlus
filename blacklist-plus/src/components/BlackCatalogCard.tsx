@@ -149,34 +149,6 @@ const MenuItem = styled.button`
   }
 `;
 
-const BlacklistBadge = styled.div`
-  position: absolute;
-  top: 15px;
-  left: 15px;
-  background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
-  color: #EF4444;
-  padding: 6px 10px;
-  border-radius: 6px;
-  font-weight: 700;
-  font-size: 16px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  box-shadow: 0 2px 12px rgba(239, 68, 68, 0.5);
-  z-index: 10;
-`;
-
-const DocBadge = styled.div`
-  background-color: #F59E0B;
-  color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 600;
-  display: inline-block;
-  margin-top: 4px;
-`;
-
 export interface BlackCatalogItem {
   id: number;
   fullname: string;
