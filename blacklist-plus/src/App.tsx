@@ -3,7 +3,6 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthPage, getSessionInfo, SideMenuContext } from "waypay_react_library";
 import "./App.css";
 import CalculatorPage from "./pages/CalculatorPage";
-import BlacklistPage from "./pages/BlacklistPage";
 import ProfilePage from "./pages/ProfilePage";
 import Layout from "./components/Layout";
 import BlackCatalogPage from "./pages/BlackCatalog";

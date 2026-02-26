@@ -1,5 +1,5 @@
 import { apiRequest } from "waypay_react_library";
-import type { CreateBlackCatalogRequest, CreateBlackCatalogResponse, CountResponse, SearchParams, SearchBlackCatalogResponse, BlackCatalogItem } from "./blackCatalog";
+import type { CreateBlackCatalogRequest, CreateBlackCatalogResponse, CountResponse, SearchParams, SearchBlackCatalogResponse } from "./blackCatalog";
 
 
 class BlackCatalogService {
