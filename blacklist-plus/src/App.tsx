@@ -5,7 +5,7 @@ import "./App.css";
 import CalculatorPage from "./pages/CalculatorPage";
 import ProfilePage from "./pages/ProfilePage";
 import Layout from "./components/Layout";
-import BlackCatalogPage from "./pages/BlackCatalog";
+import BlackCatalogPage from "./pages/BlackCatalogPage";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);

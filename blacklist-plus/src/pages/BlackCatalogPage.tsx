@@ -1,9 +1,11 @@
+// BlackCatalogPage.tsx (обновлённый)
 import { useCallback, useEffect, useState } from "react";
 import styled from "styled-components";
 import { CountInfoTitle, CustomTitle, CustomInput, PhoneModalInput, DefaultButton } from "waypay_react_library";
 import useBlackCatalog from "../api/BlackCatalog/useBlackCatalog";
 import type { BlackCatalogItem } from "../api/BlackCatalog/blackCatalog";
 import BlackCatalogCard from "../components/BlackCatalogCard";
+import { BlackCatalogModal } from "../components/BlackCatalogModal";
 
 export const TitleContainer = styled.div`
   display: flex;
@@ -132,93 +134,6 @@ const DarkCyanButton = styled(DefaultButton)`
     }
 `;
 
-// Модальное окно для создания/редактирования записи
-const ModalOverlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-`;
-
-const ModalContent = styled.div`
-  background: white;
-  padding: 24px;
-  border-radius: 12px;
-  width: 90%;
-  max-width: 500px;
-  max-height: 90vh;
-  overflow-y: auto;
-`;
-
-const ModalTitle = styled.h2`
-  font-size: 20px;
-  font-weight: 600;
-  margin-bottom: 20px;
-  color: #333;
-`;
-
-const FormField = styled.div`
-  margin-bottom: 16px;
-`;
-
-const Label = styled.label`
-  display: block;
-  font-size: 14px;
-  font-weight: 500;
-  margin-bottom: 4px;
-  color: #374151;
-`;
-
-const Input = styled.input`
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px solid #D1D5DB;
-  border-radius: 6px;
-  font-size: 14px;
-  
-  &:focus {
-    outline: none;
-    border-color: #008B8B;
-    box-shadow: 0 0 0 2px rgba(0, 139, 139, 0.1);
-  }
-`;
-
-const TextArea = styled.textarea`
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px solid #D1D5DB;
-  border-radius: 6px;
-  font-size: 14px;
-  min-height: 80px;
-  resize: vertical;
-  
-  &:focus {
-    outline: none;
-    border-color: #008B8B;
-    box-shadow: 0 0 0 2px rgba(0, 139, 139, 0.1);
-  }
-`;
-
-const ModalButtons = styled.div`
-  display: flex;
-  gap: 12px;
-  margin-top: 24px;
-`;
-
-const CancelButton = styled(DefaultButton)`
-  background-color: #6B7280;
-  
-  &:hover {
-    background-color: #4B5563;
-  }
-`;
-
 const BlackCatalogPage = () => {
     const [nameFilter, setNameFilter] = useState('');
     const [phoneFilter, setPhoneFilter] = useState('');
@@ -234,6 +149,7 @@ const BlackCatalogPage = () => {
         error, 
         searchResults,
         createEntry,
+        updateEntry,
         searchEntries,
         getTotalCount
     } = useBlackCatalog();
@@ -353,18 +269,25 @@ const BlackCatalogPage = () => {
 
     const handleSaveItem = async (itemData: Partial<BlackCatalogItem>) => {
         try {
-            // Проверяем обязательные поля
-            if (!itemData.fullname || !itemData.phone || !itemData.doc || !itemData.address) {
-                alert('Все поля обязательны для заполнения');
-                return;
+            let result;
+            
+            if (editingItem?.id) {
+                // Обновление существующей записи
+                result = await updateEntry(editingItem.id, {
+                    fullname: itemData.fullname!,
+                    phone: itemData.phone!,
+                    doc: itemData.doc!,
+                    address: itemData.address!
+                });
+            } else {
+                // Создание новой записи
+                result = await createEntry({
+                    fullname: itemData.fullname!,
+                    phone: itemData.phone!,
+                    doc: itemData.doc!,
+                    address: itemData.address!
+                });
             }
-
-            const result = await createEntry({
-                fullname: itemData.fullname,
-                phone: itemData.phone,
-                doc: itemData.doc,
-                address: itemData.address
-            });
             
             if (result) {
                 // Обновляем общее количество
@@ -424,6 +347,11 @@ const BlackCatalogPage = () => {
     const isSuperAdminCompany = () => {
         // Заглушка для проверки прав администратора
         return true;
+    };
+
+    const handleModalClose = () => {
+        setIsModalOpen(false);
+        setEditingItem(null);
     };
 
     const renderContent = () => {
@@ -489,88 +417,15 @@ const BlackCatalogPage = () => {
         );
     };
 
-    const renderModal = () => {
-        if (!isModalOpen) return null;
-
-        const formData = editingItem || {
-            fullname: '',
-            phone: '',
-            doc: '',
-            address: ''
-        };
-
-        const handleSubmit = (e: React.FormEvent) => {
-            e.preventDefault();
-            handleSaveItem(formData);
-        };
-
-        return (
-            <ModalOverlay onClick={() => setIsModalOpen(false)}>
-                <ModalContent onClick={e => e.stopPropagation()}>
-                    <ModalTitle>
-                        {editingItem ? 'Редактировать запись' : 'Добавить в чёрный каталог'}
-                    </ModalTitle>
-                    
-                    <form onSubmit={handleSubmit}>
-                        <FormField>
-                            <Label>ФИО *</Label>
-                            <Input
-                                type="text"
-                                value={formData.fullname || ''}
-                                onChange={e => setEditingItem({...formData, fullname: e.target.value})}
-                                placeholder="Иванов Иван Иванович"
-                                required
-                            />
-                        </FormField>
-                        
-                        <FormField>
-                            <Label>Телефон *</Label>
-                            <PhoneModalInput
-                                placeholder="+7 (999) 999-99-99"
-                                value={formData.phone || ''}
-                                onChange={(e) => setEditingItem({...formData, phone: e.target.value})}
-                                name="phone"
-                            />
-                        </FormField>
-                        
-                        <FormField>
-                            <Label>Документ *</Label>
-                            <Input
-                                type="text"
-                                value={formData.doc || ''}
-                                onChange={e => setEditingItem({...formData, doc: e.target.value})}
-                                placeholder="Паспорт: 4510 123456"
-                                required
-                            />
-                        </FormField>
-                        
-                        <FormField>
-                            <Label>Адрес *</Label>
-                            <TextArea
-                                value={formData.address || ''}
-                                onChange={e => setEditingItem({...formData, address: e.target.value})}
-                                placeholder="Адрес регистрации/проживания"
-                                required
-                            />
-                        </FormField>
-                        
-                        <ModalButtons>
-                            <DarkCyanButton type="submit">
-                                {editingItem ? 'Сохранить' : 'Добавить'}
-                            </DarkCyanButton>
-                            <CancelButton type="button" onClick={() => setIsModalOpen(false)}>
-                                Отмена
-                            </CancelButton>
-                        </ModalButtons>
-                    </form>
-                </ModalContent>
-            </ModalOverlay>
-        );
-    };
-
     return (
         <div onClick={closeContextMenu}>
-            {renderModal()}
+            <BlackCatalogModal
+                isOpen={isModalOpen}
+                onClose={handleModalClose}
+                onSave={handleSaveItem}
+                editingItem={editingItem}
+                mode={editingItem ? "edit" : "create"}
+            />
             
             {selectedItemDossier ? (
                 <div>
@@ -641,10 +496,10 @@ const BlackCatalogPage = () => {
                     <Backdrop onClick={closeContextMenu} />
                     <ContextMenu x={contextMenu.x} y={contextMenu.y}>
                         <MenuItem onClick={() => handleContextMenuAction('edit')}>
-                            ✏️ Редактировать
+                            Редактировать
                         </MenuItem>
                         <MenuItem danger onClick={() => handleContextMenuAction('delete')}>
-                            🗑️ Удалить
+                            Удалить
                         </MenuItem>
                     </ContextMenu>
                 </>

@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import styled from 'styled-components';
-import { FaWhatsapp, FaPhone, FaIdCard, FaEllipsisV, FaExclamationTriangle, FaMapMarkerAlt } from 'react-icons/fa';
+import { FaPhone, FaIdCard, FaEllipsisV, FaMapMarkerAlt } from 'react-icons/fa';
 
 const Card = styled.div`
   background: white;
@@ -81,19 +81,6 @@ const IconWrapper = styled.span`
   color: rgba(107, 114, 128, 0.8);
   display: flex;
   align-items: center;
-`;
-
-const WhatsAppLink = styled.a`
-  color: rgba(75, 85, 99, 1);
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  transition: color 0.2s;
-
-  &:hover {
-    color: #25D366;
-  }
 `;
 
 const PhoneLink = styled.a`
@@ -271,11 +258,6 @@ const BlackCatalogCard: React.FC<BlackCatalogCardProps> = ({
       onClick={handleCardClick}
       onContextMenu={handleRightClick}
     >
-      <BlacklistBadge>
-        <FaExclamationTriangle size={14} />
-        Чёрный список
-      </BlacklistBadge>
-      
       <CardContent>
         <CardTitle>
           <CardTitleText>
@@ -290,8 +272,8 @@ const BlackCatalogCard: React.FC<BlackCatalogCardProps> = ({
             </MenuButton>
 
             <ContextMenu $isVisible={isMenuOpen} ref={menuRef}>
-              <MenuItem onClick={handleEditClick}>✏️ Редактировать</MenuItem>
-              <MenuItem className="danger" onClick={handleDeleteClick}>🗑️ Удалить</MenuItem>
+              <MenuItem onClick={handleEditClick}>Редактировать</MenuItem>
+              <MenuItem className="danger" onClick={handleDeleteClick}>Удалить</MenuItem>
             </ContextMenu>
           </>
         )}
@@ -328,33 +310,11 @@ const BlackCatalogCard: React.FC<BlackCatalogCardProps> = ({
           
           <InfoItem>
             <InfoLabel>
-              <IconWrapper><FaWhatsapp size={13} /></IconWrapper>
-              WhatsApp
-            </InfoLabel>
-            <InfoValue>
-              {item.phone ? (
-                <WhatsAppLink 
-                  href={`https://wa.me/${item.phone.replace(/\D/g, '')}`} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {formatPhone(item.phone)}
-                </WhatsAppLink>
-              ) : (
-                'Не указан'
-              )}
-            </InfoValue>
-          </InfoItem>
-          
-          <InfoItem>
-            <InfoLabel>
               <IconWrapper><FaIdCard size={12} /></IconWrapper>
               Документ
             </InfoLabel>
             <InfoValue>
               {item.doc || 'Не указан'}
-              {item.doc && <DocBadge>Паспорт</DocBadge>}
             </InfoValue>
           </InfoItem>
           

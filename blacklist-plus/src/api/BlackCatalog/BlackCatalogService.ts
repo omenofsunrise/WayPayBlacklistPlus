@@ -1,7 +1,12 @@
 import { apiRequest } from "waypay_react_library";
-import type { CreateBlackCatalogRequest, CreateBlackCatalogResponse, CountResponse, SearchParams, SearchBlackCatalogResponse } from "./blackCatalog";
+import type { 
+  CreateBlackCatalogRequest, 
+  CreateBlackCatalogResponse, 
+  CountResponse, 
+  SearchParams, 
+  SearchBlackCatalogResponse,
+} from "./blackCatalog";
 
- 
 class BlackCatalogService {
   private baseEndpoint = '/black-catalog';
 
@@ -12,6 +17,17 @@ class BlackCatalogService {
   async create(data: CreateBlackCatalogRequest['black_catalog']): Promise<CreateBlackCatalogResponse> {
     return apiRequest<CreateBlackCatalogResponse>(this.baseEndpoint, {
       method: 'POST',
+      body: { black_catalog: data }
+    });
+  }
+
+  /**
+   * Обновить запись в черном каталоге
+   * PUT /black-catalog/{id}
+   */
+  async update(id: number, data: CreateBlackCatalogRequest['black_catalog']): Promise<CreateBlackCatalogResponse> {
+    return apiRequest<CreateBlackCatalogResponse>(`${this.baseEndpoint}/${id}`, {
+      method: 'PUT',
       body: { black_catalog: data }
     });
   }

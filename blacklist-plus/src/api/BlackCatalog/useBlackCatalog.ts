@@ -1,5 +1,9 @@
 import { useState, useCallback } from 'react';
-import type { SearchBlackCatalogResponse, CreateBlackCatalogRequest, SearchParams } from './blackCatalog';
+import type { 
+  SearchBlackCatalogResponse, 
+  CreateBlackCatalogRequest, 
+  SearchParams 
+} from './blackCatalog';
 import { blackCatalogService } from './BlackCatalogService';
 
 interface UseBlackCatalogReturn {
@@ -9,6 +13,7 @@ interface UseBlackCatalogReturn {
   count: number | null;
   
   createEntry: (data: CreateBlackCatalogRequest['black_catalog']) => Promise<{ id: number; success: boolean } | null>;
+  updateEntry: (id: number, data: CreateBlackCatalogRequest['black_catalog']) => Promise<{ id: number; success: boolean } | null>;
   searchEntries: (params: SearchParams) => Promise<SearchBlackCatalogResponse | null>;
   getTotalCount: () => Promise<number | null>;
   reset: () => void;
@@ -36,6 +41,25 @@ const useBlackCatalog = (): UseBlackCatalogReturn => {
       
       if (!response.success) {
         throw new Error(response.error || 'Failed to create entry');
+      }
+      
+      return { id: response.id, success: response.success };
+    } catch (err) {
+      return handleError(err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const updateEntry = useCallback(async (id: number, data: CreateBlackCatalogRequest['black_catalog']) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const response = await blackCatalogService.update(id, data);
+      
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to update entry');
       }
       
       return { id: response.id, success: response.success };
@@ -94,6 +118,7 @@ const useBlackCatalog = (): UseBlackCatalogReturn => {
     count,
     
     createEntry,
+    updateEntry,
     searchEntries,
     getTotalCount,
     reset,
