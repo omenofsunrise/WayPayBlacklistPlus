@@ -36,7 +36,7 @@ jobs:
       - name: Sync files via SCP
         uses: appleboy/scp-action@master
         with:
-          host: 95.163.226.24
+          host: 89.104.69.24
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "./"
