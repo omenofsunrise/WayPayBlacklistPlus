@@ -12,29 +12,40 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
-      - name: Check package.json exists
+      - name: Debug - show structure
         run: |
+          echo "Root directory:"
           ls -la
-          cat package.json | grep '"build"'
-
+          echo "Project directory:"
+          ls -la blacklist-plus/
+          
       - name: Use Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '22'
           
-      - name: Build
+      - name: Install dependencies
+        working-directory: ./blacklist-plus
         run: |
           npm ci --legacy-peer-deps
+          
+      - name: Build project
+        working-directory: ./blacklist-plus
+        run: |
           npm run build
           
-      - name: Clean remote directory and deploy
+      - name: Check build output
+        working-directory: ./blacklist-plus
+        run: |
+          ls -la dist/
+          
+      - name: Clean remote directory
         uses: appleboy/ssh-action@master
         with:
           host: 89.104.69.24
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # Очищаем папку назначения
             rm -rf /var/www/blacklist.waypay.one/*
             mkdir -p /var/www/blacklist.waypay.one
             
@@ -44,9 +55,9 @@ jobs:
           host: 89.104.69.24
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "dist/*"
+          source: "blacklist-plus/dist/*"
           target: "/var/www/blacklist.waypay.one"
-          strip_components: 1
+          strip_components: 2
           
       - name: Set permissions
         uses: appleboy/ssh-action@master
