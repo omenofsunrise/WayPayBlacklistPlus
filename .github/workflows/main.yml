@@ -42,7 +42,7 @@ jobs:
       - name: Clean remote directory
         uses: appleboy/ssh-action@master
         with:
-          host: 89.104.69.24
+          host: 95.163.226.24
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
@@ -52,7 +52,7 @@ jobs:
       - name: Copy built files
         uses: appleboy/scp-action@master
         with:
-          host: 89.104.69.24
+          host: 95.163.226.24
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "blacklist-plus/dist/*"
@@ -62,7 +62,7 @@ jobs:
       - name: Set permissions
         uses: appleboy/ssh-action@master
         with:
-          host: 89.104.69.24
+          host: 95.163.226.24
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
