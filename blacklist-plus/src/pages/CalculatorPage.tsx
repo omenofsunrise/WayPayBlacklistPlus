@@ -307,7 +307,6 @@ const CalculatorPage = () => {
             {isMobile ? (
               <>
                 <InputGroup>
-                  <Label>Сумма рассрочки, ₽</Label>
                   <CustomInput
                     name="amount"
                     placeholder="Введите сумму"
@@ -316,7 +315,6 @@ const CalculatorPage = () => {
                   />
                 </InputGroup>
                 <InputGroup>
-                  <Label>Первоначальный взнос, ₽</Label>
                   <CustomInput
                     name="initial"
                     placeholder="Введите сумму"
@@ -325,7 +323,6 @@ const CalculatorPage = () => {
                   />
                 </InputGroup>
                 <InputGroup>
-                  <Label>Начало выплат</Label>
                   <CustomCalendar
                     value={formData.startDate}
                     onChange={handleDateChange}
@@ -333,7 +330,6 @@ const CalculatorPage = () => {
                   />
                 </InputGroup>
                 <InputGroup>
-                  <Label>Количество месяцев</Label>
                   <CustomInput
                     name="months"
                     placeholder="Введите количество"
@@ -343,7 +339,6 @@ const CalculatorPage = () => {
                 </InputGroup>
                 <InputRow $compactOnMobile>
                   <InputGroup>
-                    <Label>Надбавка, %</Label>
                     <CustomInput
                       name="percent"
                       placeholder="Введите процент"
@@ -352,7 +347,6 @@ const CalculatorPage = () => {
                     />
                   </InputGroup>
                   <InputGroup>
-                    <Label>Округлять до, ₽</Label>
                     <CustomInput
                       name="round"
                       placeholder="Введите сумму"
@@ -366,7 +360,6 @@ const CalculatorPage = () => {
               <>
                 <InputRow>
                   <InputGroup>
-                    <Label>Сумма рассрочки, ₽</Label>
                     <CustomInput
                       name="amount"
                       placeholder="Введите сумму"
@@ -375,7 +368,6 @@ const CalculatorPage = () => {
                     />
                   </InputGroup>
                   <InputGroup>
-                    <Label>Количество месяцев</Label>
                     <CustomInput
                       name="months"
                       placeholder="Введите количество"
@@ -387,7 +379,6 @@ const CalculatorPage = () => {
 
                 <InputRow>
                   <InputGroup>
-                    <Label>Первоначальный взнос, ₽</Label>
                     <CustomInput
                       name="initial"
                       placeholder="Введите сумму"
@@ -396,11 +387,6 @@ const CalculatorPage = () => {
                     />
                   </InputGroup>
                   <InputGroup>
-                    <Label>
-                      {selectedMode === 'month-percent'
-                        ? 'Процент за 1 месяц, %'
-                        : 'Надбавка, %'}
-                    </Label>
                     <CustomInput
                       name="percent"
                       placeholder="Введите процент"
@@ -412,7 +398,6 @@ const CalculatorPage = () => {
 
                 <InputRow $compactOnMobile>
                   <InputGroup>
-                    <Label>Начало выплат</Label>
                     <CustomCalendar
                       value={formData.startDate}
                       onChange={handleDateChange}
@@ -420,7 +405,6 @@ const CalculatorPage = () => {
                     />
                   </InputGroup>
                   <InputGroup>
-                    <Label>Округлять до, ₽</Label>
                     <CustomInput
                       name="round"
                       placeholder="Введите сумму"
@@ -784,20 +768,6 @@ const InputGroup = styled.div`
 
   @media (max-width: 480px) {
     gap: 6px;
-  }
-`;
-
-const Label = styled.label`
-  font-size: 14px;
-  color: #333;
-  font-weight: 500;
-  text-align: left;
-  background: white;
-
-  @media (max-width: 768px) {
-    font-size: 14px;
-    font-weight: 400;
-    color: #6b717c;
   }
 `;
 
