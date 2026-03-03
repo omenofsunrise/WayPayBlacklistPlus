@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 import { CustomCalendar, CustomInput, CustomSelect, CustomTitle } from 'waypay_react_library';
 
 // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
@@ -307,52 +307,70 @@ const CalculatorPage = () => {
             {isMobile ? (
               <>
                 <InputGroup>
-                  <CustomInput
-                    name="amount"
-                    placeholder="Введите сумму"
-                    value={displayAmount}
-                    onChange={handleInputChange}
-                  />
+                  <FloatingField $hasValue={Boolean(displayAmount)}>
+                    <FloatingLabel>Сумма рассрочки, ₽</FloatingLabel>
+                    <CustomInput
+                      name="amount"
+                      placeholder="Сумма рассрочки, ₽"
+                      value={displayAmount}
+                      onChange={handleInputChange}
+                    />
+                  </FloatingField>
                 </InputGroup>
                 <InputGroup>
-                  <CustomInput
-                    name="initial"
-                    placeholder="Введите сумму"
-                    value={displayInitial}
-                    onChange={handleInputChange}
-                  />
+                  <FloatingField $hasValue={Boolean(displayInitial)}>
+                    <FloatingLabel>Первоначальный взнос, ₽</FloatingLabel>
+                    <CustomInput
+                      name="initial"
+                      placeholder="Первоначальный взнос, ₽"
+                      value={displayInitial}
+                      onChange={handleInputChange}
+                    />
+                  </FloatingField>
                 </InputGroup>
                 <InputGroup>
-                  <CustomCalendar
-                    value={formData.startDate}
-                    onChange={handleDateChange}
-                    placeholder="Выберите дату"
-                  />
+                  <FloatingField $hasValue={Boolean(formData.startDate)}>
+                    <FloatingLabel>Начало выплат</FloatingLabel>
+                    <CustomCalendar
+                      value={formData.startDate}
+                      onChange={handleDateChange}
+                      placeholder="Начало выплат"
+                    />
+                  </FloatingField>
                 </InputGroup>
                 <InputGroup>
-                  <CustomInput
-                    name="months"
-                    placeholder="Введите количество"
-                    value={formData.months}
-                    onChange={handleInputChange}
-                  />
+                  <FloatingField $hasValue={Boolean(formData.months)}>
+                    <FloatingLabel>Количество месяцев</FloatingLabel>
+                    <CustomInput
+                      name="months"
+                      placeholder="Количество месяцев"
+                      value={formData.months}
+                      onChange={handleInputChange}
+                    />
+                  </FloatingField>
                 </InputGroup>
                 <InputRow $compactOnMobile>
                   <InputGroup>
-                    <CustomInput
-                      name="percent"
-                      placeholder="Введите процент"
-                      value={formData.percent}
-                      onChange={handleInputChange}
-                    />
+                    <FloatingField $hasValue={Boolean(formData.percent)}>
+                      <FloatingLabel>Надбавка, %</FloatingLabel>
+                      <CustomInput
+                        name="percent"
+                        placeholder="Надбавка, %"
+                        value={formData.percent}
+                        onChange={handleInputChange}
+                      />
+                    </FloatingField>
                   </InputGroup>
                   <InputGroup>
-                    <CustomInput
-                      name="round"
-                      placeholder="Введите сумму"
-                      value={formData.round}
-                      onChange={handleInputChange}
-                    />
+                    <FloatingField $hasValue={Boolean(formData.round)}>
+                      <FloatingLabel>Округлять до, ₽</FloatingLabel>
+                      <CustomInput
+                        name="round"
+                        placeholder="Округлять до, ₽"
+                        value={formData.round}
+                        onChange={handleInputChange}
+                      />
+                    </FloatingField>
                   </InputGroup>
                 </InputRow>
               </>
@@ -360,57 +378,83 @@ const CalculatorPage = () => {
               <>
                 <InputRow>
                   <InputGroup>
-                    <CustomInput
-                      name="amount"
-                      placeholder="Введите сумму"
-                      value={displayAmount}
-                      onChange={handleInputChange}
-                    />
+                    <FloatingField $hasValue={Boolean(displayAmount)}>
+                      <FloatingLabel>Сумма рассрочки, ₽</FloatingLabel>
+                      <CustomInput
+                        name="amount"
+                        placeholder="Сумма рассрочки, ₽"
+                        value={displayAmount}
+                        onChange={handleInputChange}
+                      />
+                    </FloatingField>
                   </InputGroup>
                   <InputGroup>
-                    <CustomInput
-                      name="months"
-                      placeholder="Введите количество"
-                      value={formData.months}
-                      onChange={handleInputChange}
-                    />
+                    <FloatingField $hasValue={Boolean(formData.months)}>
+                      <FloatingLabel>Количество месяцев</FloatingLabel>
+                      <CustomInput
+                        name="months"
+                        placeholder="Количество месяцев"
+                        value={formData.months}
+                        onChange={handleInputChange}
+                      />
+                    </FloatingField>
                   </InputGroup>
                 </InputRow>
 
                 <InputRow>
                   <InputGroup>
-                    <CustomInput
-                      name="initial"
-                      placeholder="Введите сумму"
-                      value={displayInitial}
-                      onChange={handleInputChange}
-                    />
+                    <FloatingField $hasValue={Boolean(displayInitial)}>
+                      <FloatingLabel>Первоначальный взнос, ₽</FloatingLabel>
+                      <CustomInput
+                        name="initial"
+                        placeholder="Первоначальный взнос, ₽"
+                        value={displayInitial}
+                        onChange={handleInputChange}
+                      />
+                    </FloatingField>
                   </InputGroup>
                   <InputGroup>
-                    <CustomInput
-                      name="percent"
-                      placeholder="Введите процент"
-                      value={formData.percent}
-                      onChange={handleInputChange}
-                    />
+                    <FloatingField $hasValue={Boolean(formData.percent)}>
+                      <FloatingLabel>
+                        {selectedMode === 'month-percent'
+                          ? 'Процент за 1 месяц, %'
+                          : 'Надбавка, %'}
+                      </FloatingLabel>
+                      <CustomInput
+                        name="percent"
+                        placeholder={
+                          selectedMode === 'month-percent'
+                            ? 'Процент за 1 месяц, %'
+                            : 'Надбавка, %'
+                        }
+                        value={formData.percent}
+                        onChange={handleInputChange}
+                      />
+                    </FloatingField>
                   </InputGroup>
                 </InputRow>
 
                 <InputRow $compactOnMobile>
                   <InputGroup>
-                    <CustomCalendar
-                      value={formData.startDate}
-                      onChange={handleDateChange}
-                      placeholder="Выберите дату"
-                    />
+                    <FloatingField $hasValue={Boolean(formData.startDate)}>
+                      <FloatingLabel>Начало выплат</FloatingLabel>
+                      <CustomCalendar
+                        value={formData.startDate}
+                        onChange={handleDateChange}
+                        placeholder="Начало выплат"
+                      />
+                    </FloatingField>
                   </InputGroup>
                   <InputGroup>
-                    <CustomInput
-                      name="round"
-                      placeholder="Введите сумму"
-                      value={formData.round}
-                      onChange={handleInputChange}
-                    />
+                    <FloatingField $hasValue={Boolean(formData.round)}>
+                      <FloatingLabel>Округлять до, ₽</FloatingLabel>
+                      <CustomInput
+                        name="round"
+                        placeholder="Округлять до, ₽"
+                        value={formData.round}
+                        onChange={handleInputChange}
+                      />
+                    </FloatingField>
                   </InputGroup>
                 </InputRow>
               </>
@@ -769,6 +813,69 @@ const InputGroup = styled.div`
   @media (max-width: 480px) {
     gap: 6px;
   }
+`;
+
+const activeFloatingLabelStyles = css`
+  opacity: 1;
+  transform: translateY(0) scale(1);
+`;
+
+const FloatingLabel = styled.span`
+  position: absolute;
+  top: -8px;
+  left: 12px;
+  padding: 0 6px;
+  background: white;
+  font-size: 12px;
+  font-weight: 600;
+  color: #0f6f6a;
+  z-index: 2;
+  opacity: 0;
+  transform: translateY(4px) scale(0.98);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  pointer-events: none;
+  white-space: nowrap;
+`;
+
+const FloatingField = styled.div<{ $hasValue?: boolean }>`
+  position: relative;
+  display: flex;
+  flex-direction: column;
+
+  @media (max-width: 768px) {
+    input,
+    textarea {
+      font-size: 16px;
+    }
+  }
+
+  &:focus-within ${FloatingLabel} {
+    ${activeFloatingLabelStyles}
+  }
+
+  &:focus-within input::placeholder {
+    color: transparent;
+  }
+
+  &:focus-within textarea::placeholder {
+    color: transparent;
+  }
+
+  ${({ $hasValue }) =>
+    $hasValue &&
+    css`
+      ${FloatingLabel} {
+        ${activeFloatingLabelStyles}
+      }
+
+      input::placeholder {
+        color: transparent;
+      }
+
+      textarea::placeholder {
+        color: transparent;
+      }
+    `}
 `;
 
 const ResultsSection = styled.div`
