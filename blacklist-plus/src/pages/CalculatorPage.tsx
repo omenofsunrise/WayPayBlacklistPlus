@@ -96,7 +96,6 @@ const CalculatorPage = () => {
     if (formData.months) return;
     setFormData(prev => ({
       ...prev,
-      months: '0',
       round: prev.round || '50',
     }));
   }, [isMobile, formData.months, formData.round]);
@@ -240,16 +239,28 @@ const CalculatorPage = () => {
     calculateResults();
   }, [formData, selectedMode]);
 
+  const percentResult = (() => {
+    const sanitizedPercent = formData.percent.trim().replace(',', '.');
+    const basePercent = parseFloat(sanitizedPercent);
+    if (Number.isNaN(basePercent)) return '0';
+    const monthsValue = parseInt(formData.months, 10);
+    const totalPercent =
+      selectedMode === 'month-percent'
+        ? basePercent * (Number.isNaN(monthsValue) ? 0 : monthsValue)
+        : basePercent;
+    return formatPercentValue(totalPercent.toString());
+  })();
+
   return (
     <PageContainer>
       <ContentWrapper>
         <Header>
           <HeaderLeft>
             <DesktopOnly>
-              <CustomTitle style={{ background: 'white' }}>Калькулятор рассрочки</CustomTitle>
+              <DesktopHeaderTitle as="h1">Калькулятор рассрочки</DesktopHeaderTitle>
             </DesktopOnly>
             <MobileTitleWrap>
-              <HeaderTitle>Калькулятор</HeaderTitle>
+              <MobileHeaderTitle as="h1">Калькулятор</MobileHeaderTitle>
             </MobileTitleWrap>
           </HeaderLeft>
           <ActionsContainer>
@@ -470,7 +481,7 @@ const CalculatorPage = () => {
               </ResultItem>
               <ResultItem>
                 <ResultLabel>Надбавка %</ResultLabel>
-                <ResultValue>{formatPercentValue(formData.percent)}%</ResultValue>
+                <ResultValue>{percentResult}%</ResultValue>
               </ResultItem>
               <ResultSpacer />
               <ResultItem>
@@ -516,6 +527,7 @@ const CalculatorPage = () => {
 
 const PageContainer = styled.div`
   min-height: 100vh;
+  min-height: 100dvh;
   padding: 12px;
   display: flex;
   justify-content: center;
@@ -581,9 +593,25 @@ const HeaderLeft = styled.div`
   min-width: 0;
 `;
 
-const HeaderTitle = styled.span`
+const DesktopHeaderTitle = styled(CustomTitle)`
+  margin: 0;
+  background: white;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #111827;
+
+  @media (max-width: 1024px) {
+    font-size: 22px;
+  }
+`;
+
+const MobileHeaderTitle = styled(CustomTitle)`
+  margin: 0;
+  background: white;
   font-size: 18px;
   font-weight: 600;
+  line-height: 1.2;
   color: #111827;
 `;
 
