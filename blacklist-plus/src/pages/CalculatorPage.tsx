@@ -537,13 +537,15 @@ const PageContainer = styled.div`
   @media (max-width: 480px) {
     padding: 0;
     background: white;
-    min-height: 100%;
+    min-height: auto;
+    height: auto;
   }
 
   @media (max-width: 768px) {
     padding: 0;
     background: white;
-    min-height: 100%;
+    min-height: auto;
+    height: auto;
   }
 `;
 
