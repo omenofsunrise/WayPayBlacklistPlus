@@ -684,18 +684,27 @@ const ModeMenuItem = styled.button`
 const ModeRadio = styled.span<{ $active: boolean }>`
   width: 16px;
   height: 16px;
-  border-radius: 8px;
+  min-width: 16px;
+  min-height: 16px;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
   border: 2px solid ${({ $active }) => ($active ? '#007D88' : '#D1D5DB')};
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
+  line-height: 1;
 `;
 
 const ModeRadioDot = styled.span`
   width: 6px;
   height: 6px;
-  border-radius: 3px;
+  min-width: 6px;
+  min-height: 6px;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
   background: #007d88;
+  display: inline-block;
 `;
 
 const ModeMenuLabel = styled.span<{ $active: boolean }>`
@@ -880,7 +889,7 @@ const ResultSpacer = styled.div`
 const ColorIndicator = styled.div<{ color: 'primary' | 'secondary' }>`
   width: 10px;
   height: 10px;
-  border-radius: 3px;
+  border-radius: 50%;
   background-color: ${props => 
     props.color === 'primary' 
       ? 'rgba(0, 125, 136, 1)' 
