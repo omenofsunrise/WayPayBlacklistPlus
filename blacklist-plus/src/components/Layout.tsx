@@ -89,10 +89,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     <LayoutContainer $isMobile={isMobile}>
       <SideMenu 
         items={menuItems}
-        logo={<Logo />}
+        logo={isMobile ? null : <Logo />}
         autoCollapseOnSelect={false}
         mobileBreakpoint={768}
         showBottomLabels={false}
+        style={{ backgroundColor: '#ffffff' }}
       >
         {/* Этот children будет использоваться только в мобильной версии */}
         {isMobile && children}
