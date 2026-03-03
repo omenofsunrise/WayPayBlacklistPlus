@@ -96,7 +96,7 @@ const CalculatorPage = () => {
     if (formData.months) return;
     setFormData(prev => ({
       ...prev,
-      months: '2',
+      months: '0',
       round: prev.round || '50',
     }));
   }, [isMobile, formData.months, formData.round]);
@@ -155,7 +155,7 @@ const CalculatorPage = () => {
   const handleReset = () => {
     setFormData({
       amount: '',
-      months: isMobile ? '2' : '',
+      months: isMobile ? '0' : '',
       initial: '',
       percent: '',
       round: '50',
