@@ -96,6 +96,14 @@ const CalculatorPage = () => {
   }, []);
 
   useEffect(() => {
+    const inputs = document.querySelectorAll<HTMLInputElement>('input[data-numeric="true"]');
+    inputs.forEach(input => {
+      input.setAttribute('inputmode', 'numeric');
+      input.setAttribute('pattern', '[0-9]*');
+    });
+  }, [isMobile]);
+
+  useEffect(() => {
     if (!isMobile) return;
     if (formData.months) return;
     setFormData(prev => ({
@@ -437,6 +445,7 @@ const CalculatorPage = () => {
                     <CustomInput
                       name="amount"
                       placeholder="Сумма рассрочки, ₽"
+                      data-numeric="true"
                       inputMode="numeric"
                       pattern="[0-9]*"
                       value={displayAmount}
@@ -450,6 +459,7 @@ const CalculatorPage = () => {
                     <CustomInput
                       name="initial"
                       placeholder="Первоначальный взнос, ₽"
+                      data-numeric="true"
                       inputMode="numeric"
                       pattern="[0-9]*"
                       value={displayInitial}
@@ -473,6 +483,7 @@ const CalculatorPage = () => {
                     <CustomInput
                       name="months"
                       placeholder="Количество месяцев"
+                      data-numeric="true"
                       inputMode="numeric"
                       pattern="[0-9]*"
                       value={formData.months}
@@ -487,6 +498,7 @@ const CalculatorPage = () => {
                       <CustomInput
                         name="percent"
                         placeholder="Надбавка, %"
+                        data-numeric="true"
                         inputMode="numeric"
                         pattern="[0-9]*"
                         value={formData.percent}
@@ -500,6 +512,7 @@ const CalculatorPage = () => {
                       <CustomInput
                         name="round"
                         placeholder="Округлять до, ₽"
+                        data-numeric="true"
                         inputMode="numeric"
                         pattern="[0-9]*"
                         value={formData.round}
@@ -518,6 +531,7 @@ const CalculatorPage = () => {
                       <CustomInput
                         name="amount"
                         placeholder="Сумма рассрочки, ₽"
+                        data-numeric="true"
                         inputMode="numeric"
                         pattern="[0-9]*"
                         value={displayAmount}
@@ -531,6 +545,7 @@ const CalculatorPage = () => {
                       <CustomInput
                         name="months"
                         placeholder="Количество месяцев"
+                        data-numeric="true"
                         inputMode="numeric"
                         pattern="[0-9]*"
                         value={formData.months}
@@ -547,6 +562,7 @@ const CalculatorPage = () => {
                       <CustomInput
                         name="initial"
                         placeholder="Первоначальный взнос, ₽"
+                        data-numeric="true"
                         inputMode="numeric"
                         pattern="[0-9]*"
                         value={displayInitial}
@@ -568,6 +584,7 @@ const CalculatorPage = () => {
                             ? 'Процент за 1 месяц, %'
                             : 'Надбавка, %'
                         }
+                        data-numeric="true"
                         inputMode="numeric"
                         pattern="[0-9]*"
                         value={formData.percent}
@@ -594,6 +611,7 @@ const CalculatorPage = () => {
                       <CustomInput
                         name="round"
                         placeholder="Округлять до, ₽"
+                        data-numeric="true"
                         inputMode="numeric"
                         pattern="[0-9]*"
                         value={formData.round}
