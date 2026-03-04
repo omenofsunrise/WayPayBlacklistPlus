@@ -44,6 +44,40 @@ const roundUp = (value: number, increment: number) => {
   return Math.ceil(value / increment) * increment;
 };
 
+const STORAGE_KEY = 'waypay.calculator.form.v1';
+
+const getDefaultFormData = () => ({
+  amount: '',
+  months: '',
+  initial: '',
+  percent: '',
+  round: '50',
+  startDate: getNextMonthDate().toISOString().split('T')[0],
+});
+
+const loadStoredFormData = () => {
+  const defaults = getDefaultFormData();
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return defaults;
+    const parsed = JSON.parse(raw) as Partial<typeof defaults>;
+    return {
+      ...defaults,
+      amount: typeof parsed.amount === 'string' ? parsed.amount : defaults.amount,
+      initial: typeof parsed.initial === 'string' ? parsed.initial : defaults.initial,
+      months: typeof parsed.months === 'string' ? parsed.months : defaults.months,
+      percent: typeof parsed.percent === 'string' ? parsed.percent : defaults.percent,
+      round: typeof parsed.round === 'string' ? parsed.round : defaults.round,
+      startDate:
+        typeof parsed.startDate === 'string' && parsed.startDate
+          ? parsed.startDate
+          : defaults.startDate,
+    };
+  } catch {
+    return defaults;
+  }
+};
+
 // ==================== ТИПЫ ====================
 
 type CalculationMode = 'standard' | 'after-initial' | 'month-percent';
@@ -58,18 +92,15 @@ const CalculatorPage = () => {
   const modeButtonRef = useRef<HTMLButtonElement | null>(null);
   const modeMenuRef = useRef<HTMLDivElement | null>(null);
   const exportRef = useRef<HTMLDivElement | null>(null);
-  
-  const [formData, setFormData] = useState({
-    amount: '',
-    months: '',
-    initial: '',
-    percent: '',
-    round: '50',
-    startDate: getNextMonthDate().toISOString().split('T')[0],
-  });
-  
-  const [displayAmount, setDisplayAmount] = useState('');
-  const [displayInitial, setDisplayInitial] = useState('');
+
+  const initialFormData = loadStoredFormData();
+  const [formData, setFormData] = useState(initialFormData);
+  const [displayAmount, setDisplayAmount] = useState(
+    initialFormData.amount ? formatMoney(initialFormData.amount) : '',
+  );
+  const [displayInitial, setDisplayInitial] = useState(
+    initialFormData.initial ? formatMoney(initialFormData.initial) : '',
+  );
 
   const [results, setResults] = useState({
     monthlyPayment: '0',
@@ -94,6 +125,14 @@ const CalculatorPage = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(formData));
+    } catch {
+      // ignore storage errors (quota, etc.)
+    }
+  }, [formData]);
 
   useEffect(() => {
     const inputs = document.querySelectorAll<HTMLInputElement>('input[data-numeric="true"]');
