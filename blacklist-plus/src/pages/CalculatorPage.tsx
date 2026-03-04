@@ -1,4 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
+import html2canvas from 'html2canvas';
+import { PDFDocument } from 'pdf-lib';
 import styled, { css } from 'styled-components';
 import { CustomCalendar, CustomInput, CustomSelect, CustomTitle } from 'waypay_react_library';
 
@@ -52,8 +54,10 @@ const CalculatorPage = () => {
   const [selectedMode, setSelectedMode] = useState<CalculationMode>('standard');
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [isModeMenuOpen, setIsModeMenuOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const modeButtonRef = useRef<HTMLButtonElement | null>(null);
   const modeMenuRef = useRef<HTMLDivElement | null>(null);
+  const exportRef = useRef<HTMLDivElement | null>(null);
   
   const [formData, setFormData] = useState({
     amount: '',
@@ -149,6 +153,100 @@ const CalculatorPage = () => {
   const handleModeSelect = (mode: CalculationMode) => {
     setSelectedMode(mode);
     setIsModeMenuOpen(false);
+  };
+
+  const buildPdfBlob = async () => {
+    if (!exportRef.current) return null;
+
+    const canvas = await html2canvas(exportRef.current, {
+      backgroundColor: '#ffffff',
+      scale: 2,
+      useCORS: true,
+    });
+
+    const pdfDoc = await PDFDocument.create();
+    const pageWidth = 595.28;
+    const pageHeight = 841.89;
+    const scale = pageWidth / canvas.width;
+    const sliceHeightPx = Math.floor(pageHeight / scale);
+    let renderedHeight = 0;
+
+    while (renderedHeight < canvas.height) {
+      const sliceCanvas = document.createElement('canvas');
+      sliceCanvas.width = canvas.width;
+      sliceCanvas.height = Math.min(sliceHeightPx, canvas.height - renderedHeight);
+      const ctx = sliceCanvas.getContext('2d');
+      if (!ctx) break;
+
+      ctx.drawImage(
+        canvas,
+        0,
+        renderedHeight,
+        canvas.width,
+        sliceCanvas.height,
+        0,
+        0,
+        canvas.width,
+        sliceCanvas.height,
+      );
+
+      const pngData = sliceCanvas.toDataURL('image/png');
+      const pngImage = await pdfDoc.embedPng(pngData);
+      const page = pdfDoc.addPage([pageWidth, pageHeight]);
+      const scaledHeight = (sliceCanvas.height * pageWidth) / canvas.width;
+
+      page.drawImage(pngImage, {
+        x: 0,
+        y: pageHeight - scaledHeight,
+        width: pageWidth,
+        height: scaledHeight,
+      });
+
+      renderedHeight += sliceCanvas.height;
+    }
+
+    const bytes = await pdfDoc.save();
+    return new Blob([bytes], { type: 'application/pdf' });
+  };
+
+  const downloadBlob = (blob: Blob, filename: string) => {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
+  const handleExportPdf = async () => {
+    if (isExporting) return;
+    setIsExporting(true);
+
+    try {
+      const blob = await buildPdfBlob();
+      if (!blob) return;
+
+      const filename = `WayPay-raschet-${new Date()
+        .toLocaleDateString('ru-RU')
+        .replace(/\./g, '-')}.pdf`;
+      const file = new File([blob], filename, { type: 'application/pdf' });
+
+      const isMobileDevice =
+        /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+        (navigator.maxTouchPoints ?? 0) > 1;
+
+      if (isMobileDevice && navigator.share && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: 'Расчёт рассрочки',
+        });
+        return;
+      }
+
+      downloadBlob(blob, filename);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const handleReset = () => {
@@ -265,15 +363,25 @@ const CalculatorPage = () => {
           </HeaderLeft>
           <ActionsContainer>
             <DesktopOnly>
-              <SelectWrapper>
-                <CustomSelect
-                  value={selectedMode}
-                  onChange={handleModeChange}
-                  options={calculatorMods}
-                  placeholder="Выберите режим расчета"
-                  customPlaceholder="Режим расчета"
-                />
-              </SelectWrapper>
+              <DesktopActions>
+                <SelectWrapper>
+                  <CustomSelect
+                    value={selectedMode}
+                    onChange={handleModeChange}
+                    options={calculatorMods}
+                    placeholder="Выберите режим расчета"
+                    customPlaceholder="Режим расчета"
+                  />
+                </SelectWrapper>
+                <IconButton
+                  type="button"
+                  aria-label="Экспорт в PDF"
+                  onClick={handleExportPdf}
+                  disabled={isExporting}
+                >
+                  <IconShare />
+                </IconButton>
+              </DesktopActions>
             </DesktopOnly>
             <MobileOnly>
               <MobileActions>
@@ -285,7 +393,12 @@ const CalculatorPage = () => {
                 >
                   <IconTune />
                 </IconButton>
-                <IconButton type="button" aria-label="Экспорт в PDF">
+                <IconButton
+                  type="button"
+                  aria-label="Экспорт в PDF"
+                  onClick={handleExportPdf}
+                  disabled={isExporting}
+                >
                   <IconShare />
                 </IconButton>
                 <IconButton type="button" aria-label="Сбросить" onClick={handleReset}>
@@ -323,6 +436,8 @@ const CalculatorPage = () => {
                     <CustomInput
                       name="amount"
                       placeholder="Сумма рассрочки, ₽"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       value={displayAmount}
                       onChange={handleInputChange}
                     />
@@ -334,6 +449,8 @@ const CalculatorPage = () => {
                     <CustomInput
                       name="initial"
                       placeholder="Первоначальный взнос, ₽"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       value={displayInitial}
                       onChange={handleInputChange}
                     />
@@ -355,6 +472,8 @@ const CalculatorPage = () => {
                     <CustomInput
                       name="months"
                       placeholder="Количество месяцев"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       value={formData.months}
                       onChange={handleInputChange}
                     />
@@ -367,6 +486,8 @@ const CalculatorPage = () => {
                       <CustomInput
                         name="percent"
                         placeholder="Надбавка, %"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
                         value={formData.percent}
                         onChange={handleInputChange}
                       />
@@ -378,6 +499,8 @@ const CalculatorPage = () => {
                       <CustomInput
                         name="round"
                         placeholder="Округлять до, ₽"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
                         value={formData.round}
                         onChange={handleInputChange}
                       />
@@ -394,6 +517,8 @@ const CalculatorPage = () => {
                       <CustomInput
                         name="amount"
                         placeholder="Сумма рассрочки, ₽"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
                         value={displayAmount}
                         onChange={handleInputChange}
                       />
@@ -405,6 +530,8 @@ const CalculatorPage = () => {
                       <CustomInput
                         name="months"
                         placeholder="Количество месяцев"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
                         value={formData.months}
                         onChange={handleInputChange}
                       />
@@ -419,6 +546,8 @@ const CalculatorPage = () => {
                       <CustomInput
                         name="initial"
                         placeholder="Первоначальный взнос, ₽"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
                         value={displayInitial}
                         onChange={handleInputChange}
                       />
@@ -438,6 +567,8 @@ const CalculatorPage = () => {
                             ? 'Процент за 1 месяц, %'
                             : 'Надбавка, %'
                         }
+                        inputMode="numeric"
+                        pattern="[0-9]*"
                         value={formData.percent}
                         onChange={handleInputChange}
                       />
@@ -462,6 +593,8 @@ const CalculatorPage = () => {
                       <CustomInput
                         name="round"
                         placeholder="Округлять до, ₽"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
                         value={formData.round}
                         onChange={handleInputChange}
                       />
@@ -473,7 +606,7 @@ const CalculatorPage = () => {
           </InputsSection>
 
           <ResultsSection>
-            <ResultsCard>
+            <ResultsCard ref={exportRef}>
               <ResultsTitle>Результаты расчёта</ResultsTitle>
               <ResultItem>
                 <ResultLabel>Ежемесячный платеж</ResultLabel>
@@ -615,12 +748,16 @@ const MobileHeaderTitle = styled(CustomTitle)`
   font-weight: 600;
   line-height: 1.2;
   color: #111827;
+
+  @media (max-width: 420px) {
+    font-size: 16px;
+  }
 `;
 
 const MobileTitleWrap = styled.div`
   display: none;
 
-  @media (max-width: 768px) and (min-width: 420px) {
+  @media (max-width: 768px) {
     display: block;
   }
 `;
@@ -635,6 +772,12 @@ const ActionsContainer = styled.div`
     margin-left: auto;
     gap: 6px;
   }
+`;
+
+const DesktopActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
 `;
 
 const SelectWrapper = styled.div`

@@ -15,6 +15,20 @@ export const TitleContainer = styled.div`
   justify-content: space-between;
 `;
 
+const PageTitle = styled(CustomTitle)`
+  margin: 0;
+  color: #111827;
+
+  @media (max-width: 768px) {
+    font-size: 18px;
+    line-height: 1.2;
+  }
+
+  @media (max-width: 420px) {
+    font-size: 16px;
+  }
+`;
+
 const EmptyStateContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -443,7 +457,7 @@ const BlackCatalogPage = () => {
                 <>
                     <TitleContainer style={{ position: "sticky"}}>
                         <TitleContainer style={{maxWidth: "290px"}}>
-                            <CustomTitle>Чёрный каталог</CustomTitle>
+                            <PageTitle>Чёрный каталог</PageTitle>
                             {searchResults && searchResults.black_catalogs.length > 0 && (
                                 <span>({searchResults.count})</span>
                             )}
