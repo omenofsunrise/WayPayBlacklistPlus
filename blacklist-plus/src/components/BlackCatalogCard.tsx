@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import styled from 'styled-components';
-import { FaPhone, FaIdCard, FaEllipsisV, FaMapMarkerAlt } from 'react-icons/fa';
+import { FaPhone, FaIdCard, FaEllipsisV, FaMapMarkerAlt, FaCalendarAlt, FaBirthdayCake } from 'react-icons/fa';
 
 const Card = styled.div`
   background: white;
@@ -155,6 +155,8 @@ export interface BlackCatalogItem {
   doc: string;
   phone: string;
   address: string;
+  doc_issue_date: string;
+  birthdate: string;
 }
 
 interface BlackCatalogCardProps {
@@ -165,6 +167,21 @@ interface BlackCatalogCardProps {
   onOpenDossier: (item: BlackCatalogItem) => void;
   showMenu?: boolean;
 }
+
+const formatDate = (dateString: string): string => {
+  if (!dateString) return 'Не указана';
+  
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ru-RU', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  } catch {
+    return dateString;
+  }
+};
 
 const BlackCatalogCard: React.FC<BlackCatalogCardProps> = ({ 
   item, 
@@ -282,11 +299,31 @@ const BlackCatalogCard: React.FC<BlackCatalogCardProps> = ({
           
           <InfoItem>
             <InfoLabel>
+              <IconWrapper><FaBirthdayCake size={12} /></IconWrapper>
+              Дата рождения
+            </InfoLabel>
+            <InfoValue>
+              {formatDate(item.birthdate)}
+            </InfoValue>
+          </InfoItem>
+          
+          <InfoItem>
+            <InfoLabel>
               <IconWrapper><FaIdCard size={12} /></IconWrapper>
               Документ
             </InfoLabel>
             <InfoValue>
               {item.doc || 'Не указан'}
+            </InfoValue>
+          </InfoItem>
+          
+          <InfoItem>
+            <InfoLabel>
+              <IconWrapper><FaCalendarAlt size={12} /></IconWrapper>
+              Дата выдачи
+            </InfoLabel>
+            <InfoValue>
+              {formatDate(item.doc_issue_date)}
             </InfoValue>
           </InfoItem>
           

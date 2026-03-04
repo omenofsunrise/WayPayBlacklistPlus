@@ -1,4 +1,3 @@
-// BlackCatalogPage.tsx (обновлённый)
 import { useCallback, useEffect, useState } from "react";
 import styled from "styled-components";
 import { CountInfoTitle, CustomTitle, CustomInput, PhoneModalInput, DefaultButton } from "waypay_react_library";
@@ -164,6 +163,7 @@ const BlackCatalogPage = () => {
         searchResults,
         createEntry,
         updateEntry,
+        deleteEntry,
         searchEntries,
         getTotalCount
     } = useBlackCatalog();
@@ -174,7 +174,6 @@ const BlackCatalogPage = () => {
         item: BlackCatalogItem | null;
     } | null>(null);
 
-    // Загружаем общее количество при монтировании
     useEffect(() => {
         const loadTotalCount = async () => {
             const total = await getTotalCount();
@@ -286,33 +285,33 @@ const BlackCatalogPage = () => {
             let result;
             
             if (editingItem?.id) {
-                // Обновление существующей записи
-                result = await updateEntry(editingItem.id, {
-                    fullname: itemData.fullname!,
-                    phone: itemData.phone!,
-                    doc: itemData.doc!,
-                    address: itemData.address!
-                });
+            result = await updateEntry(editingItem.id, {
+                fullname: itemData.fullname!,
+                phone: itemData.phone!,
+                doc: itemData.doc!,
+                address: itemData.address!,
+                doc_issue_date: itemData.doc_issue_date!,
+                birthdate: itemData.birthdate!
+            });
             } else {
-                // Создание новой записи
-                result = await createEntry({
-                    fullname: itemData.fullname!,
-                    phone: itemData.phone!,
-                    doc: itemData.doc!,
-                    address: itemData.address!
-                });
+            result = await createEntry({
+                fullname: itemData.fullname!,
+                phone: itemData.phone!,
+                doc: itemData.doc!,
+                address: itemData.address!,
+                doc_issue_date: itemData.doc_issue_date!,
+                birthdate: itemData.birthdate!
+            });
             }
             
             if (result) {
-                // Обновляем общее количество
-                const total = await getTotalCount();
-                if (total !== null) {
-                    setTotalCount(total);
-                }
-                // Обновляем результаты поиска
-                if (hasSearched) {
-                    loadBlacklist();
-                }
+            const total = await getTotalCount();
+            if (total !== null) {
+                setTotalCount(total);
+            }
+            if (hasSearched) {
+                loadBlacklist();
+            }
             }
             
             setIsModalOpen(false);
@@ -325,16 +324,10 @@ const BlackCatalogPage = () => {
     const handleDeleteFromBlackCatalog = async (item: BlackCatalogItem) => {
         if (window.confirm(`Вы уверены, что хотите удалить ${item.fullname} из чёрного каталога?`)) {
             try {
-                // API не поддерживает удаление, показываем сообщение
-                alert('API не поддерживает удаление записей');
+                await deleteEntry(item.id);
+
+                loadBlacklist();
                 
-                // В реальном API здесь должен быть вызов delete
-                // После удаления обновляем список
-                if (hasSearched) {
-                    loadBlacklist();
-                }
-                
-                // Обновляем общее количество
                 const total = await getTotalCount();
                 if (total !== null) {
                     setTotalCount(total);

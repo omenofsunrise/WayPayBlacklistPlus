@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import type { 
   SearchBlackCatalogResponse, 
   CreateBlackCatalogRequest, 
-  SearchParams 
+  SearchParams,
 } from './blackCatalog';
 import { blackCatalogService } from './BlackCatalogService';
 
@@ -14,6 +14,7 @@ interface UseBlackCatalogReturn {
   
   createEntry: (data: CreateBlackCatalogRequest['black_catalog']) => Promise<{ id: number; success: boolean } | null>;
   updateEntry: (id: number, data: CreateBlackCatalogRequest['black_catalog']) => Promise<{ id: number; success: boolean } | null>;
+  deleteEntry: (id: number) => void;
   searchEntries: (params: SearchParams) => Promise<SearchBlackCatalogResponse | null>;
   getTotalCount: () => Promise<number | null>;
   reset: () => void;
@@ -70,6 +71,23 @@ const useBlackCatalog = (): UseBlackCatalogReturn => {
     }
   }, []);
 
+  const deleteEntry = useCallback(async (id: number) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      await blackCatalogService.delete(id);
+      
+      if (count !== null) {
+        setCount(Math.max(0, count - 1));
+      }
+    } catch (err) {
+      return handleError(err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [searchResults, count]);
+
   const searchEntries = useCallback(async (params: SearchParams) => {
     setIsLoading(true);
     setError(null);
@@ -119,6 +137,7 @@ const useBlackCatalog = (): UseBlackCatalogReturn => {
     
     createEntry,
     updateEntry,
+    deleteEntry,
     searchEntries,
     getTotalCount,
     reset,
