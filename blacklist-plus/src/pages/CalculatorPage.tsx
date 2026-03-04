@@ -532,7 +532,7 @@ const PageContainer = styled.div`
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  background: #f5f5f5;
+  background: white;
 
   @media (max-width: 480px) {
     padding: 0;
