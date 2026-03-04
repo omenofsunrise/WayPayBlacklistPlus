@@ -206,7 +206,8 @@ const CalculatorPage = () => {
     }
 
     const bytes = await pdfDoc.save();
-    return new Blob([bytes], { type: 'application/pdf' });
+    const safeBytes = bytes instanceof Uint8Array ? new Uint8Array(bytes) : new Uint8Array(bytes);
+    return new Blob([safeBytes], { type: 'application/pdf' });
   };
 
   const downloadBlob = (blob: Blob, filename: string) => {
