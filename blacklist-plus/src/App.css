@@ -17,17 +17,21 @@
   body,
   #root {
     overscroll-behavior: none;
+    height: 100%;
+    overflow: hidden;
   }
 
   .app-side-menu {
-    min-height: auto !important;
+    min-height: 100dvh !important;
+    height: 100dvh !important;
     background-color: #ffffff !important;
     overscroll-behavior: none;
   }
 
   .app-side-menu main {
-    flex: 0 0 auto !important;
-    overflow: visible !important;
+    flex: 1 1 auto !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
   }
 }
