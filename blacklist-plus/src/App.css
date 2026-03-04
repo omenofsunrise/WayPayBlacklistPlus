@@ -11,3 +11,23 @@
   background-color: white;
   color: black;
 }
+
+@media (max-width: 768px) {
+  html,
+  body,
+  #root {
+    overscroll-behavior: none;
+  }
+
+  .app-side-menu {
+    min-height: auto !important;
+    background-color: #ffffff !important;
+    overscroll-behavior: none;
+  }
+
+  .app-side-menu main {
+    flex: 0 0 auto !important;
+    overflow: visible !important;
+    overscroll-behavior: contain;
+  }
+}

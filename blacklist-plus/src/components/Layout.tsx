@@ -93,6 +93,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         autoCollapseOnSelect={false}
         mobileBreakpoint={768}
         showBottomLabels={false}
+        className="app-side-menu"
         style={{ backgroundColor: '#ffffff' }}
       >
         {/* Этот children будет использоваться только в мобильной версии */}
