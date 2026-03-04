@@ -4,6 +4,8 @@ export interface BlackCatalogItem {
   doc: string;
   phone: string;
   address: string;
+  doc_issue_date: string;
+  birthdate: string;
 }
 
 export interface CreateBlackCatalogRequest {
@@ -12,6 +14,8 @@ export interface CreateBlackCatalogRequest {
     doc: string;
     fullname: string;
     phone: string;
+    doc_issue_date: string;
+    birthdate: string;
   };
 }
 
@@ -36,7 +40,6 @@ export interface ErrorResponse {
   error: string;
 }
 
-// Параметры поиска
 export interface SearchParams {
   name?: string;
   phone?: string;
