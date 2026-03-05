@@ -5,6 +5,7 @@ import useBlackCatalog from "../api/BlackCatalog/useBlackCatalog";
 import type { BlackCatalogItem } from "../api/BlackCatalog/blackCatalog";
 import BlackCatalogCard from "../components/BlackCatalogCard";
 import { BlackCatalogModal } from "../components/BlackCatalogModal";
+import BlackCatalogDossier from "../components/BlackCatalogDossier";
 
 export const TitleContainer = styled.div`
   display: flex;
@@ -435,17 +436,13 @@ const BlackCatalogPage = () => {
             />
             
             {selectedItemDossier ? (
-                <div>
-                    <button onClick={() => setSelectedItemDossier(null)}>← Назад</button>
-                    <div style={{ marginTop: '20px' }}>
-                        <h2>Детальная информация</h2>
-                        <p><strong>ID:</strong> {selectedItemDossier.id}</p>
-                        <p><strong>ФИО:</strong> {selectedItemDossier.fullname}</p>
-                        <p><strong>Телефон:</strong> {selectedItemDossier.phone}</p>
-                        <p><strong>Документ:</strong> {selectedItemDossier.doc}</p>
-                        <p><strong>Адрес:</strong> {selectedItemDossier.address}</p>
-                    </div>
-                </div>
+                <>
+                    {/* Досье клиента вынесено в отдельный компонент для читаемости. */}
+                    <BlackCatalogDossier
+                        item={selectedItemDossier}
+                        onBack={() => setSelectedItemDossier(null)}
+                    />
+                </>
             ) : (
                 <>
                     <TitleContainer style={{ position: "sticky"}}>
