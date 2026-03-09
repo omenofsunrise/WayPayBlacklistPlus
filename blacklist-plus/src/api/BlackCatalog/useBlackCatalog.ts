@@ -1,7 +1,8 @@
 import { useState, useCallback } from 'react';
 import type { 
   SearchBlackCatalogResponse, 
-  CreateBlackCatalogRequest, 
+  BlackCatalogCreatePayload,
+  BlackCatalogUpdatePayload,
   SearchParams,
 } from './blackCatalog';
 import { blackCatalogService } from './BlackCatalogService';
@@ -12,8 +13,8 @@ interface UseBlackCatalogReturn {
   searchResults: SearchBlackCatalogResponse | null;
   count: number | null;
   
-  createEntry: (data: CreateBlackCatalogRequest['black_catalog']) => Promise<{ id: number; success: boolean } | null>;
-  updateEntry: (id: number, data: CreateBlackCatalogRequest['black_catalog']) => Promise<{ id: number; success: boolean } | null>;
+  createEntry: (data: BlackCatalogCreatePayload) => Promise<{ id: number; success: boolean } | null>;
+  updateEntry: (id: number, data: BlackCatalogUpdatePayload) => Promise<{ id: number; success: boolean } | null>;
   deleteEntry: (id: number) => void;
   searchEntries: (params: SearchParams) => Promise<SearchBlackCatalogResponse | null>;
   getTotalCount: () => Promise<number | null>;
@@ -33,7 +34,7 @@ const useBlackCatalog = (): UseBlackCatalogReturn => {
     return null;
   };
 
-  const createEntry = useCallback(async (data: CreateBlackCatalogRequest['black_catalog']) => {
+  const createEntry = useCallback(async (data: BlackCatalogCreatePayload) => {
     setIsLoading(true);
     setError(null);
     
@@ -52,7 +53,7 @@ const useBlackCatalog = (): UseBlackCatalogReturn => {
     }
   }, []);
 
-  const updateEntry = useCallback(async (id: number, data: CreateBlackCatalogRequest['black_catalog']) => {
+  const updateEntry = useCallback(async (id: number, data: BlackCatalogUpdatePayload) => {
     setIsLoading(true);
     setError(null);
     

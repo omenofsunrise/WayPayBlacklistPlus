@@ -2,11 +2,53 @@ export interface BlackCatalogItem {
   id: number;
   fullname: string;
   doc: string;
-  phone: string;
   address: string;
-  doc_issue_date: string;
   birthdate: string;
+  phone?: string;
+  doc_issue_date?: string;
+  comment?: string;
+  is_swindler?: boolean;
+  debt_ending_at?: string;
+  main_passport_page?: string;
+  registration_passport_page?: string;
+}
 
+export interface BlackCatalogCreatePayload {
+  address: string;
+  doc: string;
+  fullname: string;
+  birthdate: string;
+  comment?: string;
+  is_swindler?: boolean;
+  debt_ending_at?: string;
+  phone?: string;
+  doc_issue_date?: string;
+  main_page?: File | null;
+  registration_page?: File | null;
+}
+
+export interface BlackCatalogUpdatePayload {
+  address: string;
+  doc: string;
+  fullname: string;
+  birthdate: string;
+  comment?: string;
+  is_swindler?: boolean;
+  debt_ending_at?: string;
+  phone?: string;
+  doc_issue_date?: string;
+}
+
+export interface BlackCatalogFormData {
+  fullname: string;
+  doc: string;
+  address: string;
+  birthdate: string;
+  comment: string;
+  main_page: File | null;
+  registration_page: File | null;
+  is_swindler: boolean;
+  debt_ending_at: string;
 }
 
 export interface CreateBlackCatalogRequest {
@@ -14,9 +56,14 @@ export interface CreateBlackCatalogRequest {
     address: string;
     doc: string;
     fullname: string;
-    phone: string;
-    doc_issue_date: string;
     birthdate: string;
+    comment?: string;
+    is_swindler?: boolean;
+    debt_ending_at?: string;
+    phone?: string;
+    doc_issue_date?: string;
+    main_page?: File | null;
+    registration_page?: File | null;
   };
 }
 
@@ -43,5 +90,4 @@ export interface ErrorResponse {
 
 export interface SearchParams {
   name?: string;
-  phone?: string;
 }

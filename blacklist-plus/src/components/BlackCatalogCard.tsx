@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import styled from 'styled-components';
-import { FaPhone, FaIdCard, FaEllipsisV, FaMapMarkerAlt, FaCalendarAlt, FaBirthdayCake } from 'react-icons/fa';
+import { FaIdCard, FaEllipsisV, FaMapMarkerAlt, FaBirthdayCake } from 'react-icons/fa';
 
 const Card = styled.div`
   background: white;
@@ -83,17 +83,6 @@ const IconWrapper = styled.span`
   align-items: center;
 `;
 
-const PhoneLink = styled.a`
-  color: rgba(75, 85, 99, 1);
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-
-  &:hover {
-    color: #007D88;
-  }
-`;
 
 const MenuButton = styled.button`
   background: transparent;
@@ -153,9 +142,7 @@ export interface BlackCatalogItem {
   id: number;
   fullname: string;
   doc: string;
-  phone: string;
   address: string;
-  doc_issue_date: string;
   birthdate: string;
 }
 
@@ -206,16 +193,6 @@ const BlackCatalogCard: React.FC<BlackCatalogCardProps> = ({
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
-
-  const formatPhone = (phone: string): string => {
-    if (!phone) return 'Не указан';
-    
-    const cleaned = phone.replace(/\D/g, '');
-    if (cleaned.length === 11) {
-      return cleaned.replace(/(\d{1})(\d{3})(\d{3})(\d{2})(\d{2})/, '+$1 ($2) $3-$4-$5');
-    }
-    return phone;
-  };
 
   const handleMenuClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -280,25 +257,6 @@ const BlackCatalogCard: React.FC<BlackCatalogCardProps> = ({
           
           <InfoItem>
             <InfoLabel>
-              <IconWrapper><FaPhone size={12} /></IconWrapper>
-              Телефон
-            </InfoLabel>
-            <InfoValue>
-              {item.phone ? (
-                <PhoneLink 
-                  href={`tel:${item.phone}`}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {formatPhone(item.phone)}
-                </PhoneLink>
-              ) : (
-                'Не указан'
-              )}
-            </InfoValue>
-          </InfoItem>
-          
-          <InfoItem>
-            <InfoLabel>
               <IconWrapper><FaBirthdayCake size={12} /></IconWrapper>
               Дата рождения
             </InfoLabel>
@@ -314,16 +272,6 @@ const BlackCatalogCard: React.FC<BlackCatalogCardProps> = ({
             </InfoLabel>
             <InfoValue>
               {item.doc || 'Не указан'}
-            </InfoValue>
-          </InfoItem>
-          
-          <InfoItem>
-            <InfoLabel>
-              <IconWrapper><FaCalendarAlt size={12} /></IconWrapper>
-              Дата выдачи
-            </InfoLabel>
-            <InfoValue>
-              {formatDate(item.doc_issue_date)}
             </InfoValue>
           </InfoItem>
           

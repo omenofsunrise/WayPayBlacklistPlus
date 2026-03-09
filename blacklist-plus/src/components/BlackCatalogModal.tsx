@@ -1,14 +1,70 @@
 import React, { useState, useEffect } from "react";
-import { BaseModal, CustomCalendar, CustomInput, InputRow, PhoneModalInput, type ModalMode } from "waypay_react_library";
-import type { BlackCatalogItem } from "../api/BlackCatalog/blackCatalog";
+import styled from "styled-components";
+import { BaseModal, CustomCalendar, CustomInput, InputRow, type ModalMode } from "waypay_react_library";
+import type { BlackCatalogFormData, BlackCatalogItem } from "../api/BlackCatalog/blackCatalog";
 
 interface BlackCatalogModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (itemData: Partial<BlackCatalogItem>) => Promise<void>;
+  onSave: (itemData: BlackCatalogFormData) => Promise<void>;
   editingItem: Partial<BlackCatalogItem> | null;
   mode?: ModalMode;
 }
+
+const TextArea = styled.textarea`
+  width: 100%;
+  min-height: 90px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #111827;
+  background: #ffffff;
+  resize: vertical;
+
+  &:focus {
+    outline: none;
+    border-color: #007d88;
+    box-shadow: 0 0 0 3px rgba(0, 125, 136, 0.15);
+  }
+`;
+
+const FileRow = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+`;
+
+const FileLabel = styled.span`
+  font-size: 12px;
+  color: #6b7280;
+`;
+
+const FileInput = styled.input`
+  width: 100%;
+`;
+
+const FileMeta = styled.span`
+  font-size: 12px;
+  color: #6b7280;
+`;
+
+const CheckboxRow = styled.label`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: #111827;
+  cursor: pointer;
+`;
+
+const CheckboxInput = styled.input`
+  width: 16px;
+  height: 16px;
+  accent-color: #007d88;
+`;
 
 const formatFullNameLive = (
   value: string, 
@@ -85,31 +141,47 @@ export const BlackCatalogModal: React.FC<BlackCatalogModalProps> = ({
   editingItem,
   mode = "create"
 }) => {
-  const [formData, setFormData] = useState<Partial<BlackCatalogItem>>({
+  const [formData, setFormData] = useState<BlackCatalogFormData>({
     fullname: '',
-    phone: '',
     doc: '',
     address: '',
-    doc_issue_date: '',
-    birthdate: ''
+    birthdate: '',
+    comment: '',
+    main_page: null,
+    registration_page: null,
+    is_swindler: false,
+    debt_ending_at: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDebtActive, setIsDebtActive] = useState(false);
 
   useEffect(() => {
     if (editingItem) {
       setFormData({
-        ...editingItem,
-        fullname: editingItem.fullname || ''
+        fullname: editingItem.fullname || '',
+        doc: editingItem.doc || '',
+        address: editingItem.address || '',
+        birthdate: editingItem.birthdate || '',
+        comment: '',
+        main_page: null,
+        registration_page: null,
+        is_swindler: false,
+        debt_ending_at: '',
       });
+      setIsDebtActive(false);
     } else {
       setFormData({
         fullname: '',
-        phone: '',
         doc: '',
         address: '',
-        doc_issue_date: '',
-        birthdate: ''
+        birthdate: '',
+        comment: '',
+        main_page: null,
+        registration_page: null,
+        is_swindler: false,
+        debt_ending_at: '',
       });
+      setIsDebtActive(false);
     }
   }, [editingItem, isOpen]);
 
@@ -117,11 +189,11 @@ export const BlackCatalogModal: React.FC<BlackCatalogModalProps> = ({
     if (!dateStr) return '';
     
     if (dateStr.includes('T')) {
-      return dateStr;
+      return dateStr.split('T')[0];
     }
     
     if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-      return `${dateStr}T12:00:00+03:00`;
+      return dateStr;
     }
     
     return dateStr;
@@ -132,10 +204,18 @@ export const BlackCatalogModal: React.FC<BlackCatalogModalProps> = ({
     
     setIsSubmitting(true);
     try {
-      const dataToSend = {
-        ...formData,
-        ...(formData.birthdate && { birthdate: formatDateForAPI(formData.birthdate) }),
-        ...(formData.doc_issue_date && { doc_issue_date: formatDateForAPI(formData.doc_issue_date) })
+      const dataToSend: BlackCatalogFormData = {
+        fullname: formData.fullname || '',
+        doc: formData.doc || '',
+        address: formData.address || '',
+        birthdate: formData.birthdate ? formatDateForAPI(formData.birthdate) : '',
+        comment: formData.comment || '',
+        main_page: formData.main_page || null,
+        registration_page: formData.registration_page || null,
+        is_swindler: formData.is_swindler,
+        debt_ending_at: formData.debt_ending_at
+          ? formatDateForAPI(formData.debt_ending_at)
+          : '',
       };
       
       console.log('Отправляемые данные:', dataToSend);
@@ -163,7 +243,7 @@ export const BlackCatalogModal: React.FC<BlackCatalogModalProps> = ({
   };
 
   const handleFieldChange = (
-    field: keyof BlackCatalogItem,
+    field: keyof BlackCatalogFormData,
     value: string
   ) => {
     if (field !== 'fullname') {
@@ -171,10 +251,30 @@ export const BlackCatalogModal: React.FC<BlackCatalogModalProps> = ({
     }
   };
 
+  const handleCheckboxChange = (field: 'is_swindler') => (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({ ...prev, [field]: e.target.checked }));
+  };
+
+  const handleDebtToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const checked = e.target.checked;
+    setIsDebtActive(checked);
+    if (!checked) {
+      setFormData(prev => ({ ...prev, debt_ending_at: '' }));
+    }
+  };
+
+  const handleFileChange = (field: 'main_page' | 'registration_page') => (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0] ?? null;
+    setFormData(prev => ({ ...prev, [field]: file }));
+  };
+
   if (!isOpen) return null;
 
   const title = editingItem ? 'Редактировать запись' : 'Добавить запись в чёрный каталог';
   const saveButtonText = editingItem ? 'Сохранить' : 'Добавить';
+  const isCreate = mode === "create";
 
   return (
     <BaseModal
@@ -196,27 +296,10 @@ export const BlackCatalogModal: React.FC<BlackCatalogModalProps> = ({
       </InputRow>
       
       <InputRow>
-        <PhoneModalInput
-          placeholder="+7 (999) 999-99-99"
-          value={formData.phone || ''}
-          onChange={(e) => handleFieldChange('phone', e.target.value)}
-          name="phone"
-        />
-      </InputRow>
-      
-      <InputRow>
         <CustomCalendar
           prefix="Дата рождения:"
           value={formData.birthdate || ''}
           onChange={(date) => handleFieldChange('birthdate', date)}
-        />
-      </InputRow>
-      
-      <InputRow>
-        <CustomCalendar
-          prefix="Дата выдачи:"
-          value={formData.doc_issue_date || ''}
-          onChange={(date) => handleFieldChange('doc_issue_date', date)}
         />
       </InputRow>
       
@@ -236,6 +319,76 @@ export const BlackCatalogModal: React.FC<BlackCatalogModalProps> = ({
           placeholder="Адрес"
         />
       </InputRow>
+
+      {isCreate && (
+        <>
+          <InputRow>
+            <CheckboxRow>
+              <CheckboxInput
+                type="checkbox"
+                checked={formData.is_swindler}
+                onChange={handleCheckboxChange('is_swindler')}
+              />
+              Аферист
+            </CheckboxRow>
+          </InputRow>
+
+          <InputRow>
+            <CheckboxRow>
+              <CheckboxInput
+                type="checkbox"
+                checked={isDebtActive}
+                onChange={handleDebtToggle}
+              />
+              Оформлен
+            </CheckboxRow>
+          </InputRow>
+
+          {isDebtActive && (
+            <InputRow>
+              <CustomCalendar
+                prefix="До какого числа оформлен:"
+                value={formData.debt_ending_at || ''}
+                onChange={(date) => handleFieldChange('debt_ending_at', date)}
+              />
+            </InputRow>
+          )}
+
+          <InputRow>
+            <TextArea
+              value={formData.comment}
+              onChange={e => handleFieldChange('comment', e.target.value)}
+              placeholder="Комментарий"
+            />
+          </InputRow>
+
+          <InputRow>
+            <FileRow>
+              <FileLabel>Фото паспорта — основная страница</FileLabel>
+              <FileInput
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange('main_page')}
+              />
+              <FileMeta>{formData.main_page ? formData.main_page.name : 'Файл не выбран'}</FileMeta>
+            </FileRow>
+          </InputRow>
+
+          <InputRow>
+            <FileRow>
+              <FileLabel>Фото паспорта — регистрация</FileLabel>
+              <FileInput
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange('registration_page')}
+              />
+              <FileMeta>
+                {formData.registration_page ? formData.registration_page.name : 'Файл не выбран'}
+              </FileMeta>
+            </FileRow>
+          </InputRow>
+        </>
+      )}
     </BaseModal>
   );
 };

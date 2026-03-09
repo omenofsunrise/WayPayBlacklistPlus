@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import styled from "styled-components";
-import { CountInfoTitle, CustomTitle, CustomInput, PhoneModalInput, DefaultButton } from "waypay_react_library";
+import { CountInfoTitle, CustomTitle, CustomInput, DefaultButton } from "waypay_react_library";
 import useBlackCatalog from "../api/BlackCatalog/useBlackCatalog";
-import type { BlackCatalogItem } from "../api/BlackCatalog/blackCatalog";
+import type { BlackCatalogFormData, BlackCatalogItem } from "../api/BlackCatalog/blackCatalog";
 import BlackCatalogCard from "../components/BlackCatalogCard";
 import { BlackCatalogModal } from "../components/BlackCatalogModal";
 import BlackCatalogDossier from "../components/BlackCatalogDossier";
@@ -150,7 +150,6 @@ const DarkCyanButton = styled(DefaultButton)`
 
 const BlackCatalogPage = () => {
     const [nameFilter, setNameFilter] = useState('');
-    const [phoneFilter, setPhoneFilter] = useState('');
     const [searchTriggered, setSearchTriggered] = useState(false);
     const [hasSearched, setHasSearched] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -187,7 +186,6 @@ const BlackCatalogPage = () => {
 
     const resetFilters = useCallback(() => {
         setNameFilter('');
-        setPhoneFilter('');
         setSearchTriggered(false);
         setHasSearched(false);
     }, []);
@@ -195,31 +193,21 @@ const BlackCatalogPage = () => {
     const loadBlacklist = useCallback(async () => {
         const params: {
             name?: string;
-            phone?: string;
         } = {};
         
         if (nameFilter && nameFilter.length >= 5) {
             params.name = nameFilter;
         }
-        if (phoneFilter && phoneFilter.replace(/\D/g, '').length >= 11) {
-            params.phone = phoneFilter;
-        }
 
         await searchEntries(params);
         setHasSearched(true);
-    }, [nameFilter, phoneFilter, searchEntries]);
+    }, [nameFilter, searchEntries]);
 
     useEffect(() => {
         if (searchTriggered) {
             loadBlacklist();
         }
     }, [searchTriggered, loadBlacklist]);
-
-    const handlePhoneFilterChange = (value: string) => {
-        setPhoneFilter(value);
-        setSearchTriggered(false);
-        setHasSearched(false);
-    };
 
     const handleFilterChange = (value: string) => {
         setNameFilter(value);
@@ -229,9 +217,8 @@ const BlackCatalogPage = () => {
 
     const handleSearch = () => {
         const isNameValid = nameFilter.length >= 5;
-        const isPhoneValid = phoneFilter.replace(/\D/g, '').length >= 11;
         
-        if (isNameValid || isPhoneValid) {
+        if (isNameValid) {
             setSearchTriggered(true);
         }
     };
@@ -281,27 +268,28 @@ const BlackCatalogPage = () => {
         setIsModalOpen(true);
     };
 
-    const handleSaveItem = async (itemData: Partial<BlackCatalogItem>) => {
+    const handleSaveItem = async (itemData: BlackCatalogFormData) => {
         try {
             let result;
             
             if (editingItem?.id) {
             result = await updateEntry(editingItem.id, {
                 fullname: itemData.fullname!,
-                phone: itemData.phone!,
                 doc: itemData.doc!,
                 address: itemData.address!,
-                doc_issue_date: itemData.doc_issue_date!,
                 birthdate: itemData.birthdate!
             });
             } else {
             result = await createEntry({
                 fullname: itemData.fullname!,
-                phone: itemData.phone!,
                 doc: itemData.doc!,
                 address: itemData.address!,
-                doc_issue_date: itemData.doc_issue_date!,
-                birthdate: itemData.birthdate!
+                birthdate: itemData.birthdate!,
+                comment: itemData.comment?.trim() || undefined,
+                main_page: itemData.main_page || undefined,
+                registration_page: itemData.registration_page || undefined,
+                is_swindler: itemData.is_swindler,
+                debt_ending_at: itemData.debt_ending_at || undefined,
             });
             }
             
@@ -394,7 +382,7 @@ const BlackCatalogPage = () => {
                     <EmptyStateIcon>🔍</EmptyStateIcon>
                     <EmptyStateTitle>Запись в чёрном каталоге не найдена</EmptyStateTitle>
                     <EmptyStateText>
-                        По вашему запросу "{nameFilter || phoneFilter}" ничего не найдено.
+                        По вашему запросу "{nameFilter}" ничего не найдено.
                     </EmptyStateText>
                     {isSuperAdminCompany() && (
                         <DefaultButton onClick={handleAddToBlacklist}>
@@ -464,19 +452,12 @@ const BlackCatalogPage = () => {
                                 onChange={(e) => handleFilterChange(e.target.value)}
                                 onKeyPress={handleKeyPress}
                             />
-                            <PhoneModalInput 
-                                placeholder="Телефон (полный номер)"
-                                value={phoneFilter}
-                                onChange={(e) => handlePhoneFilterChange(e.target.value)}
-                                onKeyPress={handleKeyPress}
-                                name="phone"
-                            />
                             <ResetButton onClick={resetFilters}>
                                 Сбросить
                             </ResetButton>
                             <DarkCyanButton 
                                 onClick={handleSearch}
-                                disabled={!(nameFilter.length >= 5 || phoneFilter.replace(/\D/g, '').length >= 11)}
+                                disabled={!(nameFilter.length >= 5)}
                             >
                                 Поиск
                             </DarkCyanButton>

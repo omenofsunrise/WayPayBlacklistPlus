@@ -262,10 +262,6 @@ const BlackCatalogDossier = ({ item, onBack }: BlackCatalogDossierProps) => {
                         <Section>
                             <InfoGrid>
                                 <InfoItem>
-                                    <InfoLabel>Телефон</InfoLabel>
-                                    <InfoValue>{item.phone || "Не указан"}</InfoValue>
-                                </InfoItem>
-                                <InfoItem>
                                     <InfoLabel>WhatsApp</InfoLabel>
                                     <InfoValue>Не указан</InfoValue>
                                 </InfoItem>
@@ -280,10 +276,6 @@ const BlackCatalogDossier = ({ item, onBack }: BlackCatalogDossierProps) => {
                                 <InfoItem>
                                     <InfoLabel>Серия и номер</InfoLabel>
                                     <InfoValue>{item.doc || "Не указаны"}</InfoValue>
-                                </InfoItem>
-                                <InfoItem>
-                                    <InfoLabel>Год выдачи</InfoLabel>
-                                    <InfoValue>Не указан</InfoValue>
                                 </InfoItem>
                             </InfoGrid>
                         </Section>
