@@ -6,6 +6,7 @@ export interface BlackCatalogItem {
   address: string;
   doc_issue_date: string;
   birthdate: string;
+
 }
 
 export interface CreateBlackCatalogRequest {

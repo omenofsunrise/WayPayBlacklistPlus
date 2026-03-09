@@ -51,7 +51,7 @@ const getDefaultFormData = () => ({
   months: '',
   initial: '',
   percent: '',
-  round: '50',
+  round: '',
   startDate: getNextMonthDate().toISOString().split('T')[0],
 });
 
@@ -61,13 +61,16 @@ const loadStoredFormData = () => {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return defaults;
     const parsed = JSON.parse(raw) as Partial<typeof defaults>;
+    const storedRound =
+      parsed.round === '50' || parsed.round === '100' ? parsed.round : defaults.round;
+
     return {
       ...defaults,
       amount: typeof parsed.amount === 'string' ? parsed.amount : defaults.amount,
       initial: typeof parsed.initial === 'string' ? parsed.initial : defaults.initial,
       months: typeof parsed.months === 'string' ? parsed.months : defaults.months,
       percent: typeof parsed.percent === 'string' ? parsed.percent : defaults.percent,
-      round: typeof parsed.round === 'string' ? parsed.round : defaults.round,
+      round: storedRound,
       startDate:
         typeof parsed.startDate === 'string' && parsed.startDate
           ? parsed.startDate
@@ -115,6 +118,10 @@ const CalculatorPage = () => {
     { value: 'after-initial' as CalculationMode, label: 'Надбавка после вычета взноса' },
     { value: 'month-percent' as CalculationMode, label: 'Процент за 1 месяц (x месяцев)' },
   ];
+  const roundOptions = [
+    { value: '50', label: '50 ₽' },
+    { value: '100', label: '100 ₽' },
+  ];
 
   // ==================== ОБРАБОТЧИКИ ВВОДА ====================
 
@@ -141,15 +148,6 @@ const CalculatorPage = () => {
       input.setAttribute('pattern', '[0-9]*');
     });
   }, [isMobile]);
-
-  useEffect(() => {
-    if (!isMobile) return;
-    if (formData.months) return;
-    setFormData(prev => ({
-      ...prev,
-      round: prev.round || '50',
-    }));
-  }, [isMobile, formData.months, formData.round]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -184,6 +182,13 @@ const CalculatorPage = () => {
         [name]: value.replace(/\D/g, '')
       }));
     }
+  };
+
+  const handleRoundChange = (value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      round: value,
+    }));
   };
 
   const handleDateChange = (dateString: string) => {
@@ -303,7 +308,7 @@ const CalculatorPage = () => {
       months: isMobile ? '0' : '',
       initial: '',
       percent: '',
-      round: '50',
+      round: '',
       startDate: getNextMonthDate().toISOString().split('T')[0],
     });
     setDisplayAmount('');
@@ -331,7 +336,8 @@ const CalculatorPage = () => {
       const months = parseFloat(formData.months) || 1;
       const initial = parseFloat(formData.initial) || 0;
       const percent = parseFloat(formData.percent) || 0;
-      const round = parseFloat(formData.round) || 50;
+      const round = parseFloat(formData.round);
+      const shouldRound = Number.isFinite(round) && round > 0;
 
       let totalAmount = 0;
       let overpayment = 0;
@@ -359,12 +365,12 @@ const CalculatorPage = () => {
           overpayment = totalAmount - amount;
       }
 
-      const roundedTotalAmount = roundUp(totalAmount, round);
-      const roundedOverpayment = roundUp(overpayment, round);
-      const totalDebt = roundedTotalAmount - initial;
-      const roundedTotalDebt = roundUp(totalDebt, round);
-      const monthlyPayment = roundedTotalDebt / months;
-      const roundedMonthlyPayment = roundUp(monthlyPayment, round);
+      const finalTotalAmount = shouldRound ? roundUp(totalAmount, round) : totalAmount;
+      const finalOverpayment = shouldRound ? roundUp(overpayment, round) : overpayment;
+      const totalDebt = finalTotalAmount - initial;
+      const finalTotalDebt = shouldRound ? roundUp(totalDebt, round) : totalDebt;
+      const monthlyPayment = finalTotalDebt / months;
+      const finalMonthlyPayment = shouldRound ? roundUp(monthlyPayment, round) : monthlyPayment;
 
       const lastPaymentDate = new Date(formData.startDate);
       lastPaymentDate.setMonth(lastPaymentDate.getMonth() + months - 1);
@@ -374,10 +380,10 @@ const CalculatorPage = () => {
       });
 
       setResults({
-        monthlyPayment: roundedMonthlyPayment.toLocaleString('ru-RU'),
-        totalDebt: roundedTotalDebt.toLocaleString('ru-RU'),
-        overpayment: roundedOverpayment.toLocaleString('ru-RU'),
-        totalAmount: roundedTotalAmount.toLocaleString('ru-RU'),
+        monthlyPayment: finalMonthlyPayment.toLocaleString('ru-RU'),
+        totalDebt: finalTotalDebt.toLocaleString('ru-RU'),
+        overpayment: finalOverpayment.toLocaleString('ru-RU'),
+        totalAmount: finalTotalAmount.toLocaleString('ru-RU'),
         lastPaymentMonth,
       });
     };
@@ -428,6 +434,9 @@ const CalculatorPage = () => {
                   disabled={isExporting}
                 >
                   <IconShare />
+                </IconButton>
+                <IconButton type="button" aria-label="Сбросить" onClick={handleReset}>
+                  <IconRefresh />
                 </IconButton>
               </DesktopActions>
             </DesktopOnly>
@@ -548,14 +557,12 @@ const CalculatorPage = () => {
                   <InputGroup>
                     <FloatingField $hasValue={Boolean(formData.round)}>
                       <FloatingLabel>Округлять до, ₽</FloatingLabel>
-                      <CustomInput
-                        name="round"
-                        placeholder="Округлять до, ₽"
-                        data-numeric="true"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
+                      <CustomSelect
                         value={formData.round}
-                        onChange={handleInputChange}
+                        onChange={handleRoundChange}
+                        options={roundOptions}
+                        placeholder="Без округления"
+                        customPlaceholder="Без округления"
                       />
                     </FloatingField>
                   </InputGroup>
@@ -647,14 +654,12 @@ const CalculatorPage = () => {
                   <InputGroup>
                     <FloatingField $hasValue={Boolean(formData.round)}>
                       <FloatingLabel>Округлять до, ₽</FloatingLabel>
-                      <CustomInput
-                        name="round"
-                        placeholder="Округлять до, ₽"
-                        data-numeric="true"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
+                      <CustomSelect
                         value={formData.round}
-                        onChange={handleInputChange}
+                        onChange={handleRoundChange}
+                        options={roundOptions}
+                        placeholder="Без округления"
+                        customPlaceholder="Без округления"
                       />
                     </FloatingField>
                   </InputGroup>
