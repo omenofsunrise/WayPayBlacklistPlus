@@ -189,9 +189,6 @@ class BlackCatalogService {
     if (prepared.birthdate === '') {
       (prepared as any).birthdate = null;
     }
-    if (prepared.doc_issue_date === '') {
-      (prepared as any).doc_issue_date = null;
-    }
     if (prepared.debt_ending_at === '') {
       (prepared as any).debt_ending_at = null;
     }

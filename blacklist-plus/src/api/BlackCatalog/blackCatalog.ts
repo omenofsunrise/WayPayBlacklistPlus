@@ -4,8 +4,6 @@ export interface BlackCatalogItem {
   doc: string;
   address: string;
   birthdate: string;
-  phone?: string;
-  doc_issue_date?: string;
   comment?: string;
   is_swindler?: boolean;
   debt_ending_at?: string;
@@ -21,8 +19,6 @@ export interface BlackCatalogCreatePayload {
   comment?: string;
   is_swindler?: boolean;
   debt_ending_at?: string;
-  phone?: string;
-  doc_issue_date?: string;
   main_page?: File | null;
   registration_page?: File | null;
 }
@@ -35,8 +31,6 @@ export interface BlackCatalogUpdatePayload {
   comment?: string;
   is_swindler?: boolean;
   debt_ending_at?: string;
-  phone?: string;
-  doc_issue_date?: string;
 }
 
 export interface BlackCatalogFormData {
@@ -60,8 +54,6 @@ export interface CreateBlackCatalogRequest {
     comment?: string;
     is_swindler?: boolean;
     debt_ending_at?: string;
-    phone?: string;
-    doc_issue_date?: string;
     main_page?: File | null;
     registration_page?: File | null;
   };

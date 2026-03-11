@@ -728,10 +728,6 @@ const BlackCatalogDossier = ({ item, onBack, onRefresh }: BlackCatalogDossierPro
                             <SectionTitle>Общая информация</SectionTitle>
                             <InfoGrid>
                                 <InfoItem>
-                                    <InfoLabel>Телефон</InfoLabel>
-                                    <InfoValue>{item.phone || "Не указан"}</InfoValue>
-                                </InfoItem>
-                                <InfoItem>
                                     <InfoLabel>Дата рождения</InfoLabel>
                                     <InfoValue>{formatDateShort(item.birthdate)}</InfoValue>
                                 </InfoItem>

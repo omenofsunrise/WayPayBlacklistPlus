@@ -160,7 +160,6 @@ export interface BlackCatalogItem {
   doc: string;
   address: string;
   birthdate: string;
-  phone?: string;
   is_swindler?: boolean;
   debt_ending_at?: string;
 }
