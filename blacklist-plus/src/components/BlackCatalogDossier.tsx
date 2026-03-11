@@ -1,6 +1,5 @@
 import styled from "styled-components";
 import { useEffect, useRef, useState } from "react";
-import { FaArrowLeft } from "react-icons/fa";
 import { BackButton as LibBackButton, DefaultButton, apiRequest, API_BASE_URL, PhotoViewerModal } from "waypay_react_library";
 import type { BlackCatalogItem } from "../api/BlackCatalog/blackCatalog";
 import { blackCatalogService } from "../api/BlackCatalog/BlackCatalogService";
