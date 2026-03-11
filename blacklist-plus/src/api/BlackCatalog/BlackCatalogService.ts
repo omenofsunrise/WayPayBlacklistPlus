@@ -70,6 +70,115 @@ class BlackCatalogService {
     return payload as T;
   }
 
+  async setPassport(data: {
+    black_catalog_id: string;
+    main_page?: File;
+    registration_page?: File;
+  }): Promise<{ success: boolean; error?: string }> {
+    const formData = new FormData();
+    formData.append('black_catalog_id', data.black_catalog_id);
+    if (data.main_page) formData.append('main_page', data.main_page);
+    if (data.registration_page) formData.append('registration_page', data.registration_page);
+
+    return this.requestFormData<{ success: boolean; error?: string }>(
+      `${this.baseEndpoint}/passport/set`,
+      formData
+    );
+  }
+
+  async deletePassport(data: {
+    black_catalog_id: string;
+    main_page_id?: string;
+    registration_page_id?: string;
+  }): Promise<{ success: boolean; error?: string }> {
+    return apiRequest<{ success: boolean; error?: string }>(`${this.baseEndpoint}/passport/delete`, {
+      method: 'POST',
+      body: data,
+    });
+  }
+
+  async getComments(id: string, pageSize = 20): Promise<{
+    comments: Array<{
+      id: string;
+      content: string;
+      created_at: string;
+      author?: {
+        full_name?: string;
+        avatar_url?: string;
+      };
+      files?: Array<{
+        id: string;
+        filename: string;
+        url?: string;
+        content_type?: string;
+        size_bytes?: number;
+      }>;
+    }>;
+    next_page_token?: string;
+    total_count?: number;
+    success: boolean;
+    error?: string;
+  }> {
+    const queryParams = new URLSearchParams();
+    queryParams.append('page_size', String(pageSize));
+    const endpoint = `${this.baseEndpoint}/${id}/comments?${queryParams.toString()}`;
+    return apiRequest(endpoint, { method: 'GET' });
+  }
+
+  async createComment(
+    id: string,
+    data: { content: string; parent_id?: string; file?: File }
+  ): Promise<{ success: boolean; error?: string }> {
+    const formData = new FormData();
+    formData.append('content', data.content);
+    if (data.parent_id) formData.append('parent_id', data.parent_id);
+    if (data.file) formData.append('files', data.file);
+
+    return this.requestFormData(`${this.baseEndpoint}/${id}/comments`, formData);
+  }
+
+  async updateComment(
+    commentId: string,
+    content: string
+  ): Promise<{ success: boolean; error?: string }> {
+    return apiRequest(`/comments/${commentId}`, {
+      method: 'PUT',
+      body: { content },
+    });
+  }
+
+  async deleteComment(
+    id: string,
+    commentId: string
+  ): Promise<{ success: boolean; error?: string }> {
+    return apiRequest(`${this.baseEndpoint}/${id}/comments/${commentId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getCommentReplies(
+    id: string,
+    commentId: string,
+    pageSize = 20
+  ): Promise<{
+    comments: Array<{
+      id: string;
+      content: string;
+      created_at: string;
+      author?: { full_name?: string; avatar_url?: string };
+      files?: Array<{ id: string; filename: string; url?: string }>;
+      parent_id?: string;
+    }>;
+    next_page_token?: string;
+    success: boolean;
+    error?: string;
+  }> {
+    const queryParams = new URLSearchParams();
+    queryParams.append('page_size', String(pageSize));
+    const endpoint = `${this.baseEndpoint}/${id}/comments/${commentId}/replies?${queryParams.toString()}`;
+    return apiRequest(endpoint, { method: 'GET' });
+  }
+
   /**
    * Подготавливает данные для обновления
    * Для обновления: пустые даты превращаем в null

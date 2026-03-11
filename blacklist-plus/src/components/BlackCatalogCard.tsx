@@ -42,6 +42,22 @@ const CardTitleText = styled.span`
   display: inline-block;
 `;
 
+const BadgeRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-left: 12px;
+`;
+
+const Badge = styled.span<{ $tone: "danger" | "info" }>`
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: ${({ $tone }) => ($tone === "danger" ? "#991B1B" : "#0F766E")};
+  background: ${({ $tone }) => ($tone === "danger" ? "#FEE2E2" : "#CCFBF1")};
+`;
+
 const InfoGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -144,6 +160,9 @@ export interface BlackCatalogItem {
   doc: string;
   address: string;
   birthdate: string;
+  phone?: string;
+  is_swindler?: boolean;
+  debt_ending_at?: string;
 }
 
 interface BlackCatalogCardProps {
@@ -180,6 +199,16 @@ const BlackCatalogCard: React.FC<BlackCatalogCardProps> = ({
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  const isCurrentlyDebt = (() => {
+    if (!item.debt_ending_at) return false;
+    const endDate = new Date(item.debt_ending_at);
+    if (Number.isNaN(endDate.getTime())) return false;
+    const today = new Date();
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const endDateStart = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+    return endDateStart >= todayStart;
+  })();
   
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -229,6 +258,10 @@ const BlackCatalogCard: React.FC<BlackCatalogCardProps> = ({
           <CardTitleText>
             {item.fullname || 'Не указано'}
           </CardTitleText>
+          <BadgeRow>
+            {item.is_swindler && <Badge $tone="danger">Аферист</Badge>}
+            {isCurrentlyDebt && <Badge $tone="info">Оформлен</Badge>}
+          </BadgeRow>
         </CardTitle>
         
         {showMenu && (

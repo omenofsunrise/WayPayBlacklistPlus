@@ -429,6 +429,19 @@ const BlackCatalogPage = () => {
                     <BlackCatalogDossier
                         item={selectedItemDossier}
                         onBack={() => setSelectedItemDossier(null)}
+                        onRefresh={async (id) => {
+                            const params: { name?: string } = {};
+                            if (nameFilter && nameFilter.length >= 5) {
+                                params.name = nameFilter;
+                            }
+                            const response = await searchEntries(params);
+                            if (response?.black_catalogs) {
+                                const updatedItem = response.black_catalogs.find(entry => entry.id === id);
+                                if (updatedItem) {
+                                    setSelectedItemDossier(updatedItem);
+                                }
+                            }
+                        }}
                     />
                 </>
             ) : (

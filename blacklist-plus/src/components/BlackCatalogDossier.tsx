@@ -1,51 +1,9 @@
-import { useState } from "react";
 import styled from "styled-components";
-import { FaArrowLeft, FaComment, FaHistory } from "react-icons/fa";
-import { DefaultButton } from "waypay_react_library";
+import { useEffect, useState } from "react";
+import { FaArrowLeft } from "react-icons/fa";
+import { DefaultButton, apiRequest, API_BASE_URL } from "waypay_react_library";
 import type { BlackCatalogItem } from "../api/BlackCatalog/blackCatalog";
-
-const TabsContainer = styled.div`
-    width: 100%;
-    border-bottom: 1px solid rgba(209, 213, 219, 1);
-    margin-bottom: 20px;
-`;
-
-const TabsList = styled.ul`
-    display: flex;
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    gap: 24px;
-    align-items: center;
-`;
-
-const TabItem = styled.li<{ $isActive: boolean }>`
-    position: relative;
-    padding: 12px 0;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: ${props => props.$isActive ? "600" : "400"};
-    color: ${props => props.$isActive ? "rgba(0, 125, 136, 1)" : "rgba(107, 114, 128, 1)"};
-    transition: all 0.2s ease;
-
-    &:hover {
-        color: rgba(0, 125, 136, 0.8);
-    }
-`;
-
-const ActiveTabIndicator = styled.div`
-    position: absolute;
-    bottom: -1px;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background-color: rgba(0, 125, 136, 1);
-    border-radius: 2px 2px 0 0;
-`;
-
-const TabContentContainer = styled.div`
-    margin-top: 20px;
-`;
+import { blackCatalogService } from "../api/BlackCatalog/BlackCatalogService";
 
 const DossierContainer = styled.div`
     background: none;
@@ -81,6 +39,22 @@ const ClientName = styled.h2`
     font-weight: 600;
     color: #111827;
     margin: 0;
+`;
+
+const BadgeRow = styled.div`
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+`;
+
+const Badge = styled.span<{ $tone: "danger" | "info" }>`
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    color: ${({ $tone }) => ($tone === "danger" ? "#991B1B" : "#0F766E")};
+    background: ${({ $tone }) => ($tone === "danger" ? "#FEE2E2" : "#CCFBF1")};
 `;
 
 const ClientId = styled.span`
@@ -174,7 +148,6 @@ const PassportPhotoPlaceholder = styled.div`
     border-radius: 6px;
     padding: 28px 16px;
     text-align: center;
-    cursor: pointer;
     transition: border-color 0.2s;
     background: white;
 
@@ -183,65 +156,553 @@ const PassportPhotoPlaceholder = styled.div`
     }
 `;
 
+const PassportPhoto = styled.img`
+    width: 100%;
+    max-height: 240px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+`;
+
+const PassportPicker = styled.label`
+    display: block;
+    cursor: pointer;
+`;
+
+const HiddenPassportInput = styled.input`
+    display: none;
+`;
+
+const PassportActions = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+`;
+
+const PassportButtons = styled.div`
+    display: flex;
+    gap: 8px;
+`;
+
+const PassportHint = styled.div`
+    font-size: 12px;
+    color: #6b7280;
+`;
+
+const PassportError = styled.div`
+    font-size: 12px;
+    color: #b91c1c;
+`;
+
 const CommentsSection = styled(Section)`
     grid-column: 1 / -1;
-    position: relative;
-    margin-top: 6px;
 `;
 
 const CommentsHeader = styled.div`
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 8px;
+    margin-bottom: 12px;
 `;
 
-const AddCommentButton = styled(DefaultButton)`
-    padding: 8px 14px;
-    height: 36px;
-    font-size: 15px;
+const CommentList = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 `;
 
 const CommentCard = styled.div`
     background: white;
     border: 1px solid #e5e7eb;
     border-radius: 8px;
-    padding: 14px 16px;
-    display: flex;
-    gap: 12px;
-`;
-
-const Avatar = styled.div`
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    background: #e5e7eb;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    color: #6b7280;
-    flex-shrink: 0;
+    padding: 12px 14px;
 `;
 
 const CommentMeta = styled.div`
     font-size: 12px;
-    color: #9ca3af;
+    color: #6b7280;
+    margin-bottom: 6px;
 `;
 
-const CommentText = styled.div`
-    font-size: 13px;
-    color: #374151;
-    margin-top: 6px;
+const CommentContent = styled.div`
+    font-size: 14px;
+    color: #111827;
+    white-space: pre-wrap;
+`;
+
+const CommentFiles = styled.div`
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+`;
+
+const CommentFile = styled.a`
+    font-size: 12px;
+    color: #0f766e;
+    text-decoration: none;
+
+    &:hover {
+        text-decoration: underline;
+    }
+`;
+
+const CommentForm = styled.div`
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+`;
+
+const CommentInput = styled.textarea`
+    width: 100%;
+    min-height: 90px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 14px;
+    font-family: inherit;
+    color: #111827;
+    background: #ffffff;
+    resize: vertical;
+
+    &:focus {
+        outline: none;
+        border-color: #007d88;
+        box-shadow: 0 0 0 3px rgba(0, 125, 136, 0.15);
+    }
+`;
+
+const CommentFormRow = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+`;
+
+const CommentFileInput = styled.input`
+    display: none;
+`;
+
+const CommentFilePicker = styled.label`
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px dashed #d1d5db;
+    cursor: pointer;
+    font-size: 12px;
+    color: #6b7280;
+`;
+
+const CommentError = styled.div`
+    font-size: 12px;
+    color: #b91c1c;
+`;
+
+const CommentActions = styled.div`
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+`;
+
+const ReplyList = styled.div`
+    margin-top: 10px;
+    padding-left: 16px;
+    border-left: 2px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+`;
+
+const CommentWrapper = styled.div<{ $level: number }>`
+    margin-left: ${({ $level }) => Math.min($level * 18, 54)}px;
+`;
+
+const InlineButton = styled.button`
+    border: none;
+    background: transparent;
+    padding: 0;
+    font-size: 12px;
+    color: #0f766e;
+    cursor: pointer;
+
+    &:hover {
+        text-decoration: underline;
+    }
 `;
 
 type BlackCatalogDossierProps = {
     item: BlackCatalogItem;
     onBack: () => void;
+    onRefresh?: (id: number) => Promise<void> | void;
 };
 
-const BlackCatalogDossier = ({ item, onBack }: BlackCatalogDossierProps) => {
-    const [activeTab, setActiveTab] = useState<"comments" | "history">("comments");
+const BlackCatalogDossier = ({ item, onBack, onRefresh }: BlackCatalogDossierProps) => {
+    const [mainPassportUrl, setMainPassportUrl] = useState<string | null>(null);
+    const [registrationPassportUrl, setRegistrationPassportUrl] = useState<string | null>(null);
+    const [mainFile, setMainFile] = useState<File | null>(null);
+    const [registrationFile, setRegistrationFile] = useState<File | null>(null);
+    const [isUpdatingPassport, setIsUpdatingPassport] = useState(false);
+    const [isDeletingPassport, setIsDeletingPassport] = useState(false);
+    const [passportError, setPassportError] = useState<string | null>(null);
+    const [comments, setComments] = useState<Array<{
+        id: string;
+        content: string;
+        created_at: string;
+        author?: { full_name?: string; avatar_url?: string };
+        files?: Array<{ id: string; filename: string; url?: string }>;
+        parent_id?: string;
+    }>>([]);
+    const [isLoadingComments, setIsLoadingComments] = useState(false);
+    const [commentError, setCommentError] = useState<string | null>(null);
+    const [commentContent, setCommentContent] = useState("");
+    const [commentFile, setCommentFile] = useState<File | null>(null);
+    const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+    const [replyToId, setReplyToId] = useState<string | null>(null);
+    const [editId, setEditId] = useState<string | null>(null);
+    const [editContent, setEditContent] = useState("");
+    const [replies, setReplies] = useState<Record<string, Array<{
+        id: string;
+        content: string;
+        created_at: string;
+        author?: { full_name?: string; avatar_url?: string };
+        files?: Array<{ id: string; filename: string; url?: string }>;
+        parent_id?: string;
+    }>>>({});
+    const maxFileSizeBytes = 12 * 1024 * 1024;
+
+    const formatDateShort = (value?: string) => {
+        if (!value) return "Не указана";
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return value;
+        return date.toLocaleDateString("ru-RU");
+    };
+
+    const formatDateLong = (value: string) => {
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return value;
+        return date.toLocaleDateString("ru-RU", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+        });
+    };
+
+    const debtStatus = (() => {
+        if (!item.debt_ending_at) return null;
+        const endDate = new Date(item.debt_ending_at);
+        if (Number.isNaN(endDate.getTime())) return null;
+        const today = new Date();
+        const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const endDateStart = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+        const formatted = formatDateLong(item.debt_ending_at);
+        if (endDateStart >= todayStart) {
+            return {
+                isActive: true,
+                text: `Клиент оформлен до ${formatted}`,
+            };
+        }
+        return {
+            isActive: false,
+            text: `Был оформлен до ${formatted}`,
+        };
+    })();
+
+    useEffect(() => {
+        let isActive = true;
+
+        const fetchPassportUrl = async (fileId: string, setter: (value: string | null) => void) => {
+            try {
+                const response = await apiRequest<{
+                    url?: string;
+                }>(`/black-catalog/file/passport/${fileId}`, { method: "GET" });
+                if (!isActive) return;
+                const normalizeUrl = (value?: string | null) => {
+                    if (!value) return null;
+                    if (value.startsWith("http")) return value;
+                    if (value.startsWith("/")) return `${API_BASE_URL}${value}`;
+                    return `${API_BASE_URL}/${value}`;
+                };
+                setter(normalizeUrl(response?.url));
+            } catch {
+                if (!isActive) return;
+                setter(null);
+            }
+        };
+
+        setMainPassportUrl(null);
+        setRegistrationPassportUrl(null);
+
+        if (item.main_passport_page) {
+            fetchPassportUrl(item.main_passport_page, setMainPassportUrl);
+        }
+        if (item.registration_passport_page) {
+            fetchPassportUrl(item.registration_passport_page, setRegistrationPassportUrl);
+        }
+
+        return () => {
+            isActive = false;
+        };
+    }, [item.main_passport_page, item.registration_passport_page]);
+
+    useEffect(() => {
+        let isActive = true;
+
+        const fetchComments = async () => {
+            setIsLoadingComments(true);
+            setCommentError(null);
+            try {
+                const response = await blackCatalogService.getComments(String(item.id), 20);
+                if (!isActive) return;
+                setComments(response.comments || []);
+            } catch (error) {
+                if (!isActive) return;
+                const message = error instanceof Error ? error.message : "Ошибка загрузки комментариев";
+                setCommentError(message);
+            } finally {
+                if (isActive) setIsLoadingComments(false);
+            }
+        };
+
+        fetchComments();
+        return () => {
+            isActive = false;
+        };
+    }, [item.id]);
+
+    const handleUploadPassport = async (kind: "main" | "registration") => {
+        const file = kind === "main" ? mainFile : registrationFile;
+        if (!file) return;
+        if (file.size > maxFileSizeBytes) {
+            setPassportError(
+                kind === "main"
+                    ? "Ошибка загрузки главной страницы: размер файла больше 12 МБ."
+                    : "Ошибка загрузки страницы регистрации: размер файла больше 12 МБ."
+            );
+            return;
+        }
+        setIsUpdatingPassport(true);
+        setPassportError(null);
+        try {
+            await blackCatalogService.setPassport({
+                black_catalog_id: String(item.id),
+                main_page: kind === "main" ? file : undefined,
+                registration_page: kind === "registration" ? file : undefined,
+            });
+            if (kind === "main") setMainFile(null);
+            if (kind === "registration") setRegistrationFile(null);
+            if (onRefresh) {
+                await onRefresh(item.id);
+            } else if (kind === "main" && item.main_passport_page) {
+                setMainPassportUrl(null);
+            } else if (kind === "registration" && item.registration_passport_page) {
+                setRegistrationPassportUrl(null);
+            }
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Ошибка загрузки паспорта";
+            setPassportError(
+                kind === "main"
+                    ? `Ошибка загрузки главной страницы: ${message}`
+                    : `Ошибка загрузки страницы регистрации: ${message}`
+            );
+        } finally {
+            setIsUpdatingPassport(false);
+        }
+    };
+
+    const handleDeletePassport = async (kind: "main" | "registration") => {
+        const fileId = kind === "main" ? item.main_passport_page : item.registration_passport_page;
+        if (!fileId) return;
+        setIsDeletingPassport(true);
+        setPassportError(null);
+        try {
+            await blackCatalogService.deletePassport({
+                black_catalog_id: String(item.id),
+                main_page_id: kind === "main" ? fileId : undefined,
+                registration_page_id: kind === "registration" ? fileId : undefined,
+            });
+            if (onRefresh) {
+                await onRefresh(item.id);
+            } else if (kind === "main") {
+                setMainPassportUrl(null);
+            } else {
+                setRegistrationPassportUrl(null);
+            }
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Ошибка удаления паспорта";
+            setPassportError(
+                kind === "main"
+                    ? `Ошибка удаления главной страницы: ${message}`
+                    : `Ошибка удаления страницы регистрации: ${message}`
+            );
+        } finally {
+            setIsDeletingPassport(false);
+        }
+    };
+
+    const handleCreateComment = async () => {
+        if (!commentContent.trim()) {
+            setCommentError("Введите текст комментария.");
+            return;
+        }
+        if (commentFile && commentFile.size > maxFileSizeBytes) {
+            setCommentError("Размер файла больше 12 МБ.");
+            return;
+        }
+        setIsSubmittingComment(true);
+        setCommentError(null);
+        try {
+            await blackCatalogService.createComment(String(item.id), {
+                content: commentContent.trim(),
+                parent_id: replyToId || undefined,
+                file: commentFile || undefined,
+            });
+            setCommentContent("");
+            setCommentFile(null);
+            setReplyToId(null);
+            const response = await blackCatalogService.getComments(String(item.id), 20);
+            setComments(response.comments || []);
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Ошибка создания комментария";
+            setCommentError(message);
+        } finally {
+            setIsSubmittingComment(false);
+        }
+    };
+
+    const handleDeleteComment = async (commentId: string) => {
+        setCommentError(null);
+        try {
+            await blackCatalogService.deleteComment(String(item.id), commentId);
+            const response = await blackCatalogService.getComments(String(item.id), 20);
+            setComments(response.comments || []);
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Ошибка удаления комментария";
+            setCommentError(message);
+        }
+    };
+
+    const handleStartEdit = (commentId: string, content: string) => {
+        setEditId(commentId);
+        setEditContent(content);
+    };
+
+    const handleSaveEdit = async () => {
+        if (!editId) return;
+        if (!editContent.trim()) {
+            setCommentError("Введите текст комментария.");
+            return;
+        }
+        setCommentError(null);
+        try {
+            await blackCatalogService.updateComment(editId, editContent.trim());
+            setEditId(null);
+            setEditContent("");
+            const response = await blackCatalogService.getComments(String(item.id), 20);
+            setComments(response.comments || []);
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Ошибка обновления комментария";
+            setCommentError(message);
+        }
+    };
+
+    const handleLoadReplies = async (commentId: string) => {
+        try {
+            const response = await blackCatalogService.getCommentReplies(String(item.id), commentId, 20);
+            setReplies(prev => ({ ...prev, [commentId]: response.comments || [] }));
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Ошибка загрузки ответов";
+            setCommentError(message);
+        }
+    };
+
+    const renderComment = (comment: {
+        id: string;
+        content: string;
+        created_at: string;
+        author?: { full_name?: string; avatar_url?: string };
+        files?: Array<{ id: string; filename: string; url?: string }>;
+        parent_id?: string;
+    }, level = 0) => {
+        const nestedReplies = replies[comment.id] || [];
+
+        return (
+            <CommentWrapper key={comment.id} $level={level}>
+                <CommentCard>
+                    <CommentMeta>
+                        {comment.author?.full_name || "Без имени"} ·{" "}
+                        {formatDateShort(comment.created_at)}
+                    </CommentMeta>
+                    {editId === comment.id ? (
+                        <>
+                            <CommentInput
+                                value={editContent}
+                                onChange={(e) => setEditContent(e.target.value)}
+                            />
+                            <CommentActions>
+                                <InlineButton onClick={handleSaveEdit}>
+                                    Сохранить
+                                </InlineButton>
+                                <InlineButton
+                                    onClick={() => {
+                                        setEditId(null);
+                                        setEditContent("");
+                                    }}
+                                >
+                                    Отмена
+                                </InlineButton>
+                            </CommentActions>
+                        </>
+                    ) : (
+                        <CommentContent>{comment.content}</CommentContent>
+                    )}
+                    {comment.files && comment.files.length > 0 && (
+                        <CommentFiles>
+                            {comment.files.map(file => (
+                                file.url ? (
+                                    <CommentFile
+                                        key={file.id}
+                                        href={file.url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                    >
+                                        {file.filename || "Файл"}
+                                    </CommentFile>
+                                ) : (
+                                    <CommentMeta key={file.id}>
+                                        {file.filename || "Файл"}
+                                    </CommentMeta>
+                                )
+                            ))}
+                        </CommentFiles>
+                    )}
+                    <CommentActions>
+                        <InlineButton onClick={() => setReplyToId(comment.id)}>
+                            Ответить
+                        </InlineButton>
+                        <InlineButton onClick={() => handleStartEdit(comment.id, comment.content)}>
+                            Редактировать
+                        </InlineButton>
+                        <InlineButton onClick={() => handleDeleteComment(comment.id)}>
+                            Удалить
+                        </InlineButton>
+                        <InlineButton onClick={() => handleLoadReplies(comment.id)}>
+                            Показать ответы
+                        </InlineButton>
+                    </CommentActions>
+                    {nestedReplies.length > 0 && (
+                        <ReplyList>
+                            {nestedReplies.map(reply => renderComment(reply, level + 1))}
+                        </ReplyList>
+                    )}
+                </CommentCard>
+            </CommentWrapper>
+        );
+    };
 
     // Досье клиента: открывается при клике на карточку клиента.
     return (
@@ -255,28 +716,39 @@ const BlackCatalogDossier = ({ item, onBack }: BlackCatalogDossierProps) => {
                         <div>
                             <ClientName>{item.fullname}</ClientName>
                             <ClientId>ID: {item.id}</ClientId>
+                            <BadgeRow>
+                                {item.is_swindler && <Badge $tone="danger">Аферист</Badge>}
+                                {debtStatus?.isActive && <Badge $tone="info">Оформлен</Badge>}
+                            </BadgeRow>
                         </div>
                     </DossierHeader>
 
                     <DossierGrid>
                         <Section>
+                            <SectionTitle>Общая информация</SectionTitle>
                             <InfoGrid>
                                 <InfoItem>
-                                    <InfoLabel>WhatsApp</InfoLabel>
-                                    <InfoValue>Не указан</InfoValue>
+                                    <InfoLabel>Телефон</InfoLabel>
+                                    <InfoValue>{item.phone || "Не указан"}</InfoValue>
                                 </InfoItem>
                                 <InfoItem>
                                     <InfoLabel>Дата рождения</InfoLabel>
-                                    <InfoValue>Не указана</InfoValue>
+                                    <InfoValue>{formatDateShort(item.birthdate)}</InfoValue>
                                 </InfoItem>
                                 <InfoItem>
-                                    <InfoLabel>Адрес регистрации</InfoLabel>
+                                    <InfoLabel>Адрес</InfoLabel>
                                     <InfoValue>{item.address || "Не указан"}</InfoValue>
                                 </InfoItem>
                                 <InfoItem>
-                                    <InfoLabel>Серия и номер</InfoLabel>
-                                    <InfoValue>{item.doc || "Не указаны"}</InfoValue>
+                                    <InfoLabel>Документ</InfoLabel>
+                                    <InfoValue>{item.doc || "Не указан"}</InfoValue>
                                 </InfoItem>
+                                {debtStatus && (
+                                    <InfoItem>
+                                        <InfoLabel>Оформление</InfoLabel>
+                                        <InfoValue>{debtStatus.text}</InfoValue>
+                                    </InfoItem>
+                                )}
                             </InfoGrid>
                         </Section>
 
@@ -285,73 +757,149 @@ const BlackCatalogDossier = ({ item, onBack }: BlackCatalogDossierProps) => {
                             <PassportSection>
                                 <PassportPhotoSection>
                                     <PassportPhotoTitle>Основная страница</PassportPhotoTitle>
-                                    <PassportPhotoPlaceholder>
-                                        <p style={{ margin: "0 0 6px 0", color: "#6b7280", fontSize: "12px" }}>
-                                            Основная страница не загружена
-                                        </p>
-                                        <DefaultButton style={{ padding: "8px 14px", fontSize: "13px" }}>
-                                            Загрузить фото
-                                        </DefaultButton>
-                                    </PassportPhotoPlaceholder>
+                                    <PassportPicker>
+                                        <HiddenPassportInput
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(e) => setMainFile(e.target.files?.[0] ?? null)}
+                                        />
+                                        {mainPassportUrl ? (
+                                            <PassportPhoto
+                                                src={mainPassportUrl}
+                                                alt="Основная страница паспорта"
+                                            />
+                                        ) : (
+                                            <PassportPhotoPlaceholder>
+                                                <p style={{ margin: "0", color: "#6b7280", fontSize: "12px" }}>
+                                                    Основная страница не загружена
+                                                </p>
+                                                <p style={{ margin: "6px 0 0 0", color: "#9ca3af", fontSize: "11px" }}>
+                                                    Нажмите, чтобы выбрать файл
+                                                </p>
+                                            </PassportPhotoPlaceholder>
+                                        )}
+                                    </PassportPicker>
+                                    <PassportActions>
+                                        <PassportButtons>
+                                            <DefaultButton
+                                                type="button"
+                                                onClick={() => handleUploadPassport("main")}
+                                                disabled={!mainFile || isUpdatingPassport}
+                                            >
+                                                {mainPassportUrl ? "Обновить" : "Загрузить"}
+                                            </DefaultButton>
+                                            <DefaultButton
+                                                type="button"
+                                                onClick={() => handleDeletePassport("main")}
+                                                disabled={!item.main_passport_page || isDeletingPassport}
+                                            >
+                                                Удалить
+                                            </DefaultButton>
+                                        </PassportButtons>
+                                        <PassportHint>Максимальный размер файла: 12 МБ.</PassportHint>
+                                        {passportError?.includes("главной") && (
+                                            <PassportError>{passportError}</PassportError>
+                                        )}
+                                    </PassportActions>
                                 </PassportPhotoSection>
                                 <PassportPhotoSection>
                                     <PassportPhotoTitle>Страница с регистрацией</PassportPhotoTitle>
-                                    <PassportPhotoPlaceholder>
-                                        <p style={{ margin: "0 0 6px 0", color: "#6b7280", fontSize: "12px" }}>
-                                            Страница с регистрацией не загружена
-                                        </p>
-                                        <DefaultButton style={{ padding: "8px 14px", fontSize: "13px" }}>
-                                            Загрузить фото
-                                        </DefaultButton>
-                                    </PassportPhotoPlaceholder>
+                                    <PassportPicker>
+                                        <HiddenPassportInput
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(e) => setRegistrationFile(e.target.files?.[0] ?? null)}
+                                        />
+                                        {registrationPassportUrl ? (
+                                            <PassportPhoto
+                                                src={registrationPassportUrl}
+                                                alt="Страница регистрации"
+                                            />
+                                        ) : (
+                                            <PassportPhotoPlaceholder>
+                                                <p style={{ margin: "0", color: "#6b7280", fontSize: "12px" }}>
+                                                    Страница с регистрацией не загружена
+                                                </p>
+                                                <p style={{ margin: "6px 0 0 0", color: "#9ca3af", fontSize: "11px" }}>
+                                                    Нажмите, чтобы выбрать файл
+                                                </p>
+                                            </PassportPhotoPlaceholder>
+                                        )}
+                                    </PassportPicker>
+                                    <PassportActions>
+                                        <PassportButtons>
+                                            <DefaultButton
+                                                type="button"
+                                                onClick={() => handleUploadPassport("registration")}
+                                                disabled={!registrationFile || isUpdatingPassport}
+                                            >
+                                                {registrationPassportUrl ? "Обновить" : "Загрузить"}
+                                            </DefaultButton>
+                                            <DefaultButton
+                                                type="button"
+                                                onClick={() => handleDeletePassport("registration")}
+                                                disabled={!item.registration_passport_page || isDeletingPassport}
+                                            >
+                                                Удалить
+                                            </DefaultButton>
+                                        </PassportButtons>
+                                        <PassportHint>Максимальный размер файла: 12 МБ.</PassportHint>
+                                        {passportError?.includes("регистрации") && (
+                                            <PassportError>{passportError}</PassportError>
+                                        )}
+                                    </PassportActions>
                                 </PassportPhotoSection>
                             </PassportSection>
                         </Section>
 
                         <CommentsSection>
                             <CommentsHeader>
-                                <SectionTitle>
-                                    {activeTab === "comments" ? <FaComment /> : <FaHistory />}
-                                    {activeTab === "comments" ? "Комментарии" : "История"}
-                                </SectionTitle>
-                                <AddCommentButton type="button">+</AddCommentButton>
+                                <SectionTitle>Комментарии</SectionTitle>
                             </CommentsHeader>
+                            {isLoadingComments ? (
+                                <div>Загрузка комментариев...</div>
+                            ) : comments.length === 0 ? (
+                                <div>Комментариев пока нет</div>
+                            ) : (
+                                <CommentList>
+                                    {comments
+                                        .filter(comment => !comment.parent_id)
+                                        .map(comment => renderComment(comment))}
+                                </CommentList>
+                            )}
 
-                            <TabsContainer>
-                                <TabsList>
-                                    <TabItem
-                                        $isActive={activeTab === "comments"}
-                                        onClick={() => setActiveTab("comments")}
-                                    >
-                                        Комментарии
-                                        {activeTab === "comments" && <ActiveTabIndicator />}
-                                    </TabItem>
-                                    <TabItem
-                                        $isActive={activeTab === "history"}
-                                        onClick={() => setActiveTab("history")}
-                                    >
-                                        История
-                                        {activeTab === "history" && <ActiveTabIndicator />}
-                                    </TabItem>
-                                </TabsList>
-                            </TabsContainer>
-
-                            <TabContentContainer>
-                                {activeTab === "comments" ? (
-                                    <CommentCard>
-                                        <Avatar>Т</Avatar>
-                                        <div>
-                                            <div style={{ fontSize: "12px", fontWeight: 600, color: "#111827" }}>
-                                                ТЕСТ
-                                            </div>
-                                            <CommentMeta>04.05.2026, 20:02</CommentMeta>
-                                            <CommentText>Это комментарий</CommentText>
-                                        </div>
-                                    </CommentCard>
-                                ) : (
-                                    <div>История пока пуста</div>
+                            <CommentForm>
+                                {replyToId && (
+                                    <CommentMeta>Ответ на комментарий</CommentMeta>
                                 )}
-                            </TabContentContainer>
+                                <CommentInput
+                                    value={commentContent}
+                                    onChange={(e) => setCommentContent(e.target.value)}
+                                    placeholder={replyToId ? "Ответить на комментарий" : "Добавить комментарий"}
+                                />
+                                <CommentFormRow>
+                                    <CommentFilePicker>
+                                        <CommentFileInput
+                                            type="file"
+                                            onChange={(e) => setCommentFile(e.target.files?.[0] ?? null)}
+                                        />
+                                        {commentFile ? commentFile.name : "Прикрепить файл (до 12 МБ)"}
+                                    </CommentFilePicker>
+                                    <DefaultButton
+                                        type="button"
+                                        onClick={handleCreateComment}
+                                        disabled={isSubmittingComment}
+                                    >
+                                        {replyToId ? "Ответить" : "Добавить"}
+                                    </DefaultButton>
+                                    {replyToId && (
+                                        <InlineButton onClick={() => setReplyToId(null)}>
+                                            Сбросить ответ
+                                        </InlineButton>
+                                    )}
+                                </CommentFormRow>
+                                {commentError && <CommentError>{commentError}</CommentError>}
+                            </CommentForm>
                         </CommentsSection>
                     </DossierGrid>
         </DossierContainer>
