@@ -61,16 +61,13 @@ const loadStoredFormData = () => {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return defaults;
     const parsed = JSON.parse(raw) as Partial<typeof defaults>;
-    const storedRound =
-      parsed.round === '50' || parsed.round === '100' ? parsed.round : defaults.round;
-
     return {
       ...defaults,
       amount: typeof parsed.amount === 'string' ? parsed.amount : defaults.amount,
       initial: typeof parsed.initial === 'string' ? parsed.initial : defaults.initial,
       months: typeof parsed.months === 'string' ? parsed.months : defaults.months,
       percent: typeof parsed.percent === 'string' ? parsed.percent : defaults.percent,
-      round: storedRound,
+      round: defaults.round,
       startDate:
         typeof parsed.startDate === 'string' && parsed.startDate
           ? parsed.startDate
