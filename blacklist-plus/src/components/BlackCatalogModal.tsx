@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { BaseModal, CustomCalendar, CustomInput, InputRow, type ModalMode } from "waypay_react_library";
+import { BaseModal, CustomInput, InputRow, type ModalMode } from "waypay_react_library";
 import type { BlackCatalogFormData, BlackCatalogItem } from "../api/BlackCatalog/blackCatalog";
 
 interface BlackCatalogModalProps {
