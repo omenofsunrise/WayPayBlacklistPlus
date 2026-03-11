@@ -309,15 +309,6 @@ const CommentActions = styled.div`
     flex-wrap: wrap;
 `;
 
-const ReplyList = styled.div`
-    margin-top: 10px;
-    padding-left: 16px;
-    border-left: 2px solid #e5e7eb;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-`;
-
 const CommentWrapper = styled.div<{ $level: number }>`
     margin-left: ${({ $level }) => Math.min($level * 18, 54)}px;
 `;
@@ -362,17 +353,8 @@ const BlackCatalogDossier = ({ item, onBack, onRefresh }: BlackCatalogDossierPro
     const [commentContent, setCommentContent] = useState("");
     const [commentFile, setCommentFile] = useState<File | null>(null);
     const [isSubmittingComment, setIsSubmittingComment] = useState(false);
-    const [replyToId, setReplyToId] = useState<string | null>(null);
     const [editId, setEditId] = useState<string | null>(null);
     const [editContent, setEditContent] = useState("");
-    const [replies, setReplies] = useState<Record<string, Array<{
-        id: string;
-        content: string;
-        created_at: string;
-        author?: { full_name?: string; avatar_url?: string };
-        files?: Array<{ id: string; filename: string; url?: string }>;
-        parent_id?: string;
-    }>>>({});
     const maxFileSizeBytes = 12 * 1024 * 1024;
 
     const formatDateShort = (value?: string) => {
@@ -558,12 +540,10 @@ const BlackCatalogDossier = ({ item, onBack, onRefresh }: BlackCatalogDossierPro
         try {
             await blackCatalogService.createComment(String(item.id), {
                 content: commentContent.trim(),
-                parent_id: replyToId || undefined,
                 file: commentFile || undefined,
             });
             setCommentContent("");
             setCommentFile(null);
-            setReplyToId(null);
             const response = await blackCatalogService.getComments(String(item.id), 20);
             setComments(response.comments || []);
         } catch (error) {
@@ -610,16 +590,6 @@ const BlackCatalogDossier = ({ item, onBack, onRefresh }: BlackCatalogDossierPro
         }
     };
 
-    const handleLoadReplies = async (commentId: string) => {
-        try {
-            const response = await blackCatalogService.getCommentReplies(String(item.id), commentId, 20);
-            setReplies(prev => ({ ...prev, [commentId]: response.comments || [] }));
-        } catch (error) {
-            const message = error instanceof Error ? error.message : "Ошибка загрузки ответов";
-            setCommentError(message);
-        }
-    };
-
     const renderComment = (comment: {
         id: string;
         content: string;
@@ -627,11 +597,9 @@ const BlackCatalogDossier = ({ item, onBack, onRefresh }: BlackCatalogDossierPro
         author?: { full_name?: string; avatar_url?: string };
         files?: Array<{ id: string; filename: string; url?: string }>;
         parent_id?: string;
-    }, level = 0) => {
-        const nestedReplies = replies[comment.id] || [];
-
+    }) => {
         return (
-            <CommentWrapper key={comment.id} $level={level}>
+            <CommentWrapper key={comment.id} $level={0}>
                 <CommentCard>
                     <CommentMeta>
                         {comment.author?.full_name || "Без имени"} ·{" "}
@@ -681,24 +649,13 @@ const BlackCatalogDossier = ({ item, onBack, onRefresh }: BlackCatalogDossierPro
                         </CommentFiles>
                     )}
                     <CommentActions>
-                        <InlineButton onClick={() => setReplyToId(comment.id)}>
-                            Ответить
-                        </InlineButton>
                         <InlineButton onClick={() => handleStartEdit(comment.id, comment.content)}>
                             Редактировать
                         </InlineButton>
                         <InlineButton onClick={() => handleDeleteComment(comment.id)}>
                             Удалить
                         </InlineButton>
-                        <InlineButton onClick={() => handleLoadReplies(comment.id)}>
-                            Показать ответы
-                        </InlineButton>
                     </CommentActions>
-                    {nestedReplies.length > 0 && (
-                        <ReplyList>
-                            {nestedReplies.map(reply => renderComment(reply, level + 1))}
-                        </ReplyList>
-                    )}
                 </CommentCard>
             </CommentWrapper>
         );
@@ -865,13 +822,10 @@ const BlackCatalogDossier = ({ item, onBack, onRefresh }: BlackCatalogDossierPro
                             )}
 
                             <CommentForm>
-                                {replyToId && (
-                                    <CommentMeta>Ответ на комментарий</CommentMeta>
-                                )}
                                 <CommentInput
                                     value={commentContent}
                                     onChange={(e) => setCommentContent(e.target.value)}
-                                    placeholder={replyToId ? "Ответить на комментарий" : "Добавить комментарий"}
+                                    placeholder="Добавить комментарий"
                                 />
                                 <CommentFormRow>
                                     <CommentFilePicker>
@@ -886,13 +840,8 @@ const BlackCatalogDossier = ({ item, onBack, onRefresh }: BlackCatalogDossierPro
                                         onClick={handleCreateComment}
                                         disabled={isSubmittingComment}
                                     >
-                                        {replyToId ? "Ответить" : "Добавить"}
+                                        Добавить
                                     </DefaultButton>
-                                    {replyToId && (
-                                        <InlineButton onClick={() => setReplyToId(null)}>
-                                            Сбросить ответ
-                                        </InlineButton>
-                                    )}
                                 </CommentFormRow>
                                 {commentError && <CommentError>{commentError}</CommentError>}
                             </CommentForm>

@@ -156,28 +156,6 @@ class BlackCatalogService {
     });
   }
 
-  async getCommentReplies(
-    id: string,
-    commentId: string,
-    pageSize = 20
-  ): Promise<{
-    comments: Array<{
-      id: string;
-      content: string;
-      created_at: string;
-      author?: { full_name?: string; avatar_url?: string };
-      files?: Array<{ id: string; filename: string; url?: string }>;
-      parent_id?: string;
-    }>;
-    next_page_token?: string;
-    success: boolean;
-    error?: string;
-  }> {
-    const queryParams = new URLSearchParams();
-    queryParams.append('page_size', String(pageSize));
-    const endpoint = `${this.baseEndpoint}/${id}/comments/${commentId}/replies?${queryParams.toString()}`;
-    return apiRequest(endpoint, { method: 'GET' });
-  }
 
   /**
    * Подготавливает данные для обновления
