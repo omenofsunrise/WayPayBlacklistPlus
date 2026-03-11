@@ -13,6 +13,11 @@ export const TitleContainer = styled.div`
   gap: 16px;
   width: 100%;
   justify-content: space-between;
+
+  @media (max-width: 768px) {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
 `;
 
 const PageTitle = styled(CustomTitle)`
@@ -76,6 +81,11 @@ const StickyFilterField = styled(FilterField)`
   z-index: 10;
   padding: 16px 0;
   background: none;
+
+  @media (max-width: 768px) {
+    top: 0;
+    padding: 12px 0;
+  }
 `;
 
 const ResetButton = styled.button`
@@ -92,6 +102,11 @@ const ResetButton = styled.button`
 
   &:hover {
     color: #374151;
+  }
+
+  @media (max-width: 768px) {
+    margin-left: 0;
+    width: 100%;
   }
 `;
 
@@ -138,6 +153,12 @@ const Container = styled.div`
     flex-direction: row;
     width: 50vw;
     gap: 15px;
+
+    @media (max-width: 768px) {
+        width: 100%;
+        flex-direction: column;
+        gap: 10px;
+    }
 `;
 
 const DarkCyanButton = styled(DefaultButton)`
@@ -145,6 +166,10 @@ const DarkCyanButton = styled(DefaultButton)`
     
     &:hover {
         background-color: #006666;
+    }
+
+    @media (max-width: 768px) {
+        width: 100%;
     }
 `;
 

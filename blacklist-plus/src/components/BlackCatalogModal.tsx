@@ -157,16 +157,33 @@ export const BlackCatalogModal: React.FC<BlackCatalogModalProps> = ({
 
   useEffect(() => {
     if (editingItem) {
+      const normalizeIncomingDate = (value?: string) => {
+        if (!value) return '';
+        if (value.includes('T')) {
+          const [datePart] = value.split('T');
+          if (/^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
+            const [year, month, day] = datePart.split('-');
+            return `${day}.${month}.${year}`;
+          }
+          return datePart;
+        }
+        if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+          const [year, month, day] = value.split('-');
+          return `${day}.${month}.${year}`;
+        }
+        return value;
+      };
+
       setFormData({
         fullname: editingItem.fullname || '',
         doc: editingItem.doc || '',
         address: editingItem.address || '',
-        birthdate: editingItem.birthdate || '',
+        birthdate: normalizeIncomingDate(editingItem.birthdate),
         comment: '',
         main_page: null,
         registration_page: null,
-        is_swindler: false,
-        debt_ending_at: '',
+        is_swindler: Boolean(editingItem.is_swindler),
+        debt_ending_at: normalizeIncomingDate(editingItem.debt_ending_at),
       });
       setIsDebtActive(false);
     } else {

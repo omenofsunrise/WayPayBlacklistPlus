@@ -18,6 +18,10 @@ const Card = styled.div`
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   }
+
+  @media (max-width: 768px) {
+    padding: 14px;
+  }
 `;
 
 const CardContent = styled.div`
@@ -36,6 +40,13 @@ const CardTitle = styled.h3`
   justify-content: space-between;
   align-items: center;
   padding-right: 50px;
+
+  @media (max-width: 768px) {
+    font-size: 16px;
+    padding-right: 0;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
 `;
 
 const CardTitleText = styled.span`

@@ -1,7 +1,7 @@
 import styled from "styled-components";
 import { useEffect, useRef, useState } from "react";
 import { FaArrowLeft } from "react-icons/fa";
-import { DefaultButton, apiRequest, API_BASE_URL, PhotoViewerModal } from "waypay_react_library";
+import { BackButton as LibBackButton, DefaultButton, apiRequest, API_BASE_URL, PhotoViewerModal } from "waypay_react_library";
 import type { BlackCatalogItem } from "../api/BlackCatalog/blackCatalog";
 import { blackCatalogService } from "../api/BlackCatalog/BlackCatalogService";
 
@@ -9,12 +9,13 @@ const DossierContainer = styled.div`
     background: none;
     padding: 12px;
     position: relative;
+
+    @media (max-width: 768px) {
+        padding: 8px;
+    }
 `;
 
-const BackButton = styled(DefaultButton)`
-    position: absolute;
-    top: 16px;
-    left: 16px;
+const BackButton = styled(LibBackButton)`
     border-radius: 6px;
     padding: 10px 18px;
     cursor: pointer;
@@ -23,6 +24,13 @@ const BackButton = styled(DefaultButton)`
     gap: 8px;
     font-size: 14px;
     font-weight: 500;
+    width: fit-content;
+    margin-bottom: 12px;
+
+    @media (max-width: 768px) {
+        width: 100%;
+        justify-content: center;
+    }
 `;
 
 const DossierHeader = styled.div`
@@ -30,8 +38,13 @@ const DossierHeader = styled.div`
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 18px;
-    margin-top: 64px;
+    margin-top: 0;
     padding-right: 120px;
+
+    @media (max-width: 768px) {
+        margin-top: 8px;
+        padding-right: 0;
+    }
 `;
 
 const ClientName = styled.h2`
@@ -202,6 +215,19 @@ const PassportHeaderRow = styled.div`
     align-items: center;
     gap: 10px;
     margin-top: 6px;
+`;
+
+const PassportHideButton = styled.button`
+    border: none;
+    background: transparent;
+    padding: 0;
+    font-size: 12px;
+    color: #0f766e;
+    cursor: pointer;
+
+    &:hover {
+        text-decoration: underline;
+    }
 `;
 
 const HiddenPassportInput = styled.input`
@@ -744,7 +770,6 @@ const BlackCatalogDossier = ({ item, onBack, onRefresh }: BlackCatalogDossierPro
     return (
         <DossierContainer>
                     <BackButton onClick={onBack}>
-                        <FaArrowLeft />
                         Назад к поиску
                     </BackButton>
 
@@ -795,6 +820,11 @@ const BlackCatalogDossier = ({ item, onBack, onRefresh }: BlackCatalogDossierPro
                                         <PassportStatus>
                                             {item.main_passport_page ? "Загружено" : "Не загружено"}
                                         </PassportStatus>
+                                        {isMainRevealed && (
+                                            <PassportHideButton onClick={() => setIsMainRevealed(false)}>
+                                                Скрыть
+                                            </PassportHideButton>
+                                        )}
                                     </PassportHeaderRow>
                                     <HiddenPassportInput
                                         ref={mainInputRef}
@@ -864,6 +894,11 @@ const BlackCatalogDossier = ({ item, onBack, onRefresh }: BlackCatalogDossierPro
                                         <PassportStatus>
                                             {item.registration_passport_page ? "Загружено" : "Не загружено"}
                                         </PassportStatus>
+                                        {isRegistrationRevealed && (
+                                            <PassportHideButton onClick={() => setIsRegistrationRevealed(false)}>
+                                                Скрыть
+                                            </PassportHideButton>
+                                        )}
                                     </PassportHeaderRow>
                                     <HiddenPassportInput
                                         ref={registrationInputRef}
