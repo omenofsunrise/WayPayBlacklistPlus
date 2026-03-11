@@ -54,8 +54,8 @@ const Badge = styled.span<{ $tone: "danger" | "info" }>`
   border-radius: 999px;
   font-size: 12px;
   font-weight: 600;
-  color: ${({ $tone }) => ($tone === "danger" ? "#991B1B" : "#0F766E")};
-  background: ${({ $tone }) => ($tone === "danger" ? "#FEE2E2" : "#CCFBF1")};
+  color: ${({ $tone }) => ($tone === "danger" ? "#991B1B" : "#92400E")};
+  background: ${({ $tone }) => ($tone === "danger" ? "#FEE2E2" : "#FEF3C7")};
 `;
 
 const InfoGrid = styled.div`
