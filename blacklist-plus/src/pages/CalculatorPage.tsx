@@ -559,7 +559,7 @@ const CalculatorPage = () => {
                       <FloatingLabel>Округлять до, ₽</FloatingLabel>
                       <CustomSelect
                         value={formData.round}
-                        onChange={handleRoundChange}
+                        onChange={(e) => handleRoundChange(e.target.value)}
                         options={roundOptions}
                         placeholder="Без округления"
                         customPlaceholder="Без округления"
@@ -656,7 +656,7 @@ const CalculatorPage = () => {
                       <FloatingLabel>Округлять до, ₽</FloatingLabel>
                       <CustomSelect
                         value={formData.round}
-                        onChange={handleRoundChange}
+                        onChange={(e) => handleRoundChange(e.target.value)}
                         options={roundOptions}
                         placeholder="Без округления"
                         customPlaceholder="Без округления"
