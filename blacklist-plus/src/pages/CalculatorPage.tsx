@@ -116,6 +116,7 @@ const CalculatorPage = () => {
     { value: 'month-percent' as CalculationMode, label: 'Процент за 1 месяц (x месяцев)' },
   ];
   const roundOptions = [
+    { value: '', label: 'Без округления' },
     { value: '50', label: '50 ₽' },
     { value: '100', label: '100 ₽' },
   ];
