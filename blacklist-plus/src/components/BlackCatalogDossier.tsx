@@ -1,7 +1,7 @@
 import styled from "styled-components";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FaArrowLeft } from "react-icons/fa";
-import { DefaultButton, apiRequest, API_BASE_URL } from "waypay_react_library";
+import { DefaultButton, apiRequest, API_BASE_URL, PhotoViewerModal } from "waypay_react_library";
 import type { BlackCatalogItem } from "../api/BlackCatalog/blackCatalog";
 import { blackCatalogService } from "../api/BlackCatalog/BlackCatalogService";
 
@@ -162,11 +162,46 @@ const PassportPhoto = styled.img`
     object-fit: cover;
     border-radius: 8px;
     border: 1px solid #e5e7eb;
+    cursor: pointer;
 `;
 
-const PassportPicker = styled.label`
-    display: block;
+const SpoilerMedia = styled.div<{ $revealed: boolean }>`
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+
+    ${PassportPhoto} {
+        filter: ${({ $revealed }) => ($revealed ? "none" : "blur(18px)")};
+        transform: ${({ $revealed }) => ($revealed ? "none" : "scale(1.03)")};
+        transition: filter 0.2s ease, transform 0.2s ease;
+    }
+`;
+
+const SpoilerOverlay = styled.button<{ $revealed: boolean }>`
+    position: absolute;
+    inset: 0;
+    border: none;
+    background: ${({ $revealed }) =>
+        $revealed ? "transparent" : "rgba(17, 24, 39, 0.35)"};
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
     cursor: pointer;
+    display: ${({ $revealed }) => ($revealed ? "none" : "flex")};
+    align-items: center;
+    justify-content: center;
+`;
+
+const PassportStatus = styled.span`
+    font-size: 12px;
+    color: #6b7280;
+`;
+
+const PassportHeaderRow = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 6px;
 `;
 
 const HiddenPassportInput = styled.input`
@@ -183,6 +218,7 @@ const PassportActions = styled.div`
 const PassportButtons = styled.div`
     display: flex;
     gap: 8px;
+    flex-wrap: wrap;
 `;
 
 const PassportHint = styled.div`
@@ -236,6 +272,16 @@ const CommentFiles = styled.div`
     display: flex;
     flex-direction: column;
     gap: 6px;
+`;
+
+const CommentImage = styled.img`
+    width: 240px;
+    height: 240px;
+    object-fit: contain;
+    background: #f9fafb;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    cursor: pointer;
 `;
 
 const CommentFile = styled.a`
@@ -333,6 +379,8 @@ type BlackCatalogDossierProps = {
 };
 
 const BlackCatalogDossier = ({ item, onBack, onRefresh }: BlackCatalogDossierProps) => {
+    const mainInputRef = useRef<HTMLInputElement | null>(null);
+    const registrationInputRef = useRef<HTMLInputElement | null>(null);
     const [mainPassportUrl, setMainPassportUrl] = useState<string | null>(null);
     const [registrationPassportUrl, setRegistrationPassportUrl] = useState<string | null>(null);
     const [mainFile, setMainFile] = useState<File | null>(null);
@@ -340,6 +388,11 @@ const BlackCatalogDossier = ({ item, onBack, onRefresh }: BlackCatalogDossierPro
     const [isUpdatingPassport, setIsUpdatingPassport] = useState(false);
     const [isDeletingPassport, setIsDeletingPassport] = useState(false);
     const [passportError, setPassportError] = useState<string | null>(null);
+    const [isMainRevealed, setIsMainRevealed] = useState(false);
+    const [isRegistrationRevealed, setIsRegistrationRevealed] = useState(false);
+    const [isPhotoViewerOpen, setIsPhotoViewerOpen] = useState(false);
+    const [photoViewerIndex, setPhotoViewerIndex] = useState(0);
+    const [commentViewerUrl, setCommentViewerUrl] = useState<string | null>(null);
     const [comments, setComments] = useState<Array<{
         id: string;
         content: string;
@@ -356,6 +409,12 @@ const BlackCatalogDossier = ({ item, onBack, onRefresh }: BlackCatalogDossierPro
     const [editId, setEditId] = useState<string | null>(null);
     const [editContent, setEditContent] = useState("");
     const maxFileSizeBytes = 12 * 1024 * 1024;
+
+    const isImageFile = (file?: { content_type?: string; filename?: string }) => {
+        if (file?.content_type?.startsWith("image/")) return true;
+        if (!file?.filename) return false;
+        return /\.(png|jpe?g|gif|webp)$/i.test(file.filename);
+    };
 
     const formatDateShort = (value?: string) => {
         if (!value) return "Не указана";
@@ -418,6 +477,8 @@ const BlackCatalogDossier = ({ item, onBack, onRefresh }: BlackCatalogDossierPro
 
         setMainPassportUrl(null);
         setRegistrationPassportUrl(null);
+        setIsMainRevealed(false);
+        setIsRegistrationRevealed(false);
 
         if (item.main_passport_page) {
             fetchPassportUrl(item.main_passport_page, setMainPassportUrl);
@@ -554,6 +615,15 @@ const BlackCatalogDossier = ({ item, onBack, onRefresh }: BlackCatalogDossierPro
         }
     };
 
+    const openPhotoViewer = (index: number) => {
+        setPhotoViewerIndex(index);
+        setIsPhotoViewerOpen(true);
+    };
+
+    const openCommentViewer = (url: string) => {
+        setCommentViewerUrl(url);
+    };
+
     const handleDeleteComment = async (commentId: string) => {
         setCommentError(null);
         try {
@@ -628,23 +698,32 @@ const BlackCatalogDossier = ({ item, onBack, onRefresh }: BlackCatalogDossierPro
                     ) : (
                         <CommentContent>{comment.content}</CommentContent>
                     )}
-                    {comment.files && comment.files.length > 0 && (
-                        <CommentFiles>
-                            {comment.files.map(file => (
-                                file.url ? (
-                                    <CommentFile
-                                        key={file.id}
-                                        href={file.url}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                    >
-                                        {file.filename || "Файл"}
-                                    </CommentFile>
-                                ) : (
-                                    <CommentMeta key={file.id}>
-                                        {file.filename || "Файл"}
-                                    </CommentMeta>
-                                )
+                                            {comment.files && comment.files.length > 0 && (
+                                                <CommentFiles>
+                                                    {comment.files.map(file => (
+                                                        file.url ? (
+                                                            isImageFile(file) ? (
+                                                                <CommentImage
+                                                                    key={file.id}
+                                                                    src={file.url}
+                                                                    alt={file.filename || "Изображение"}
+                                                                    onClick={() => file.url && openCommentViewer(file.url)}
+                                                                />
+                                                            ) : (
+                                                                <CommentFile
+                                                                    key={file.id}
+                                                                    href={file.url}
+                                                                    target="_blank"
+                                                                    rel="noreferrer"
+                                                                >
+                                                                    {file.filename || "Файл"}
+                                                                </CommentFile>
+                                                            )
+                                                        ) : (
+                                                            <CommentMeta key={file.id}>
+                                                                {file.filename || "Файл"}
+                                                            </CommentMeta>
+                                                        )
                             ))}
                         </CommentFiles>
                     )}
@@ -706,34 +785,58 @@ const BlackCatalogDossier = ({ item, onBack, onRefresh }: BlackCatalogDossierPro
                         </Section>
 
                         <Section>
-                            <SectionTitle>Паспорт</SectionTitle>
+                            <SectionTitle>
+                                Паспорт
+                            </SectionTitle>
                             <PassportSection>
                                 <PassportPhotoSection>
                                     <PassportPhotoTitle>Основная страница</PassportPhotoTitle>
-                                    <PassportPicker>
-                                        <HiddenPassportInput
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={(e) => setMainFile(e.target.files?.[0] ?? null)}
-                                        />
-                                        {mainPassportUrl ? (
+                                    <PassportHeaderRow>
+                                        <PassportStatus>
+                                            {item.main_passport_page ? "Загружено" : "Не загружено"}
+                                        </PassportStatus>
+                                    </PassportHeaderRow>
+                                    <HiddenPassportInput
+                                        ref={mainInputRef}
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => setMainFile(e.target.files?.[0] ?? null)}
+                                    />
+                                    {mainPassportUrl ? (
+                                        <SpoilerMedia $revealed={isMainRevealed}>
                                             <PassportPhoto
                                                 src={mainPassportUrl}
                                                 alt="Основная страница паспорта"
+                                                onClick={() => openPhotoViewer(0)}
                                             />
-                                        ) : (
-                                            <PassportPhotoPlaceholder>
+                                            <SpoilerOverlay
+                                                type="button"
+                                                $revealed={isMainRevealed}
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    setIsMainRevealed(true);
+                                                }}
+                                            >
+                                                Нажмите, чтобы показать
+                                            </SpoilerOverlay>
+                                        </SpoilerMedia>
+                                    ) : (
+                                        <PassportPhotoPlaceholder>
                                                 <p style={{ margin: "0", color: "#6b7280", fontSize: "12px" }}>
-                                                    Основная страница не загружена
+                                                    {item.main_passport_page
+                                                        ? "Нажмите на фото, чтобы открыть"
+                                                        : "Основная страница не загружена"}
                                                 </p>
-                                                <p style={{ margin: "6px 0 0 0", color: "#9ca3af", fontSize: "11px" }}>
-                                                    Нажмите, чтобы выбрать файл
-                                                </p>
-                                            </PassportPhotoPlaceholder>
-                                        )}
-                                    </PassportPicker>
+                                        </PassportPhotoPlaceholder>
+                                    )}
                                     <PassportActions>
                                         <PassportButtons>
+                                            <DefaultButton
+                                                type="button"
+                                                onClick={() => mainInputRef.current?.click()}
+                                            >
+                                                Выбрать файл
+                                            </DefaultButton>
                                             <DefaultButton
                                                 type="button"
                                                 onClick={() => handleUploadPassport("main")}
@@ -757,30 +860,52 @@ const BlackCatalogDossier = ({ item, onBack, onRefresh }: BlackCatalogDossierPro
                                 </PassportPhotoSection>
                                 <PassportPhotoSection>
                                     <PassportPhotoTitle>Страница с регистрацией</PassportPhotoTitle>
-                                    <PassportPicker>
-                                        <HiddenPassportInput
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={(e) => setRegistrationFile(e.target.files?.[0] ?? null)}
-                                        />
-                                        {registrationPassportUrl ? (
+                                    <PassportHeaderRow>
+                                        <PassportStatus>
+                                            {item.registration_passport_page ? "Загружено" : "Не загружено"}
+                                        </PassportStatus>
+                                    </PassportHeaderRow>
+                                    <HiddenPassportInput
+                                        ref={registrationInputRef}
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => setRegistrationFile(e.target.files?.[0] ?? null)}
+                                    />
+                                    {registrationPassportUrl ? (
+                                        <SpoilerMedia $revealed={isRegistrationRevealed}>
                                             <PassportPhoto
                                                 src={registrationPassportUrl}
                                                 alt="Страница регистрации"
+                                                onClick={() => openPhotoViewer(mainPassportUrl ? 1 : 0)}
                                             />
-                                        ) : (
-                                            <PassportPhotoPlaceholder>
+                                            <SpoilerOverlay
+                                                type="button"
+                                                $revealed={isRegistrationRevealed}
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    setIsRegistrationRevealed(true);
+                                                }}
+                                            >
+                                                Нажмите, чтобы показать
+                                            </SpoilerOverlay>
+                                        </SpoilerMedia>
+                                    ) : (
+                                        <PassportPhotoPlaceholder>
                                                 <p style={{ margin: "0", color: "#6b7280", fontSize: "12px" }}>
-                                                    Страница с регистрацией не загружена
+                                                    {item.registration_passport_page
+                                                        ? "Нажмите на фото, чтобы открыть"
+                                                        : "Страница с регистрацией не загружена"}
                                                 </p>
-                                                <p style={{ margin: "6px 0 0 0", color: "#9ca3af", fontSize: "11px" }}>
-                                                    Нажмите, чтобы выбрать файл
-                                                </p>
-                                            </PassportPhotoPlaceholder>
-                                        )}
-                                    </PassportPicker>
+                                        </PassportPhotoPlaceholder>
+                                    )}
                                     <PassportActions>
                                         <PassportButtons>
+                                            <DefaultButton
+                                                type="button"
+                                                onClick={() => registrationInputRef.current?.click()}
+                                            >
+                                                Выбрать файл
+                                            </DefaultButton>
                                             <DefaultButton
                                                 type="button"
                                                 onClick={() => handleUploadPassport("registration")}
@@ -847,6 +972,22 @@ const BlackCatalogDossier = ({ item, onBack, onRefresh }: BlackCatalogDossierPro
                             </CommentForm>
                         </CommentsSection>
                     </DossierGrid>
+                    {isPhotoViewerOpen && (
+                        <PhotoViewerModal
+                            images={[mainPassportUrl, registrationPassportUrl].filter(
+                                (url): url is string => Boolean(url)
+                            )}
+                            initialIndex={photoViewerIndex}
+                            onClose={() => setIsPhotoViewerOpen(false)}
+                        />
+                    )}
+                    {commentViewerUrl && (
+                        <PhotoViewerModal
+                            images={[commentViewerUrl]}
+                            initialIndex={0}
+                            onClose={() => setCommentViewerUrl(null)}
+                        />
+                    )}
         </DossierContainer>
     );
 };

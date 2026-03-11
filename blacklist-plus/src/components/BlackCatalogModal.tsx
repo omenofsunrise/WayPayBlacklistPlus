@@ -192,6 +192,11 @@ export const BlackCatalogModal: React.FC<BlackCatalogModalProps> = ({
       return dateStr.split('T')[0];
     }
     
+    if (/^\d{2}\.\d{2}\.\d{4}$/.test(dateStr)) {
+      const [day, month, year] = dateStr.split('.');
+      return `${year}-${month}-${day}`;
+    }
+
     if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
       return dateStr;
     }
@@ -251,6 +256,20 @@ export const BlackCatalogModal: React.FC<BlackCatalogModalProps> = ({
     }
   };
 
+  const handleDateTextChange = (field: 'birthdate' | 'debt_ending_at') => (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const digits = e.target.value.replace(/\D/g, '').slice(0, 8);
+    let formatted = digits;
+    if (digits.length > 2) {
+      formatted = `${digits.slice(0, 2)}.${digits.slice(2)}`;
+    }
+    if (digits.length > 4) {
+      formatted = `${digits.slice(0, 2)}.${digits.slice(2, 4)}.${digits.slice(4)}`;
+    }
+    handleFieldChange(field, formatted);
+  };
+
   const handleCheckboxChange = (field: 'is_swindler') => (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({ ...prev, [field]: e.target.checked }));
   };
@@ -296,10 +315,11 @@ export const BlackCatalogModal: React.FC<BlackCatalogModalProps> = ({
       </InputRow>
       
       <InputRow>
-        <CustomCalendar
-          prefix="Дата рождения:"
+        <CustomInput
+          type="text"
           value={formData.birthdate || ''}
-          onChange={(date) => handleFieldChange('birthdate', date)}
+          onChange={handleDateTextChange('birthdate')}
+          placeholder="Дата рождения (ДД.ММ.ГГГГ)"
         />
       </InputRow>
       
@@ -346,11 +366,12 @@ export const BlackCatalogModal: React.FC<BlackCatalogModalProps> = ({
 
           {isDebtActive && (
             <InputRow>
-              <CustomCalendar
-                prefix="До какого числа оформлен:"
-                value={formData.debt_ending_at || ''}
-                onChange={(date) => handleFieldChange('debt_ending_at', date)}
-              />
+            <CustomInput
+              type="text"
+              value={formData.debt_ending_at || ''}
+              onChange={handleDateTextChange('debt_ending_at')}
+              placeholder="Оформлен до (ДД.ММ.ГГГГ)"
+            />
             </InputRow>
           )}
 
