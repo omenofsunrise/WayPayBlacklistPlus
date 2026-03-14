@@ -7,33 +7,7 @@ interface SubscriptionInfoProps {
 }
 
 const SubscriptionInfo: React.FC<SubscriptionInfoProps> = ({ 
-  tariffType, 
-  expirationDate, 
-  isActive = false 
 }) => {
-  const getTariffDisplayName = (type: string) => {
-    switch (type) {
-      case 'blacklist_plus':
-        return 'Black List Plus';
-      default:
-        return type;
-    }
-  };
-
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('ru-RU', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    }).format(date);
-  };
-
-  const getDaysUntilExpiration = () => {
-    if (!expirationDate) return null;
-    return Math.ceil(
-      (new Date(expirationDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
-    );
-  };
 
     return (
       <div style={{

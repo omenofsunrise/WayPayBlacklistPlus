@@ -47,12 +47,6 @@ const SubscriptionBlock: React.FC<SubscriptionBlockProps> = ({
   };
 
   const handleSubscribe = async () => {
-    // Используем акционную цену для 30 дней, если акция активна
-    const selectedPlan = subscriptionPlans.find(plan => plan.days === selectedDays);
-    const finalPrice = selectedPlan?.promoPrice && isPromoActive() 
-      ? selectedPlan.promoPrice 
-      : selectedPlan?.price;
-
     const result = await createOrExtend({
       days: selectedDays,
       tariff_type: tariffType,
