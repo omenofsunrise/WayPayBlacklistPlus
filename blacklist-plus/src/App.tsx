@@ -6,9 +6,11 @@ import CalculatorPage from "./pages/CalculatorPage";
 import ProfilePage from "./pages/ProfilePage";
 import Layout from "./components/Layout";
 import BlackCatalogPage from "./pages/BlackCatalogPage";
+import { NotModeratedMessage } from "./components/Moderation";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isModerated, setIsModerated] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [collapsed, setCollapsed] = useState<boolean>(false);
   const [selectedSideMenuItem, setSelectedSideMenuItem] = useState<string | null>(null);
@@ -21,17 +23,26 @@ function App() {
   const checkAuth = async () => {
     try {
       setIsLoading(true);
-      const sessionInfo = await getSessionInfo();
-      setIsAuthenticated(!!sessionInfo);
+      const sessionInfo = await getSessionInfo() as { is_moderated?: boolean } | null;
+      
+      if (sessionInfo) {
+        setIsAuthenticated(true);
+        setIsModerated(sessionInfo?.is_moderated ?? true);
+      } else {
+        setIsAuthenticated(false);
+        setIsModerated(true);
+      }
     } catch (error) {
+      console.error('Ошибка при проверке авторизации:', error);
       setIsAuthenticated(false);
+      setIsModerated(true);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleLoginSuccess = () => {
-    setIsAuthenticated(true);
+    checkAuth();
   };
 
   const toggleCollapsed = () => {
@@ -51,6 +62,10 @@ function App() {
         title="Регистрация / Авторизация"
       />
     );
+  }
+
+  if (!isModerated) {
+    return <NotModeratedMessage />;
   }
 
   return (
