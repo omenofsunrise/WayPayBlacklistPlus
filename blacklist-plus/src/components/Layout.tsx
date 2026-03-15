@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import { SideMenuContext, SideMenu } from 'waypay_react_library';
 
-// Импортируем иконки (можно заменить на свои)
 const CalculatorIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M7 3H17C18.1046 3 19 3.89543 19 5V19C19 20.1046 18.1046 21 17 21H7C5.89543 21 5 20.1046 5 19V5C5 3.89543 5.89543 3 7 3Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -35,7 +34,6 @@ const UserIcon = () => (
   </svg>
 );
 
-// Логотип приложения
 const Logo = () => (
   <div style={{ fontWeight: 'bold', textAlign: 'left', fontSize: '30px', color: '#000' }}>
     ЧС+
@@ -68,7 +66,6 @@ const Layout: React.FC<LayoutProps> = ({ children, userInfo }) => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Определяем элементы меню
   const menuItems = [
     {
       key: 'calculator',
@@ -90,16 +87,14 @@ const Layout: React.FC<LayoutProps> = ({ children, userInfo }) => {
     },
   ];
 
-  // Синхронизируем выбранный пункт меню с текущим URL
   useEffect(() => {
-    const path = location.pathname.substring(1); // убираем первый слеш
+    const path = location.pathname.substring(1);
     const currentItem = menuItems.find(item => item.key === path);
     if (currentItem) {
       setSelectedSideMenuItem(currentItem.key);
     }
   }, [location.pathname, setSelectedSideMenuItem]);
 
-  // Форматирование даты
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'Бессрочно';
     const date = new Date(dateString);
@@ -239,35 +234,6 @@ const LicenseDate = styled.span`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-`;
-
-const CollapsedTooltip = styled.div`
-  position: absolute;
-  left: 100%;
-  top: 50%;
-  transform: translateY(-50%);
-  background: white;
-  padding: 12px;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  margin-left: 12px;
-  z-index: 1000;
-  min-width: 200px;
-  display: none;
-  border: 1px solid #e5e7eb;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    left: -6px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 0;
-    height: 0;
-    border-top: 6px solid transparent;
-    border-bottom: 6px solid transparent;
-    border-right: 6px solid white;
-  }
 `;
 
 const LayoutContainer = styled.div<{ $isMobile: boolean }>`

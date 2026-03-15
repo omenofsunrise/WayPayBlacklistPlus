@@ -1,6 +1,6 @@
 export const NotModeratedMessage = () => {
   const whatsappPhone = "+7 (989) 924-24-24";
-  const callPhone = "+7 (989) 920-20-20";
+  const callPhone = "+7 (989) 924-24-24";
   
   return (
     <div style={{
@@ -37,23 +37,12 @@ export const NotModeratedMessage = () => {
         }}>
           Пожалуйста, свяжитесь с нашей поддержкой для активации
         </p>
-        
-        <p style={{ 
-          color: '#666', 
-          fontSize: 'clamp(18px, 5vw, 22px)', 
-          lineHeight: '1.4',
-          marginBottom: '24px',
-          fontWeight: 'bold'
-        }}>
-          Ибрагим
-        </p>
 
         <div style={{
           display: 'flex',
           flexDirection: 'column',
           gap: '12px'
         }}>
-          {/* WhatsApp */}
           <a 
             href={`https://wa.me/${whatsappPhone.replace(/[^\d+]/g, '')}`}
             target="_blank"
@@ -70,7 +59,6 @@ export const NotModeratedMessage = () => {
               display: 'block'
             }}
             onClick={(e) => {
-              // Улучшение для мобильных устройств
               if (window.innerWidth <= 768) {
                 e.currentTarget.style.opacity = '0.7';
                 setTimeout(() => {
@@ -128,7 +116,7 @@ export const NotModeratedMessage = () => {
               display: 'block',
               marginBottom: '8px'
             }}>
-              Телефон для звонков:
+              Позвонить:
             </span>
             <span style={{
               display: 'block',
