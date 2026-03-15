@@ -24,6 +24,14 @@ const SubscriptionPage: React.FC<SubscriptionPageProps> = ({
 
   useEffect(() => {
     loadSubscriptionInfo();
+    
+    document.body.style.overflow = 'auto';
+    document.documentElement.style.overflow = 'auto';
+    
+    return () => {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+    };
   }, []);
 
   const loadSubscriptionInfo = async () => {
@@ -53,15 +61,21 @@ const SubscriptionPage: React.FC<SubscriptionPageProps> = ({
   return (
     <div style={{
       padding: 0,
-      width: "auto",
-      height: "auto"
+      width: "100%",
+      minHeight: "100vh",
+      height: "100%",
+      overflowY: "auto",
+      overflowX: "hidden",
+      WebkitOverflowScrolling: "touch", 
     }}>
       <div style={{
         maxWidth: '1200px',
         margin: '0 auto',
-        padding: 0,
-        width: "auto",
-        height: "auto"
+        padding: '20px',
+        width: "100%",
+        boxSizing: "border-box",
+        height: "auto",
+        minHeight: "100%",
       }}>
         <ProfileHeader name={name} phone={phone} />
         

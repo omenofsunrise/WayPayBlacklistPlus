@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { TariffType } from '../../api/Subscription/subscription';
 import useSubscription from '../../api/Subscription/useSubscription';
 
@@ -14,6 +14,8 @@ const SubscriptionBlock: React.FC<SubscriptionBlockProps> = ({
   onPaymentSuccess
 }) => {
   const [selectedDays, setSelectedDays] = useState<number>(365);
+  const [isMobile, setIsMobile] = useState(false);
+  
   const {
     isLoading,
     error,
@@ -21,7 +23,17 @@ const SubscriptionBlock: React.FC<SubscriptionBlockProps> = ({
     clearError,
   } = useSubscription();
 
-  // Проверка активна ли акция (до 25 апреля)
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   const isPromoActive = () => {
     const today = new Date();
     const promoEndDate = new Date('2026-04-25');
@@ -32,10 +44,10 @@ const SubscriptionBlock: React.FC<SubscriptionBlockProps> = ({
     { 
       days: 30, 
       price: 600, 
-      promoPrice: 1, // Акционная цена
+      promoPrice: 1,
       label: '1 месяц', 
       pricePerDay: '20.00',
-      promoPricePerDay: '0.03', // 1₽/30 дней ≈ 0.03₽/день
+      promoPricePerDay: '0.03',
     },
     { days: 90, price: 1764, label: '3 месяца', discount: '2%', pricePerDay: '19.60' },
     { days: 180, price: 3456, label: '6 месяцев', discount: '4%', pricePerDay: '19.20' },
@@ -50,16 +62,11 @@ const SubscriptionBlock: React.FC<SubscriptionBlockProps> = ({
     const result = await createOrExtend({
       days: selectedDays,
       tariff_type: tariffType,
-      // Можно передать специальный параметр для акции, если API поддерживает
-      // promo_code: selectedDays === 30 && isPromoActive() ? 'APRIL_PROMO' : undefined
     });
 
     if (result?.success && result.payment_url) {
-      // Перенаправляем на страницу оплаты
       window.location.href = result.payment_url;
       
-      // Если есть callback успешной оплаты, вызываем его
-      // (обычно это происходит после редиректа обратно)
       if (onPaymentSuccess) {
         onPaymentSuccess();
       }
@@ -75,34 +82,74 @@ const SubscriptionBlock: React.FC<SubscriptionBlockProps> = ({
     }
   };
 
+  const mobileStyles = {
+    container: {
+      padding: isMobile ? '20px 15px' : '40px',
+    },
+    title: {
+      fontSize: isMobile ? '24px' : '32px',
+      marginBottom: isMobile ? '5px' : '10px',
+    },
+    subtitle: {
+      fontSize: isMobile ? '16px' : '18px',
+      marginBottom: isMobile ? '20px' : '30px',
+    },
+    plansGrid: {
+      display: 'grid',
+      gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(250px, 1fr))',
+      gap: isMobile ? '12px' : '20px',
+      marginBottom: isMobile ? '20px' : '30px',
+    },
+    planCard: {
+      padding: isMobile ? '15px' : '20px',
+    },
+    planTitle: {
+      fontSize: isMobile ? '18px' : '20px',
+    },
+    planPrice: {
+      fontSize: isMobile ? '22px' : '24px',
+    },
+    button: {
+      padding: isMobile ? '12px 30px' : '15px 40px',
+      fontSize: isMobile ? '16px' : '18px',
+      width: isMobile ? '100%' : 'auto',
+    },
+    errorMessage: {
+      padding: isMobile ? '12px' : '15px',
+      fontSize: isMobile ? '14px' : '16px',
+    },
+  };
+
   return (
     <div style={{
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
+      padding: '0px',
     }}>
       <div style={{
         maxWidth: '1200px',
         width: '100%',
         backgroundColor: 'white',
-        borderRadius: '20px',
-        padding: '40px',
-        boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+        borderRadius: isMobile ? '15px' : '20px',
+        padding: mobileStyles.container.padding,
+        boxShadow: isMobile ? '0 10px 30px rgba(0,0,0,0.2)' : '0 20px 60px rgba(0,0,0,0.3)',
       }}>
         <h1 style={{ 
           textAlign: 'center', 
-          marginBottom: '10px',
+          marginBottom: mobileStyles.title.marginBottom,
           color: '#333',
+          fontSize: mobileStyles.title.fontSize,
         }}>
           Оформление подписки
         </h1>
         
         <p style={{ 
           textAlign: 'center', 
-          marginBottom: '30px',
+          marginBottom: mobileStyles.subtitle.marginBottom,
           color: '#666',
-          fontSize: '18px',
+          fontSize: mobileStyles.subtitle.fontSize,
         }}>
           {getTariffDisplayName(tariffType)}
         </p>
@@ -111,14 +158,15 @@ const SubscriptionBlock: React.FC<SubscriptionBlockProps> = ({
           <div style={{
             backgroundColor: '#fee',
             color: '#c33',
-            padding: '15px',
+            padding: mobileStyles.errorMessage.padding,
             borderRadius: '8px',
             marginBottom: '20px',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
+            fontSize: mobileStyles.errorMessage.fontSize,
           }}>
-            <span>{error}</span>
+            <span style={{ flex: 1 }}>{error}</span>
             <button 
               onClick={clearError}
               style={{
@@ -126,20 +174,18 @@ const SubscriptionBlock: React.FC<SubscriptionBlockProps> = ({
                 border: 'none',
                 color: '#c33',
                 cursor: 'pointer',
-                fontSize: '18px',
+                fontSize: isMobile ? '20px' : '18px',
+                padding: '0 5px',
+                marginLeft: '10px',
               }}
+              aria-label="Закрыть"
             >
               ×
             </button>
           </div>
         )}
 
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-          gap: '20px',
-          marginBottom: '30px',
-        }}>
+        <div style={mobileStyles.plansGrid}>
           {subscriptionPlans.map((plan) => (
             <div
               key={plan.days}
@@ -147,73 +193,110 @@ const SubscriptionBlock: React.FC<SubscriptionBlockProps> = ({
               style={{
                 border: `2px solid ${selectedDays === plan.days ? '#007D88' : '#e0e0e0'}`,
                 borderRadius: '10px',
-                padding: '20px',
+                padding: mobileStyles.planCard.padding,
                 cursor: 'pointer',
                 transition: 'all 0.3s',
                 backgroundColor: selectedDays === plan.days ? '#F9FAFA' : 'white',
                 position: 'relative',
-                transform: selectedDays === plan.days ? 'scale(1.02)' : 'scale(1)',
+                transform: selectedDays === plan.days && !isMobile ? 'scale(1.02)' : 'scale(1)',
+                ...(selectedDays === plan.days && isMobile && {
+                  borderWidth: '3px',
+                }),
               }}
             >
               {plan.discount && (
                 <div style={{
                   position: 'absolute',
                   top: '-10px',
-                  right: '10px',
+                  right: isMobile ? '5px' : '10px',
                   backgroundColor: '#25CBA1',
                   color: 'white',
-                  padding: '5px 10px',
+                  padding: isMobile ? '4px 8px' : '5px 10px',
                   borderRadius: '20px',
-                  fontSize: '14px',
+                  fontSize: isMobile ? '12px' : '14px',
                   fontWeight: 'bold',
                 }}>
                   {plan.discount}
                 </div>
               )}
-              
-              {/* Специальный бейдж для акционного предложения */}
               {plan.promoPrice && isPromoActive() && plan.days === 30 && (
                 <div style={{
                   position: 'absolute',
                   top: '-10px',
-                  right: '10px',
+                  right: isMobile ? '5px' : '10px',
                   backgroundColor: '#FF6B6B',
                   color: 'white',
-                  padding: '5px 10px',
+                  padding: isMobile ? '4px 8px' : '5px 10px',
                   borderRadius: '20px',
-                  fontSize: '14px',
+                  fontSize: isMobile ? '12px' : '14px',
                   fontWeight: 'bold',
+                  whiteSpace: 'nowrap',
                 }}>
-                  🔥 АКЦИЯ
+                  {isMobile ? '🔥 АКЦИЯ' : '🔥 АКЦИЯ'}
                 </div>
               )}
               
-              <h3 style={{ margin: '0 0 10px 0', color: '#333' }}>{plan.label}</h3>
+              <h3 style={{ 
+                margin: '0 0 10px 0', 
+                color: '#333',
+                fontSize: mobileStyles.planTitle.fontSize,
+                paddingRight: plan.discount || (plan.promoPrice && isPromoActive() && plan.days === 30) ? '70px' : '0',
+              }}>
+                {plan.label}
+              </h3>
               
-              {/* Отображение цены с акцией для 30 дней */}
               {plan.promoPrice && isPromoActive() && plan.days === 30 ? (
                 <>
-                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#007D88' }}>
-                    {plan.promoPrice} ₽
+                  <div style={{ 
+                    fontSize: mobileStyles.planPrice.fontSize, 
+                    fontWeight: 'bold', 
+                    color: '#007D88',
+                    display: 'flex',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: '8px',
+                  }}>
+                    <span>{plan.promoPrice} ₽</span>
+                    <span style={{ 
+                      fontSize: isMobile ? '14px' : '16px', 
+                      color: '#999', 
+                      textDecoration: 'line-through',
+                    }}>
+                      {plan.price} ₽
+                    </span>
                   </div>
                   <div style={{ 
-                    fontSize: '16px', 
                     color: '#999', 
-                    textDecoration: 'line-through',
-                    marginTop: '4px'
+                    marginTop: '5px',
+                    fontSize: isMobile ? '14px' : '16px',
                   }}>
-                    {plan.price} ₽
-                  </div>
-                  <div style={{ color: '#999', marginTop: '5px' }}>
                     {plan.promoPricePerDay} ₽/день
                   </div>
+                                {plan.promoPrice && isPromoActive() && (
+                <p style={{ 
+                  color: '#FF6B6B', 
+                  fontWeight: 'bold',
+                  fontSize: isMobile ? '13px' : '14px',
+                  margin: 0,
+                }}>
+                  Акция действует до 25 апреля 2025 года
+                </p>
+              )}
                 </>
               ) : (
                 <>
-                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#007D88' }}>
+                  <div style={{ 
+                    fontSize: mobileStyles.planPrice.fontSize, 
+                    fontWeight: 'bold', 
+                    color: '#007D88' 
+                  }}>
                     {plan.price} ₽
                   </div>
-                  <div style={{ color: '#999', marginTop: '5px' }}>
+                  <div style={{ 
+                    color: '#999', 
+                    marginTop: '5px',
+                    fontSize: isMobile ? '14px' : '16px',
+                  }}>
                     {plan.pricePerDay} ₽/день
                   </div>
                 </>
@@ -225,7 +308,8 @@ const SubscriptionBlock: React.FC<SubscriptionBlockProps> = ({
         <div style={{
           display: 'flex',
           justifyContent: 'center',
-          gap: '20px',
+          flexDirection: isMobile ? 'column' : 'row',
+          gap: isMobile ? '15px' : '20px',
         }}>
           <button
             onClick={handleSubscribe}
@@ -234,30 +318,22 @@ const SubscriptionBlock: React.FC<SubscriptionBlockProps> = ({
               backgroundColor: '#007D88',
               color: 'white',
               border: 'none',
-              padding: '15px 40px',
+              padding: mobileStyles.button.padding,
               borderRadius: '8px',
-              fontSize: '18px',
+              fontSize: mobileStyles.button.fontSize,
               fontWeight: 'bold',
               cursor: isLoading ? 'not-allowed' : 'pointer',
               opacity: isLoading ? 0.7 : 1,
               transition: 'background-color 0.3s',
+              width: mobileStyles.button.width,
+              ...(isMobile && {
+                touchAction: 'manipulation',
+                WebkitTapHighlightColor: 'transparent',
+              }),
             }}
           >
             {isLoading ? 'Обработка...' : 'Оформить подписку'}
           </button>
-        </div>
-
-        <div style={{
-          marginTop: '30px',
-          textAlign: 'center',
-          color: '#999',
-          fontSize: '14px',
-        }}>
-          {isPromoActive() && (
-            <p style={{ color: '#FF6B6B', fontWeight: 'bold' }}>
-              Акция действует до 25 апреля 2025 года
-            </p>
-          )}
         </div>
       </div>
     </div>

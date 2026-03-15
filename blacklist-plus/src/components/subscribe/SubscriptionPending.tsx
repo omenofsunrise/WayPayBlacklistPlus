@@ -7,7 +7,7 @@ interface SubscriptionPendingPageProps {
   onCheckStatus?: () => Promise<void>;
   tariffType?: TariffType;
   onPaymentComplete?: () => void;
-  expiresAt?: string; // Дата истечения срока оплаты в формате ISO
+  expiresAt?: string;
 }
 
 const SubscriptionPendingPage: React.FC<SubscriptionPendingPageProps> = ({ 
@@ -29,7 +29,6 @@ const SubscriptionPendingPage: React.FC<SubscriptionPendingPageProps> = ({
   const checkIntervalRef = useRef<number | null>(null);
   const timerIntervalRef = useRef<number | null>(null);
 
-  // Функция для форматирования оставшегося времени
   const formatTimeLeft = useCallback((expiryDate: string) => {
     const now = new Date().getTime();
     const expiry = new Date(expiryDate).getTime();
@@ -45,13 +44,11 @@ const SubscriptionPendingPage: React.FC<SubscriptionPendingPageProps> = ({
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   }, []);
 
-  // Обновление таймера
   const updateTimer = useCallback(() => {
     if (expiresAt && paymentStep === 1) {
       const formatted = formatTimeLeft(expiresAt);
       setTimeLeft(formatted);
 
-      // Если время истекло
       if (formatted === '00:00') {
         setAutoCheckError('Время ожидания оплаты истекло');
         if (timerIntervalRef.current) {
@@ -62,14 +59,11 @@ const SubscriptionPendingPage: React.FC<SubscriptionPendingPageProps> = ({
     }
   }, [expiresAt, paymentStep, formatTimeLeft]);
 
-  // Запуск таймера
   const startTimer = useCallback(() => {
     if (!expiresAt || paymentStep !== 1) return;
 
-    // Обновляем таймер сразу
     updateTimer();
 
-    // Запускаем интервал для обновления каждую секунду
     if (timerIntervalRef.current) {
       clearInterval(timerIntervalRef.current);
     }
@@ -81,7 +75,6 @@ const SubscriptionPendingPage: React.FC<SubscriptionPendingPageProps> = ({
     }, 1000);
   }, [expiresAt, paymentStep, updateTimer]);
 
-  // Остановка таймера
   const stopTimer = useCallback(() => {
     if (timerIntervalRef.current) {
       clearInterval(timerIntervalRef.current);
@@ -102,7 +95,7 @@ const SubscriptionPendingPage: React.FC<SubscriptionPendingPageProps> = ({
       
       if (statusResponse.success && statusResponse.status === 'active') {
         setPaymentStep(3);
-        stopTimer(); // Останавливаем таймер при успешной оплате
+        stopTimer();
         if (onPaymentComplete) {
           onPaymentComplete();
         }
@@ -110,7 +103,7 @@ const SubscriptionPendingPage: React.FC<SubscriptionPendingPageProps> = ({
         setPaymentStep(1);
       } else if (statusResponse.status === 'expired') {
         setAutoCheckError('Время ожидания оплаты истекло');
-        stopTimer(); // Останавливаем таймер при истечении срока
+        stopTimer();
       }
       
       if (onCheckStatus) {
@@ -162,7 +155,6 @@ const SubscriptionPendingPage: React.FC<SubscriptionPendingPageProps> = ({
     };
   }, [startAutoCheck, startTimer, stopAutoCheck, stopTimer]);
 
-  // Эффект для перезапуска таймера при изменении paymentStep
   useEffect(() => {
     if (paymentStep === 1) {
       startTimer();
@@ -200,7 +192,6 @@ const SubscriptionPendingPage: React.FC<SubscriptionPendingPageProps> = ({
     }
   };
 
-  // Определяем цвет таймера в зависимости от оставшегося времени
   const getTimerColor = () => {
     if (!expiresAt) return '#007D88';
     
@@ -209,12 +200,11 @@ const SubscriptionPendingPage: React.FC<SubscriptionPendingPageProps> = ({
     const difference = expiry - now;
     const minutesLeft = difference / (1000 * 60);
 
-    if (minutesLeft <= 1) return '#F44336'; // Красный - меньше минуты
-    if (minutesLeft <= 3) return '#FF9800'; // Оранжевый - меньше 3 минут
-    return '#007D88'; // Основной цвет бренда
+    if (minutesLeft <= 1) return '#F44336';
+    if (minutesLeft <= 3) return '#FF9800';
+    return '#007D88';
   };
 
-  // Получаем цвет фона для таймера
   const getTimerBackgroundColor = () => {
     if (!expiresAt) return '#E8F4F5';
     
@@ -232,35 +222,42 @@ const SubscriptionPendingPage: React.FC<SubscriptionPendingPageProps> = ({
     <div style={{
       display: 'flex',
       justifyContent: 'center',
-      alignItems: 'center',
+      alignItems: 'flex-start',
       minHeight: '100vh',
       backgroundColor: '#f5f5f5',
+      padding: '12px',
+      boxSizing: 'border-box'
     }}>
       <div style={{
         maxWidth: '600px',
         width: '100%',
         backgroundColor: 'white',
         borderRadius: '20px',
-        padding: '40px',
+        padding: '24px 16px',
         boxShadow: '0 20px 60px rgba(0,0,0,0.1)',
-        position: 'relative'
+        position: 'relative',
+        margin: '12px 0'
       }}>
-        {/* Кнопка отмены в углу */}
+        {/* Кнопка отмены для десктопа (только на экранах шире 768px) */}
         {paymentStep === 1 && !showCancelConfirm && (
           <button
             onClick={() => setShowCancelConfirm(true)}
+            className="desktop-cancel-button"
             style={{
               position: 'absolute',
-              top: '20px',
-              right: '20px',
+              top: '12px',
+              right: '12px',
               backgroundColor: 'transparent',
               color: '#999',
               border: '1px solid #ddd',
-              padding: '8px 16px',
+              padding: '6px 12px',
               borderRadius: '20px',
-              fontSize: '14px',
+              fontSize: '13px',
               cursor: 'pointer',
-              transition: 'all 0.3s'
+              transition: 'all 0.3s',
+              zIndex: 10,
+              minHeight: '36px',
+              minWidth: '80px'
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.backgroundColor = '#f5f5f5';
@@ -287,29 +284,34 @@ const SubscriptionPendingPage: React.FC<SubscriptionPendingPageProps> = ({
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            zIndex: 1000
+            zIndex: 1000,
+            padding: '16px',
+            boxSizing: 'border-box'
           }}>
             <div style={{
               backgroundColor: 'white',
               borderRadius: '16px',
-              padding: '30px',
+              padding: '24px 20px',
               maxWidth: '400px',
-              width: '90%',
-              textAlign: 'center'
+              width: '100%',
+              textAlign: 'center',
+              maxHeight: '90vh',
+              overflowY: 'auto'
             }}>
               <h3 style={{ 
                 color: '#333', 
-                marginBottom: '15px',
-                fontSize: '20px'
+                marginBottom: '12px',
+                fontSize: '20px',
+                lineHeight: '1.4'
               }}>
                 Отменить оформление?
               </h3>
 
               <p style={{ 
                 color: '#666', 
-                marginBottom: '25px',
-                fontSize: '14px',
-                lineHeight: '1.6'
+                marginBottom: '24px',
+                fontSize: '15px',
+                lineHeight: '1.5'
               }}>
                 Вы уверены, что хотите отменить оформление подписки? 
                 Вам придется начать заново.
@@ -330,23 +332,25 @@ const SubscriptionPendingPage: React.FC<SubscriptionPendingPageProps> = ({
 
               <div style={{
                 display: 'flex',
+                flexDirection: 'column',
                 gap: '10px'
               }}>
                 <button
                   onClick={handleCancelSubscription}
                   disabled={isCancelling}
                   style={{
-                    flex: 1,
+                    width: '100%',
                     backgroundColor: '#F44336',
                     color: 'white',
                     border: 'none',
-                    padding: '12px',
+                    padding: '14px',
                     borderRadius: '8px',
-                    fontSize: '14px',
+                    fontSize: '16px',
                     fontWeight: 'bold',
                     cursor: isCancelling ? 'not-allowed' : 'pointer',
                     opacity: isCancelling ? 0.7 : 1,
-                    transition: 'background-color 0.3s'
+                    transition: 'background-color 0.3s',
+                    minHeight: '48px'
                   }}
                   onMouseEnter={(e) => {
                     if (!isCancelling) {
@@ -369,16 +373,17 @@ const SubscriptionPendingPage: React.FC<SubscriptionPendingPageProps> = ({
                   }}
                   disabled={isCancelling}
                   style={{
-                    flex: 1,
+                    width: '100%',
                     backgroundColor: '#f5f5f5',
                     color: '#666',
                     border: 'none',
-                    padding: '12px',
+                    padding: '14px',
                     borderRadius: '8px',
-                    fontSize: '14px',
+                    fontSize: '16px',
                     cursor: isCancelling ? 'not-allowed' : 'pointer',
                     opacity: isCancelling ? 0.5 : 1,
-                    transition: 'background-color 0.3s'
+                    transition: 'background-color 0.3s',
+                    minHeight: '48px'
                   }}
                   onMouseEnter={(e) => {
                     if (!isCancelling) {
@@ -399,11 +404,16 @@ const SubscriptionPendingPage: React.FC<SubscriptionPendingPageProps> = ({
         )}
 
         {/* Заголовок */}
-        <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+        <div style={{ 
+          textAlign: 'center', 
+          marginBottom: '24px',
+        }}>
           <h1 style={{ 
             color: '#333', 
-            marginBottom: '10px',
-            fontSize: '28px'
+            marginBottom: '8px',
+            fontSize: '24px',
+            lineHeight: '1.3',
+            padding: '0 8px'
           }}>
             {paymentStep === 1 && 'Ожидание оплаты'}
             {paymentStep === 2 && 'Подтверждение платежа'}
@@ -412,8 +422,10 @@ const SubscriptionPendingPage: React.FC<SubscriptionPendingPageProps> = ({
 
           <p style={{ 
             color: '#666', 
-            fontSize: '16px',
-            lineHeight: '1.6'
+            fontSize: '15px',
+            lineHeight: '1.5',
+            padding: '0 12px',
+            margin: 0
           }}>
             {paymentStep === 1 && 'Мы перенаправили вас на страницу оплаты. Пожалуйста, завершите платеж.'}
             {paymentStep === 2 && 'Платёж обрабатывается банком. Обычно это занимает несколько секунд.'}
@@ -425,15 +437,16 @@ const SubscriptionPendingPage: React.FC<SubscriptionPendingPageProps> = ({
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
-          marginBottom: '40px',
-          position: 'relative'
+          marginBottom: '32px',
+          position: 'relative',
+          padding: '0 4px'
         }}>
           {/* Линия прогресса */}
           <div style={{
             position: 'absolute',
             top: '15px',
-            left: '15%',
-            right: '15%',
+            left: '18%',
+            right: '18%',
             height: '2px',
             backgroundColor: '#E0E0E0',
             zIndex: 1
@@ -454,13 +467,13 @@ const SubscriptionPendingPage: React.FC<SubscriptionPendingPageProps> = ({
             flex: 1
           }}>
             <div style={{
-              width: '30px',
-              height: '30px',
+              width: '32px',
+              height: '32px',
               borderRadius: '50%',
               backgroundColor: getStepStatus(1) === 'completed' ? '#007D88' : 
                              getStepStatus(1) === 'current' ? '#007D88' : '#E0E0E0',
               border: getStepStatus(1) === 'current' ? '3px solid #007D88' : 'none',
-              margin: '0 auto 10px',
+              margin: '0 auto 8px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -472,7 +485,7 @@ const SubscriptionPendingPage: React.FC<SubscriptionPendingPageProps> = ({
             </div>
             <div style={{
               color: getStepStatus(1) === 'current' ? '#007D88' : '#999',
-              fontSize: '12px',
+              fontSize: '11px',
               fontWeight: getStepStatus(1) === 'current' ? 'bold' : 'normal'
             }}>
               Начало
@@ -487,13 +500,13 @@ const SubscriptionPendingPage: React.FC<SubscriptionPendingPageProps> = ({
             flex: 1
           }}>
             <div style={{
-              width: '30px',
-              height: '30px',
+              width: '32px',
+              height: '32px',
               borderRadius: '50%',
               backgroundColor: getStepStatus(2) === 'completed' ? '#007D88' : 
                              getStepStatus(2) === 'current' ? 'white' : '#E0E0E0',
               border: getStepStatus(2) === 'current' ? '3px solid #007D88' : 'none',
-              margin: '0 auto 10px',
+              margin: '0 auto 8px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -506,7 +519,7 @@ const SubscriptionPendingPage: React.FC<SubscriptionPendingPageProps> = ({
             </div>
             <div style={{
               color: getStepStatus(2) === 'current' ? '#007D88' : '#999',
-              fontSize: '12px',
+              fontSize: '11px',
               fontWeight: getStepStatus(2) === 'current' ? 'bold' : 'normal'
             }}>
               Подтверждение
@@ -521,13 +534,13 @@ const SubscriptionPendingPage: React.FC<SubscriptionPendingPageProps> = ({
             flex: 1
           }}>
             <div style={{
-              width: '30px',
-              height: '30px',
+              width: '32px',
+              height: '32px',
               borderRadius: '50%',
               backgroundColor: getStepStatus(3) === 'completed' ? '#007D88' : 
                              getStepStatus(3) === 'current' ? 'white' : '#E0E0E0',
               border: getStepStatus(3) === 'current' ? '3px solid #007D88' : 'none',
-              margin: '0 auto 10px',
+              margin: '0 auto 8px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -540,7 +553,7 @@ const SubscriptionPendingPage: React.FC<SubscriptionPendingPageProps> = ({
             </div>
             <div style={{
               color: getStepStatus(3) === 'current' ? '#007D88' : '#999',
-              fontSize: '12px',
+              fontSize: '11px',
               fontWeight: getStepStatus(3) === 'current' ? 'bold' : 'normal'
             }}>
               Завершено
@@ -552,12 +565,16 @@ const SubscriptionPendingPage: React.FC<SubscriptionPendingPageProps> = ({
         <div style={{
           backgroundColor: '#F9FAFA',
           borderRadius: '12px',
-          padding: '20px',
-          marginBottom: '30px'
+          padding: '20px 16px',
+          marginBottom: '24px'
         }}>
           {/* Ссылка для оплаты */}
-          <div style={{ marginBottom: '20px' }}>
-            <div style={{ color: '#999', fontSize: '14px', marginBottom: '5px' }}>
+          <div style={{ marginBottom: '16px' }}>
+            <div style={{ 
+              color: '#999', 
+              fontSize: '13px', 
+              marginBottom: '8px' 
+            }}>
               Ссылка для оплаты
             </div>
             <a 
@@ -567,13 +584,15 @@ const SubscriptionPendingPage: React.FC<SubscriptionPendingPageProps> = ({
               style={{
                 color: '#007D88',
                 textDecoration: 'none',
-                fontSize: '16px',
+                fontSize: '14px',
                 wordBreak: 'break-all',
-                display: 'inline-block',
-                padding: '8px 16px',
+                display: 'block',
+                padding: '12px 16px',
                 backgroundColor: '#E8F4F5',
                 borderRadius: '8px',
-                transition: 'background-color 0.3s'
+                transition: 'background-color 0.3s',
+                lineHeight: '1.5',
+                minHeight: '44px'
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = '#D1E9EB';
@@ -590,33 +609,61 @@ const SubscriptionPendingPage: React.FC<SubscriptionPendingPageProps> = ({
           {paymentStep === 1 && expiresAt && timeLeft !== '00:00' && (
             <div style={{
               borderTop: '1px solid #E0E0E0',
-              paddingTop: '20px'
+              paddingTop: '16px'
             }}>
               <div style={{ 
                 color: '#666', 
-                fontSize: '14px', 
-                marginBottom: '10px',
+                fontSize: '13px', 
+                marginBottom: '8px',
                 textAlign: 'center'
               }}>
                 Осталось времени на оплату
               </div>
               <div style={{
                 backgroundColor: getTimerBackgroundColor(),
-                padding: '15px',
+                padding: '16px 12px',
                 borderRadius: '12px',
                 textAlign: 'center'
               }}>
                 <div style={{
-                  fontSize: '48px',
+                  fontSize: '42px',
                   fontWeight: 'bold',
                   color: getTimerColor(),
                   fontFamily: 'monospace',
                   lineHeight: 1.2,
-                  letterSpacing: '4px'
+                  letterSpacing: '2px'
                 }}>
                   {timeLeft}
                 </div>
               </div>
+              {paymentStep === 1 && !showCancelConfirm && (
+                <button
+                  onClick={() => setShowCancelConfirm(true)}
+                  className="mobile-cancel-button"
+                  style={{
+                    width: '100%',
+                    margin: '16px 0 0px 0px',
+                    backgroundColor: '#F44336',
+                    color: 'white',
+                    border: 'none',
+                    padding: '14px',
+                    borderRadius: '8px',
+                    fontSize: '16px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.3s',
+                    zIndex: 10,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#D32F2F';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#F44336';
+                  }}
+                >
+                  ✕ Отменить оформление
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -625,11 +672,12 @@ const SubscriptionPendingPage: React.FC<SubscriptionPendingPageProps> = ({
           <div style={{
             backgroundColor: '#FFEBEE',
             color: '#F44336',
-            padding: '12px',
+            padding: '12px 16px',
             borderRadius: '8px',
-            marginBottom: '20px',
+            marginBottom: '16px',
             fontSize: '14px',
-            textAlign: 'center'
+            textAlign: 'center',
+            lineHeight: '1.5'
           }}>
             {autoCheckError}
           </div>
@@ -637,8 +685,8 @@ const SubscriptionPendingPage: React.FC<SubscriptionPendingPageProps> = ({
 
         {paymentStep === 2 && (
           <div style={{
-            marginTop: '30px',
-            padding: '20px',
+            marginTop: '24px',
+            padding: '16px',
             backgroundColor: '#E3F2FD',
             borderRadius: '12px',
             textAlign: 'center'
@@ -646,7 +694,8 @@ const SubscriptionPendingPage: React.FC<SubscriptionPendingPageProps> = ({
             <p style={{ 
               color: '#1976D2', 
               fontSize: '14px',
-              margin: 0
+              margin: 0,
+              lineHeight: '1.5'
             }}>
               Идёт автоматическая проверка статуса каждые 5 секунд.
               Платёж обрабатывается банком. Обычно это занимает несколько секунд.
@@ -662,6 +711,30 @@ const SubscriptionPendingPage: React.FC<SubscriptionPendingPageProps> = ({
         @keyframes pulse {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.3; }
+        }
+        
+        /* Десктопная кнопка видна только на экранах шире 768px */
+        @media (min-width: 769px) {
+          .mobile-cancel-button {
+            display: none !important;
+          }
+        }
+        
+        /* Мобильная кнопка видна только на экранах до 768px */
+        @media (max-width: 768px) {
+          .desktop-cancel-button {
+            display: none !important;
+          }
+          
+          .mobile-cancel-button {
+            display: block !important;
+          }
+          
+          /* Предотвращение масштабирования при двойном тапе */
+          * {
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+          }
         }
       `}</style>
     </div>
