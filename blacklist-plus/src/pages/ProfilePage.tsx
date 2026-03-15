@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authStorage } from 'waypay_react_library';
 import SubscriptionBlock from '../components/subscribe/SubscriptionBlock';
-import { subscriptionService } from '../api/Subscription/SubscriptionService';
 
 interface ProfilePageProps {
   userName: string;
@@ -32,7 +31,6 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
     endDate: subscriptionEndDate,
     tariffType: 'blacklist_plus'
   });
-  const [isLoading, setIsLoading] = useState(false);
 
   // Синхронизируем данные при изменении пропсов
   useEffect(() => {
@@ -76,19 +74,6 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
       year: 'numeric'
     });
   };
-
-  if (isLoading) {
-    return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '300px' 
-      }}>
-        Загрузка...
-      </div>
-    );
-  }
 
   return (
     <div style={{ 

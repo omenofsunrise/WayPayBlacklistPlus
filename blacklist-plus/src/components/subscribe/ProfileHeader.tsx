@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { authStorage } from 'waypay_react_library';
 
 interface ProfileHeaderProps {
   name: string;
@@ -20,14 +21,14 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ name, phone }) => {
   }, []);
 
   const handleLogout = () => {
-    window.location.reload();
+    authStorage.logout();
+      window.location.reload();
   };
 
   const formatPhone = (phone: string) => {
     return phone.replace(/(\d{1})(\d{3})(\d{3})(\d{2})(\d{2})/, '$1 ($2) $3-$4-$5');
   };
 
-  // Мобильная версия
   if (isMobile) {
     return (
       <div style={{
