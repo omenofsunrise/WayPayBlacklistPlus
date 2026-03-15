@@ -1,6 +1,6 @@
 export const NotModeratedMessage = () => {
-  const whatsappPhone = "+7 (962) 206-43-99";
-  const callPhone = "+7 (919) 410-70-30";
+  const whatsappPhone = "+7 (989) 924-24-24";
+  const callPhone = "+7 (989) 920-20-20";
   
   return (
     <div style={{

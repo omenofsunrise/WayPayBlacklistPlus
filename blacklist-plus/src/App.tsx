@@ -10,9 +10,20 @@ import { NotModeratedMessage } from "./components/Moderation";
 import type { TariffType } from "./api/Subscription/subscription";
 import { subscriptionService } from "./api/Subscription/SubscriptionService";
 import SubscriptionPage from "./pages/SubscriptionPage";
+import SubscriptionPendingPage from "./components/subscribe/SubscriptionPending";
 
 const SubscriptionGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [hasActiveSubscription, setHasActiveSubscription] = useState<boolean | null>(null);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<{
+    hasActive: boolean;
+    hasPending: boolean;
+    pendingData?: {
+      payment_url: string;
+      expires_at: string;
+    };
+  }>({
+    hasActive: false,
+    hasPending: false
+  });
   const [isChecking, setIsChecking] = useState(true);
   const [tariffType] = useState<TariffType>('blacklist_plus');
   const [userData, setUserData] = useState<{ name: string; phone: string }>({
@@ -41,32 +52,65 @@ const SubscriptionGuard: React.FC<{ children: React.ReactNode }> = ({ children }
         });
       }
       
-      await checkSubscription();
+      await checkSubscriptionStatus();
     } catch (error) {
       console.error('Ошибка при загрузке данных пользователя:', error);
       setUserData({
         name: "Пользователь",
         phone: "",
       });
-      await checkSubscription();
+      await checkSubscriptionStatus();
     }
   };
 
-  const checkSubscription = async () => {
+  const checkSubscriptionStatus = async () => {
     try {
       setIsChecking(true);
-      const isActive = await subscriptionService.isActive(tariffType);
-      setHasActiveSubscription(isActive);
+      
+      // Получаем статус подписки через сервис
+      const status = await subscriptionService.getStatus(tariffType);
+      
+      if (status.success) {
+        if (status.status === 'active') {
+          setSubscriptionStatus({
+            hasActive: true,
+            hasPending: false
+          });
+        } else if (status.status === 'pending') {
+          setSubscriptionStatus({
+            hasActive: false,
+            hasPending: true,
+            pendingData: {
+              payment_url: status.payment_url!,
+              expires_at: status.expires_at!
+            }
+          });
+        } else {
+          setSubscriptionStatus({
+            hasActive: false,
+            hasPending: false
+          });
+        }
+      } else {
+        setSubscriptionStatus({
+          hasActive: false,
+          hasPending: false
+        });
+      }
     } catch (error) {
-      console.error('Ошибка при проверке подписки:', error);
-      setHasActiveSubscription(false);
+      console.error('Ошибка при проверке статуса подписки:', error);
+      setSubscriptionStatus({
+        hasActive: false,
+        hasPending: false
+      });
     } finally {
       setIsChecking(false);
     }
   };
 
   const handlePaymentSuccess = () => {
-    checkSubscription();
+    // После успешной оплаты проверяем статус снова
+    checkSubscriptionStatus();
   };
 
   if (isChecking) {
@@ -82,7 +126,18 @@ const SubscriptionGuard: React.FC<{ children: React.ReactNode }> = ({ children }
     );
   }
 
-  if (!hasActiveSubscription) {
+  // Если есть pending подписка, показываем страницу ожидания оплаты
+  if (subscriptionStatus.hasPending && subscriptionStatus.pendingData) {
+    return (
+      <SubscriptionPendingPage 
+        paymentUrl={subscriptionStatus.pendingData.payment_url}
+        expiresAt={subscriptionStatus.pendingData.expires_at}
+      />
+    );
+  }
+
+  // Если нет активной подписки, показываем страницу оформления
+  if (!subscriptionStatus.hasActive) {
     return (
       <SubscriptionPage 
         tariffType={tariffType}
@@ -93,6 +148,7 @@ const SubscriptionGuard: React.FC<{ children: React.ReactNode }> = ({ children }
     );
   }
 
+  // Если есть активная подписка, показываем контент
   return <>{children}</>;
 };
 
