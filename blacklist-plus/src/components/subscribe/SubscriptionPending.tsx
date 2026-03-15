@@ -29,15 +29,6 @@ const SubscriptionPendingPage: React.FC<SubscriptionPendingPageProps> = ({
   const checkIntervalRef = useRef<number | null>(null);
   const timerIntervalRef = useRef<number | null>(null);
 
-  // Функция для склонения слова "минута"
-  const getMinutesWord = useCallback((minutes: number): string => {
-    if (minutes >= 11 && minutes <= 19) return 'минут';
-    const lastDigit = minutes % 10;
-    if (lastDigit === 1) return 'минута';
-    if (lastDigit >= 2 && lastDigit <= 4) return 'минуты';
-    return 'минут';
-  }, []);
-
   // Функция для форматирования оставшегося времени
   const formatTimeLeft = useCallback((expiryDate: string) => {
     const now = new Date().getTime();
