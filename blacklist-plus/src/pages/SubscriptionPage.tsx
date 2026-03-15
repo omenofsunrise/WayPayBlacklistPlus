@@ -62,7 +62,6 @@ const SubscriptionPage: React.FC<SubscriptionPageProps> = ({
     <div style={{
       padding: 0,
       width: "100%",
-      minHeight: "100vh",
       height: "100%",
       overflowY: "auto",
       overflowX: "hidden",

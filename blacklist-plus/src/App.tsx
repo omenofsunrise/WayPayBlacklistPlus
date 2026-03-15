@@ -11,6 +11,7 @@ import type { TariffType } from "./api/Subscription/subscription";
 import { subscriptionService } from "./api/Subscription/SubscriptionService";
 import SubscriptionPage from "./pages/SubscriptionPage";
 import SubscriptionPendingPage from "./components/subscribe/SubscriptionPending";
+import ProfileHeader from "./components/subscribe/ProfileHeader";
 
 const SubscriptionGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [subscriptionStatus, setSubscriptionStatus] = useState<{
@@ -67,7 +68,6 @@ const SubscriptionGuard: React.FC<{ children: React.ReactNode }> = ({ children }
     try {
       setIsChecking(true);
       
-      // Получаем статус подписки через сервис
       const status = await subscriptionService.getStatus(tariffType);
       
       if (status.success) {
@@ -109,7 +109,6 @@ const SubscriptionGuard: React.FC<{ children: React.ReactNode }> = ({ children }
   };
 
   const handlePaymentSuccess = () => {
-    // После успешной оплаты проверяем статус снова
     checkSubscriptionStatus();
   };
 
@@ -126,7 +125,6 @@ const SubscriptionGuard: React.FC<{ children: React.ReactNode }> = ({ children }
     );
   }
 
-  // Если есть pending подписка, показываем страницу ожидания оплаты
   if (subscriptionStatus.hasPending && subscriptionStatus.pendingData) {
     return (
       <SubscriptionPendingPage 
@@ -136,7 +134,6 @@ const SubscriptionGuard: React.FC<{ children: React.ReactNode }> = ({ children }
     );
   }
 
-  // Если нет активной подписки, показываем страницу оформления
   if (!subscriptionStatus.hasActive) {
     return (
       <SubscriptionPage 
@@ -148,7 +145,6 @@ const SubscriptionGuard: React.FC<{ children: React.ReactNode }> = ({ children }
     );
   }
 
-  // Если есть активная подписка, показываем контент
   return <>{children}</>;
 };
 
@@ -159,6 +155,10 @@ function App() {
   const [collapsed, setCollapsed] = useState<boolean>(false);
   const [selectedSideMenuItem, setSelectedSideMenuItem] = useState<string | null>(null);
   const [selectedTopMenuItem, setSelectedTopMenuItem] = useState<string | null>(null);
+  const [userData, setUserData] = useState<{ name: string; phone: string }>({
+    name: "",
+    phone: "",
+  });
 
   useEffect(() => {
     checkAuth();
@@ -167,11 +167,22 @@ function App() {
   const checkAuth = async () => {
     try {
       setIsLoading(true);
-      const sessionInfo = await getSessionInfo() as { is_moderated?: boolean } | null;
+      const sessionInfo = await getSessionInfo() as { 
+        client?: { 
+          name?: string; 
+          phone?: string;
+        }
+        is_moderated?: boolean;
+      } | null;
       
       if (sessionInfo) {
         setIsAuthenticated(true);
         setIsModerated(sessionInfo?.is_moderated ?? true);
+        
+        setUserData({
+          name: sessionInfo.client?.name || "Пользователь",
+          phone: sessionInfo.client?.phone || "",
+        });
       } else {
         setIsAuthenticated(false);
         setIsModerated(true);
@@ -209,7 +220,31 @@ function App() {
   }
 
   if (!isModerated) {
-    return <NotModeratedMessage />;
+    return (
+      <div style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: "100%",
+        height: "100%",
+        overflowY: "auto",
+        overflowX: "hidden",
+        WebkitOverflowScrolling: "touch",
+      }}>
+        <div style={{
+          maxWidth: '1200px',
+          margin: '0 auto',
+          padding: '20px',
+          minHeight: "100vh",
+          boxSizing: "border-box",
+        }}>
+          <ProfileHeader name={userData.name} phone={userData.phone} />
+          <NotModeratedMessage />
+        </div>
+      </div>
+    );
   }
 
   return (

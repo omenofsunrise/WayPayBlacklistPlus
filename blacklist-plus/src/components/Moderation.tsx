@@ -6,82 +6,140 @@ export const NotModeratedMessage = () => {
     <div style={{
       display: 'flex',
       flexDirection: 'column',
-      justifyContent: 'center',
+      justifyContent: 'top',
       alignItems: 'center',
-      height: '100vh',
-      textAlign: 'center',
-      padding: '20px',
-      backgroundColor: '#f5f5f5'
+      padding: '0 16px 16px',
+      boxSizing: 'border-box'
     }}>
       <div style={{
-        maxWidth: '500px',
-        padding: '40px',
+        width: '100%',
+        maxWidth: '400px',
+        padding: '24px 20px',
         backgroundColor: 'white',
-        borderRadius: '12px',
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+        borderRadius: '20px',
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
       }}>
-        <h1 style={{ color: '#333', marginBottom: '20px' }}>
-          Аккаунт нужно активировать
+        <h1 style={{ 
+          color: '#333', 
+          marginBottom: '16px',
+          fontSize: 'clamp(20px, 6vw, 28px)',
+          lineHeight: '1.3',
+          textAlign: "center"
+        }}>
+          Нужно активировать аккаунт
         </h1>
+        
         <p style={{ 
           color: '#666', 
-          fontSize: '16px', 
-          lineHeight: '1.6',
-          marginBottom: '30px'
+          fontSize: 'clamp(14px, 4vw, 16px)', 
+          lineHeight: '1.5',
+          marginBottom: '8px'
         }}>
           Пожалуйста, свяжитесь с нашей поддержкой для активации
         </p>
         
+        <p style={{ 
+          color: '#666', 
+          fontSize: 'clamp(18px, 5vw, 22px)', 
+          lineHeight: '1.4',
+          marginBottom: '24px',
+          fontWeight: 'bold'
+        }}>
+          Ибрагим
+        </p>
+
         <div style={{
           display: 'flex',
           flexDirection: 'column',
-          gap: '15px'
+          gap: '12px'
         }}>
           {/* WhatsApp */}
-          <div style={{
-            padding: '15px',
-            backgroundColor: '#e8f5e9',
-            borderRadius: '8px',
-            border: '1px solid #c8e6c9'
-          }}>
-            <span style={{ color: '#555', fontWeight: 'bold' }}>WhatsApp:</span>
-            <a 
-              href={`https://wa.me/${whatsappPhone.replace(/[^\d+]/g, '')}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'block',
-                color: '#25D366',
-                fontSize: '20px',
-                fontWeight: 'bold',
-                textDecoration: 'none',
-                marginTop: '10px'
-              }}
-            >
+          <a 
+            href={`https://wa.me/${whatsappPhone.replace(/[^\d+]/g, '')}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              padding: '16px',
+              backgroundColor: '#e8f5e9',
+              borderRadius: '12px',
+              border: '1px solid #c8e6c9',
+              textDecoration: 'none',
+              cursor: 'pointer',
+              WebkitTapHighlightColor: 'transparent',
+              transition: 'opacity 0.2s',
+              display: 'block'
+            }}
+            onClick={(e) => {
+              // Улучшение для мобильных устройств
+              if (window.innerWidth <= 768) {
+                e.currentTarget.style.opacity = '0.7';
+                setTimeout(() => {
+                  e.currentTarget.style.opacity = '1';
+                }, 200);
+              }
+            }}
+          >
+            <span style={{ 
+              color: '#555', 
+              fontWeight: 'bold',
+              fontSize: 'clamp(14px, 4vw, 16px)',
+              display: 'block',
+              marginBottom: '8px'
+            }}>
+              WhatsApp:
+            </span>
+            <span style={{
+              display: 'block',
+              color: '#25D366',
+              fontSize: 'clamp(18px, 5vw, 22px)',
+              fontWeight: 'bold',
+              wordBreak: 'break-word'
+            }}>
               {whatsappPhone}
-            </a>
-          </div>
+            </span>
+          </a>
 
-          <div style={{
-            padding: '15px',
-            backgroundColor: '#007D88',
-            borderRadius: '8px',
-          }}>
-            <span style={{ color: 'white', fontWeight: 'bold' }}>Телефон для звонков:</span>
-            <a 
-              href={`tel:${callPhone.replace(/[^\d+]/g, '')}`}
-              style={{
-                display: 'block',
-                color: 'white',
-                fontSize: '20px',
-                fontWeight: 'bold',
-                textDecoration: 'none',
-                marginTop: '10px'
-              }}
-            >
+          {/* Телефон */}
+          <a 
+            href={`tel:${callPhone.replace(/[^\d+]/g, '')}`}
+            style={{
+              padding: '16px',
+              backgroundColor: '#007D88',
+              borderRadius: '12px',
+              textDecoration: 'none',
+              cursor: 'pointer',
+              WebkitTapHighlightColor: 'transparent',
+              transition: 'opacity 0.2s',
+              display: 'block'
+            }}
+            onClick={(e) => {
+              if (window.innerWidth <= 768) {
+                e.currentTarget.style.opacity = '0.7';
+                setTimeout(() => {
+                  e.currentTarget.style.opacity = '1';
+                }, 200);
+              }
+            }}
+          >
+            <span style={{ 
+              color: 'white', 
+              fontWeight: 'bold',
+              fontSize: 'clamp(14px, 4vw, 16px)',
+              display: 'block',
+              marginBottom: '8px'
+            }}>
+              Телефон для звонков:
+            </span>
+            <span style={{
+              display: 'block',
+              color: 'white',
+              fontSize: 'clamp(18px, 5vw, 22px)',
+              fontWeight: 'bold',
+              wordBreak: 'break-word'
+            }}>
               {callPhone}
-            </a>
-          </div>
+            </span>
+          </a>
         </div>
       </div>
     </div>
