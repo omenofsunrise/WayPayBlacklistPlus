@@ -13,10 +13,12 @@ import SubscriptionPage from "./pages/SubscriptionPage";
 import SubscriptionPendingPage from "./components/subscribe/SubscriptionPending";
 import ProfileHeader from "./components/subscribe/ProfileHeader";
 
-const SubscriptionGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const SubscriptionGuard: React.FC<{ children: React.ReactNode; onSubscriptionCheck: (status: any) => void }> = 
+  ({ children, onSubscriptionCheck }) => {
   const [subscriptionStatus, setSubscriptionStatus] = useState<{
     hasActive: boolean;
     hasPending: boolean;
+    endDate?: string;
     pendingData?: {
       payment_url: string;
       expires_at: string;
@@ -72,37 +74,48 @@ const SubscriptionGuard: React.FC<{ children: React.ReactNode }> = ({ children }
       
       if (status.success) {
         if (status.status === 'active') {
-          setSubscriptionStatus({
+          const newStatus = {
             hasActive: true,
-            hasPending: false
-          });
+            hasPending: false,
+            endDate: status.end_at
+          };
+          setSubscriptionStatus(newStatus);
+          onSubscriptionCheck(newStatus);
         } else if (status.status === 'pending') {
-          setSubscriptionStatus({
+          const newStatus = {
             hasActive: false,
             hasPending: true,
             pendingData: {
               payment_url: status.payment_url!,
               expires_at: status.expires_at!
             }
-          });
+          };
+          setSubscriptionStatus(newStatus);
+          onSubscriptionCheck(newStatus);
         } else {
-          setSubscriptionStatus({
+          const newStatus = {
             hasActive: false,
             hasPending: false
-          });
+          };
+          setSubscriptionStatus(newStatus);
+          onSubscriptionCheck(newStatus);
         }
       } else {
-        setSubscriptionStatus({
+        const newStatus = {
           hasActive: false,
           hasPending: false
-        });
+        };
+        setSubscriptionStatus(newStatus);
+        onSubscriptionCheck(newStatus);
       }
     } catch (error) {
       console.error('Ошибка при проверке статуса подписки:', error);
-      setSubscriptionStatus({
+      const newStatus = {
         hasActive: false,
         hasPending: false
-      });
+      };
+      setSubscriptionStatus(newStatus);
+      onSubscriptionCheck(newStatus);
     } finally {
       setIsChecking(false);
     }
@@ -159,6 +172,14 @@ function App() {
     name: "",
     phone: "",
   });
+  const [subscriptionInfo, setSubscriptionInfo] = useState<{
+    hasActive: boolean;
+    hasPending: boolean;
+    endAt?: string;
+  }>({
+    hasActive: false,
+    hasPending: false
+  });
 
   useEffect(() => {
     checkAuth();
@@ -202,6 +223,15 @@ function App() {
 
   const toggleCollapsed = () => {
     setCollapsed(prev => !prev);
+  };
+
+  const handleSubscriptionCheck = (status: any) => {
+    const formattedStatus = {
+      hasActive: status.hasActive,
+      hasPending: status.hasPending,
+      endAt: status.endDate || status.endAt
+    };
+    setSubscriptionInfo(formattedStatus);
   };
 
   if (isLoading) {
@@ -257,8 +287,14 @@ function App() {
         selectedTopMenuItem,
         setSelectedTopMenuItem,
       }}>
-        <SubscriptionGuard>
-          <Layout>
+        <SubscriptionGuard onSubscriptionCheck={handleSubscriptionCheck}>
+          <Layout 
+            userInfo={{
+              name: userData.name,
+              phone: userData.phone,
+              licenseEndDate: subscriptionInfo.endAt
+            }}
+          >
             <Routes>
               <Route path="/" element={<Navigate to="/calculator" replace />} />
               <Route path="/calculator" element={<CalculatorPage />} />
