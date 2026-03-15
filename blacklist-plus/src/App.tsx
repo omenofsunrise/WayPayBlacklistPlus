@@ -13,8 +13,11 @@ import SubscriptionPage from "./pages/SubscriptionPage";
 import SubscriptionPendingPage from "./components/subscribe/SubscriptionPending";
 import ProfileHeader from "./components/subscribe/ProfileHeader";
 
-const SubscriptionGuard: React.FC<{ children: React.ReactNode; onSubscriptionCheck: (status: any) => void }> = 
-  ({ children, onSubscriptionCheck }) => {
+const SubscriptionGuard: React.FC<{ 
+  children: React.ReactNode; 
+  onSubscriptionCheck: (status: any) => void;
+  onUserDataLoad: (data: { name: string; phone: string }) => void;
+}> = ({ children, onSubscriptionCheck, onUserDataLoad }) => {
   const [subscriptionStatus, setSubscriptionStatus] = useState<{
     hasActive: boolean;
     hasPending: boolean;
@@ -49,19 +52,23 @@ const SubscriptionGuard: React.FC<{ children: React.ReactNode; onSubscriptionChe
       } | null;
       
       if (sessionInfo) {
-        setUserData({
+        const userData = {
           name: sessionInfo.client.name || "Пользователь",
           phone: sessionInfo.client.phone || "",
-        });
+        };
+        setUserData(userData);
+        onUserDataLoad(userData);
       }
       
       await checkSubscriptionStatus();
     } catch (error) {
       console.error('Ошибка при загрузке данных пользователя:', error);
-      setUserData({
+      const userData = {
         name: "Пользователь",
         phone: "",
-      });
+      };
+      setUserData(userData);
+      onUserDataLoad(userData);
       await checkSubscriptionStatus();
     }
   };
@@ -175,7 +182,7 @@ function App() {
   const [subscriptionInfo, setSubscriptionInfo] = useState<{
     hasActive: boolean;
     hasPending: boolean;
-    endAt?: string;
+    endDate?: string;
   }>({
     hasActive: false,
     hasPending: false
@@ -226,12 +233,15 @@ function App() {
   };
 
   const handleSubscriptionCheck = (status: any) => {
-    const formattedStatus = {
+    setSubscriptionInfo({
       hasActive: status.hasActive,
       hasPending: status.hasPending,
-      endAt: status.endDate || status.endAt
-    };
-    setSubscriptionInfo(formattedStatus);
+      endDate: status.endDate
+    });
+  };
+
+  const handleUserDataLoad = (data: { name: string; phone: string }) => {
+    setUserData(data);
   };
 
   if (isLoading) {
@@ -287,19 +297,32 @@ function App() {
         selectedTopMenuItem,
         setSelectedTopMenuItem,
       }}>
-        <SubscriptionGuard onSubscriptionCheck={handleSubscriptionCheck}>
+        <SubscriptionGuard 
+          onSubscriptionCheck={handleSubscriptionCheck}
+          onUserDataLoad={handleUserDataLoad}
+        >
           <Layout 
             userInfo={{
               name: userData.name,
               phone: userData.phone,
-              licenseEndDate: subscriptionInfo.endAt
+              licenseEndDate: subscriptionInfo.endDate
             }}
           >
             <Routes>
               <Route path="/" element={<Navigate to="/calculator" replace />} />
               <Route path="/calculator" element={<CalculatorPage />} />
               <Route path="/blacklist" element={<BlackCatalogPage />} />
-              <Route path="/profile" element={<ProfilePage />} />
+              <Route 
+                path="/profile" 
+                element={
+                  <ProfilePage 
+                    userName={userData.name}
+                    userPhone={userData.phone}
+                    subscriptionEndDate={subscriptionInfo.endDate}
+                    hasActiveSubscription={subscriptionInfo.hasActive}
+                  />
+                } 
+              />
             </Routes>
           </Layout>
         </SubscriptionGuard>

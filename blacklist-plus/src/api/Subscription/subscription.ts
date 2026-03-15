@@ -15,6 +15,7 @@ export interface Subscription {
 export interface CreateSubscriptionPayload {
   days: number;
   tariff_type: TariffType;
+  promo?: boolean;
 }
 
 export interface CreateSubscriptionResponse {

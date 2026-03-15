@@ -163,7 +163,7 @@ export default Layout;
 
 const UserInfoContainer = styled.div<{ $collapsed: boolean }>`
   width: 100%;
-  padding: ${({ $collapsed }) => ($collapsed ? '12px 0' : '16px')};
+  padding: ${({ $collapsed }) => ($collapsed ? '12px 0' : '8px')};
   display: flex;
   align-items: center;
   justify-content: ${({ $collapsed }) => ($collapsed ? 'center' : 'flex-start')};

@@ -7,11 +7,15 @@ interface SubscriptionBlockProps {
   onPaymentSuccess?: () => void;
   phone?: string;
   name?: string;
+  disablePromo?: boolean;
+  title?: string;
 }
 
 const SubscriptionBlock: React.FC<SubscriptionBlockProps> = ({ 
   tariffType, 
-  onPaymentSuccess
+  onPaymentSuccess,
+  disablePromo = false,
+  title = 'Оформление подписки'
 }) => {
   const [selectedDays, setSelectedDays] = useState<number>(365);
   const [isMobile, setIsMobile] = useState(false);
@@ -35,6 +39,11 @@ const SubscriptionBlock: React.FC<SubscriptionBlockProps> = ({
   }, []);
 
   const isPromoActive = () => {
+    // Если акция отключена через пропс, сразу возвращаем false
+    if (disablePromo) {
+      return false;
+    }
+    
     const today = new Date();
     const promoEndDate = new Date('2026-04-25');
     return today <= promoEndDate;
@@ -62,6 +71,7 @@ const SubscriptionBlock: React.FC<SubscriptionBlockProps> = ({
     const result = await createOrExtend({
       days: selectedDays,
       tariff_type: tariffType,
+      promo: !disablePromo
     });
 
     if (result?.success && result.payment_url) {
@@ -120,6 +130,8 @@ const SubscriptionBlock: React.FC<SubscriptionBlockProps> = ({
     },
   };
 
+  const promoActive = isPromoActive();
+
   return (
     <div style={{
       display: 'flex',
@@ -142,7 +154,7 @@ const SubscriptionBlock: React.FC<SubscriptionBlockProps> = ({
           color: '#333',
           fontSize: mobileStyles.title.fontSize,
         }}>
-          Оформление подписки
+          {title}
         </h1>
         
         <p style={{ 
@@ -219,7 +231,7 @@ const SubscriptionBlock: React.FC<SubscriptionBlockProps> = ({
                   {plan.discount}
                 </div>
               )}
-              {plan.promoPrice && isPromoActive() && plan.days === 30 && (
+              {plan.promoPrice && promoActive && plan.days === 30 && (
                 <div style={{
                   position: 'absolute',
                   top: '-10px',
@@ -240,12 +252,12 @@ const SubscriptionBlock: React.FC<SubscriptionBlockProps> = ({
                 margin: '0 0 10px 0', 
                 color: '#333',
                 fontSize: mobileStyles.planTitle.fontSize,
-                paddingRight: plan.discount || (plan.promoPrice && isPromoActive() && plan.days === 30) ? '70px' : '0',
+                paddingRight: plan.discount || (plan.promoPrice && promoActive && plan.days === 30) ? '70px' : '0',
               }}>
                 {plan.label}
               </h3>
               
-              {plan.promoPrice && isPromoActive() && plan.days === 30 ? (
+              {plan.promoPrice && promoActive && plan.days === 30 ? (
                 <>
                   <div style={{ 
                     fontSize: mobileStyles.planPrice.fontSize, 
@@ -272,16 +284,16 @@ const SubscriptionBlock: React.FC<SubscriptionBlockProps> = ({
                   }}>
                     {plan.promoPricePerDay} ₽/день
                   </div>
-                                {plan.promoPrice && isPromoActive() && (
-                <p style={{ 
-                  color: '#FF6B6B', 
-                  fontWeight: 'bold',
-                  fontSize: isMobile ? '13px' : '14px',
-                  margin: 0,
-                }}>
-                  Акция действует до 25 апреля 2025 года
-                </p>
-              )}
+                  {promoActive && (
+                    <p style={{ 
+                      color: '#FF6B6B', 
+                      fontWeight: 'bold',
+                      fontSize: isMobile ? '13px' : '14px',
+                      margin: '5px 0 0 0',
+                    }}>
+                      Акция действует до 25 апреля 2026 года
+                    </p>
+                  )}
                 </>
               ) : (
                 <>
