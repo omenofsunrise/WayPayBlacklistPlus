@@ -12,6 +12,10 @@ const DossierContainer = styled.div`
     @media (max-width: 768px) {
         padding: 8px;
     }
+
+    @media (max-width: 480px) {
+        padding: 6px;
+    }
 `;
 
 const BackButton = styled(LibBackButton)`
@@ -43,6 +47,8 @@ const DossierHeader = styled.div`
     @media (max-width: 768px) {
         margin-top: 8px;
         padding-right: 0;
+        flex-direction: column;
+        gap: 10px;
     }
 `;
 
@@ -51,6 +57,10 @@ const ClientName = styled.h2`
     font-weight: 600;
     color: #111827;
     margin: 0;
+
+    @media (max-width: 480px) {
+        font-size: 16px;
+    }
 `;
 
 const BadgeRow = styled.div`
@@ -86,6 +96,10 @@ const DossierGrid = styled.div`
     @media (max-width: 1024px) {
         grid-template-columns: 1fr;
     }
+
+    @media (max-width: 640px) {
+        gap: 18px;
+    }
 `;
 
 const Section = styled.div`
@@ -100,6 +114,10 @@ const SectionTitle = styled.h3`
     display: flex;
     align-items: center;
     gap: 8px;
+
+    @media (max-width: 480px) {
+        font-size: 13px;
+    }
 `;
 
 const InfoGrid = styled.div`
@@ -166,6 +184,10 @@ const PassportPhotoPlaceholder = styled.div`
     &:hover {
         border-color: #007D88;
     }
+
+    @media (max-width: 480px) {
+        padding: 18px 12px;
+    }
 `;
 
 const PassportPhoto = styled.img`
@@ -175,6 +197,10 @@ const PassportPhoto = styled.img`
     border-radius: 8px;
     border: 1px solid #e5e7eb;
     cursor: pointer;
+
+    @media (max-width: 640px) {
+        max-height: 320px;
+    }
 `;
 
 const SpoilerMedia = styled.div<{ $revealed: boolean }>`
@@ -244,6 +270,11 @@ const PassportButtons = styled.div`
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
+
+    @media (max-width: 640px) {
+        flex-direction: column;
+        align-items: stretch;
+    }
 `;
 
 const PassportHint = styled.div`
@@ -265,6 +296,12 @@ const CommentsHeader = styled.div`
     align-items: center;
     justify-content: space-between;
     margin-bottom: 12px;
+
+    @media (max-width: 640px) {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
 `;
 
 const CommentList = styled.div`
@@ -278,6 +315,10 @@ const CommentCard = styled.div`
     border: 1px solid #e5e7eb;
     border-radius: 8px;
     padding: 12px 14px;
+
+    @media (max-width: 480px) {
+        padding: 10px 12px;
+    }
 `;
 
 const CommentMeta = styled.div`
@@ -307,6 +348,12 @@ const CommentImage = styled.img`
     border-radius: 8px;
     border: 1px solid #e5e7eb;
     cursor: pointer;
+
+    @media (max-width: 640px) {
+        width: 100%;
+        height: auto;
+        max-height: 280px;
+    }
 `;
 
 const CommentFile = styled.a`
@@ -350,6 +397,11 @@ const CommentFormRow = styled.div`
     align-items: center;
     gap: 12px;
     flex-wrap: wrap;
+
+    @media (max-width: 640px) {
+        flex-direction: column;
+        align-items: stretch;
+    }
 `;
 
 const CommentFileInput = styled.input`
@@ -366,6 +418,12 @@ const CommentFilePicker = styled.label`
     cursor: pointer;
     font-size: 12px;
     color: #6b7280;
+
+    @media (max-width: 640px) {
+        width: 100%;
+        justify-content: center;
+        text-align: center;
+    }
 `;
 
 const CommentError = styled.div`
@@ -378,6 +436,11 @@ const CommentActions = styled.div`
     gap: 8px;
     margin-top: 8px;
     flex-wrap: wrap;
+
+    @media (max-width: 640px) {
+        flex-direction: column;
+        align-items: stretch;
+    }
 `;
 
 const CommentWrapper = styled.div<{ $level: number }>`

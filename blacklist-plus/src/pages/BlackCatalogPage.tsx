@@ -388,7 +388,7 @@ const BlackCatalogPage = () => {
             return (
                 <EmptyStateContainer>
                     <EmptyStateIcon>📋</EmptyStateIcon>
-                    <EmptyStateTitle>Чёрный каталог</EmptyStateTitle>
+                    <EmptyStateTitle>Черный список</EmptyStateTitle>
                     <EmptyStateText>
                         Введите ФИО клиента (минимум 5 символов) или полный номер телефона для поиска в чёрном каталоге.
                     </EmptyStateText>
@@ -473,7 +473,7 @@ const BlackCatalogPage = () => {
                 <>
                     <TitleContainer style={{ position: "sticky"}}>
                         <TitleContainer style={{maxWidth: "290px"}}>
-                            <PageTitle>Чёрный каталог</PageTitle>
+                            <PageTitle>Черный список</PageTitle>
                             {searchResults && searchResults.black_catalogs.length > 0 && (
                                 <span>({searchResults.count})</span>
                             )}

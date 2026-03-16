@@ -308,7 +308,7 @@ export const BlackCatalogModal: React.FC<BlackCatalogModalProps> = ({
 
   if (!isOpen) return null;
 
-  const title = editingItem ? 'Редактировать запись' : 'Добавить запись в чёрный каталог';
+  const title = editingItem ? 'Редактировать запись' : 'Добавить в ЧС';
   const saveButtonText = editingItem ? 'Сохранить' : 'Добавить';
   const isCreate = mode === "create";
 
