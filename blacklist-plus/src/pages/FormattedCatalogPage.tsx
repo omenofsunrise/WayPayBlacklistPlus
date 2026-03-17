@@ -15,12 +15,13 @@ const texts: BlackCatalogPageContentTexts = {
     `Вы уверены, что хотите удалить ${fullname} из оформленных?`,
 };
 
-const FormattedCatalogPage = () => {
+const FormattedCatalogPage = ({ userId }: { userId: string }) => {
   return (
     <BlackCatalogPageContent
       texts={texts}
       showDebtSection
       requireDebtDate
+      userId={userId}
     />
   );
 };

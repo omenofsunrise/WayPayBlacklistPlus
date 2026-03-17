@@ -17,7 +17,7 @@ import ProfileHeader from "./components/subscribe/ProfileHeader";
 const SubscriptionGuard: React.FC<{ 
   children: React.ReactNode; 
   onSubscriptionCheck: (status: any) => void;
-  onUserDataLoad: (data: { name: string; phone: string }) => void;
+  onUserDataLoad: (data: { name: string; phone: string, id: string }) => void;
 }> = ({ children, onSubscriptionCheck, onUserDataLoad }) => {
   const [subscriptionStatus, setSubscriptionStatus] = useState<{
     hasActive: boolean;
@@ -33,9 +33,10 @@ const SubscriptionGuard: React.FC<{
   });
   const [isChecking, setIsChecking] = useState(true);
   const [tariffType] = useState<TariffType>('blacklist_plus');
-  const [userData, setUserData] = useState<{ name: string; phone: string }>({
+  const [userData, setUserData] = useState<{ name: string; phone: string, id: string }>({
     name: "",
     phone: "",
+    id: ""
   });
 
   useEffect(() => {
@@ -48,6 +49,7 @@ const SubscriptionGuard: React.FC<{
         client: { 
           name?: string; 
           phone?: string;
+          id?: string;
         }
         is_moderated?: boolean;
       } | null;
@@ -56,6 +58,7 @@ const SubscriptionGuard: React.FC<{
         const userData = {
           name: sessionInfo.client.name || "Пользователь",
           phone: sessionInfo.client.phone || "",
+          id: sessionInfo.client.id || ""
         };
         setUserData(userData);
         onUserDataLoad(userData);
@@ -67,6 +70,7 @@ const SubscriptionGuard: React.FC<{
       const userData = {
         name: "Пользователь",
         phone: "",
+        id: ""
       };
       setUserData(userData);
       onUserDataLoad(userData);
@@ -176,9 +180,10 @@ function App() {
   const [collapsed, setCollapsed] = useState<boolean>(false);
   const [selectedSideMenuItem, setSelectedSideMenuItem] = useState<string | null>(null);
   const [selectedTopMenuItem, setSelectedTopMenuItem] = useState<string | null>(null);
-  const [userData, setUserData] = useState<{ name: string; phone: string }>({
+  const [userData, setUserData] = useState<{ name: string; phone: string, id: string }>({
     name: "",
     phone: "",
+    id: ""
   });
   const [subscriptionInfo, setSubscriptionInfo] = useState<{
     hasActive: boolean;
@@ -200,6 +205,7 @@ function App() {
         client?: { 
           name?: string; 
           phone?: string;
+          id?: string
         }
         is_moderated?: boolean;
       } | null;
@@ -211,6 +217,7 @@ function App() {
         setUserData({
           name: sessionInfo.client?.name || "Пользователь",
           phone: sessionInfo.client?.phone || "",
+          id: sessionInfo.client?.id || "" 
         });
       } else {
         setIsAuthenticated(false);
@@ -241,7 +248,7 @@ function App() {
     });
   };
 
-  const handleUserDataLoad = (data: { name: string; phone: string }) => {
+  const handleUserDataLoad = (data: { name: string; phone: string, id: string }) => {
     setUserData(data);
   };
 
@@ -312,8 +319,9 @@ function App() {
             <Routes>
               <Route path="/" element={<Navigate to="/calculator" replace />} />
               <Route path="/calculator" element={<CalculatorPage />} />
-              <Route path="/blacklist" element={<BlackCatalogPage />} />
-              <Route path="/formatted" element={<FormattedCatalogPage />} />
+              <Route path="/blacklist" element={
+                <BlackCatalogPage userId={userData.id} />} />
+              <Route path="/formatted" element={<FormattedCatalogPage userId={userData.id}/>} />
               <Route 
                 path="/profile" 
                 element={

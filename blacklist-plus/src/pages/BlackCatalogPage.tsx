@@ -15,8 +15,8 @@ const texts: BlackCatalogPageContentTexts = {
     `Вы уверены, что хотите удалить ${fullname} из чёрного каталога?`,
 };
 
-const BlackCatalogPage = () => {
-  return <BlackCatalogPageContent texts={texts} showDebtSection={false} />;
+const BlackCatalogPage = ({ userId }: { userId: string }) => {
+  return <BlackCatalogPageContent texts={texts} showDebtSection={false} userId={userId}/>;
 };
 
 export default BlackCatalogPage;

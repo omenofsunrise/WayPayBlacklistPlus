@@ -102,6 +102,7 @@ class BlackCatalogService {
       id: string;
       content: string;
       created_at: string;
+      user_id: string;
       author?: {
         full_name?: string;
         avatar_url?: string;

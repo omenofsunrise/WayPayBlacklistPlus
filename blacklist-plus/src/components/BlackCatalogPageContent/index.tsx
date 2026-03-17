@@ -27,6 +27,7 @@ import {
 
 const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
   texts,
+  userId,
   showDebtSection = true,
   requireDebtDate = false,
 }) => {
@@ -310,6 +311,7 @@ const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
           {/* Досье клиента вынесено в отдельный компонент для читаемости. */}
           <BlackCatalogDossier
             item={selectedItemDossier}
+            userId={userId}
             onBack={() => setSelectedItemDossier(null)}
             onRefresh={async (id) => {
               const params: { name?: string } = {};

@@ -455,9 +455,10 @@ type BlackCatalogDossierProps = {
     item: BlackCatalogItem;
     onBack: () => void;
     onRefresh?: (id: number) => Promise<void> | void;
+    userId: string;
 };
 
-const BlackCatalogDossier = ({ item, onBack, onRefresh }: BlackCatalogDossierProps) => {
+const BlackCatalogDossier = ({ item, onBack, onRefresh, userId }: BlackCatalogDossierProps) => {
     const mainInputRef = useRef<HTMLInputElement | null>(null);
     const registrationInputRef = useRef<HTMLInputElement | null>(null);
     const [mainPassportUrl, setMainPassportUrl] = useState<string | null>(null);
@@ -476,6 +477,7 @@ const BlackCatalogDossier = ({ item, onBack, onRefresh }: BlackCatalogDossierPro
         id: string;
         content: string;
         created_at: string;
+        user_id: string;
         author?: { full_name?: string; avatar_url?: string };
         files?: Array<{ id: string; filename: string; url?: string }>;
         parent_id?: string;
@@ -743,10 +745,12 @@ const BlackCatalogDossier = ({ item, onBack, onRefresh }: BlackCatalogDossierPro
         id: string;
         content: string;
         created_at: string;
+        user_id: string;
         author?: { full_name?: string; avatar_url?: string };
         files?: Array<{ id: string; filename: string; url?: string }>;
         parent_id?: string;
     }) => {
+        const canModify = comment.user_id === userId;
         return (
             <CommentWrapper key={comment.id} $level={0}>
                 <CommentCard>
@@ -806,14 +810,16 @@ const BlackCatalogDossier = ({ item, onBack, onRefresh }: BlackCatalogDossierPro
                             ))}
                         </CommentFiles>
                     )}
-                    <CommentActions>
-                        <InlineButton onClick={() => handleStartEdit(comment.id, comment.content)}>
-                            Редактировать
-                        </InlineButton>
-                        <InlineButton onClick={() => handleDeleteComment(comment.id)}>
-                            Удалить
-                        </InlineButton>
-                    </CommentActions>
+                    {canModify && (
+                        <CommentActions>
+                            <InlineButton onClick={() => handleStartEdit(comment.id, comment.content)}>
+                                Редактировать
+                            </InlineButton>
+                            <InlineButton onClick={() => handleDeleteComment(comment.id)}>
+                                Удалить
+                            </InlineButton>
+                        </CommentActions>
+                    )}
                 </CommentCard>
             </CommentWrapper>
         );
