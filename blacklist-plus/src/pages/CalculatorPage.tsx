@@ -555,7 +555,7 @@ const CalculatorPage = () => {
                   <InputGroup>
                     <FloatingField $hasValue={Boolean(formData.round)}>
                       <FloatingLabel>Округлять до, ₽</FloatingLabel>
-                      <CustomSelect
+                      <RoundSelect
                         value={formData.round}
                         onChange={(e) => handleRoundChange(e.target.value)}
                         options={roundOptions}
@@ -652,7 +652,7 @@ const CalculatorPage = () => {
                   <InputGroup>
                     <FloatingField $hasValue={Boolean(formData.round)}>
                       <FloatingLabel>Округлять до, ₽</FloatingLabel>
-                      <CustomSelect
+                      <RoundSelect
                         value={formData.round}
                         onChange={(e) => handleRoundChange(e.target.value)}
                         options={roundOptions}
@@ -1110,6 +1110,18 @@ const FloatingField = styled.div<{ $hasValue?: boolean }>`
         color: transparent;
       }
     `}
+`;
+
+const RoundSelect = styled(CustomSelect)`
+  @media (max-width: 768px) {
+    border-radius: 0 !important;
+
+    button,
+    [role='button'],
+    input {
+      border-radius: 0 !important;
+    }
+  }
 `;
 
 const ResultsSection = styled.div`

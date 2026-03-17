@@ -6,6 +6,7 @@ import CalculatorPage from "./pages/CalculatorPage";
 import ProfilePage from "./pages/ProfilePage";
 import Layout from "./components/Layout";
 import BlackCatalogPage from "./pages/BlackCatalogPage";
+import FormattedCatalogPage from "./pages/FormattedCatalogPage";
 import { NotModeratedMessage } from "./components/Moderation";
 import type { TariffType } from "./api/Subscription/subscription";
 import { subscriptionService } from "./api/Subscription/SubscriptionService";
@@ -312,6 +313,7 @@ function App() {
               <Route path="/" element={<Navigate to="/calculator" replace />} />
               <Route path="/calculator" element={<CalculatorPage />} />
               <Route path="/blacklist" element={<BlackCatalogPage />} />
+              <Route path="/formatted" element={<FormattedCatalogPage />} />
               <Route 
                 path="/profile" 
                 element={

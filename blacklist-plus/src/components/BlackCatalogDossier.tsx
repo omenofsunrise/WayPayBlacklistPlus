@@ -932,6 +932,13 @@ const BlackCatalogDossier = ({ item, onBack, onRefresh }: BlackCatalogDossierPro
                                             >
                                                 Удалить
                                             </DefaultButton>
+                                            <DefaultButton
+                                                type="button"
+                                                onClick={() => setIsMainRevealed(false)}
+                                                disabled={!isMainRevealed}
+                                            >
+                                                Скрыть
+                                            </DefaultButton>
                                         </PassportButtons>
                                         <PassportHint>Максимальный размер файла: 12 МБ.</PassportHint>
                                         {passportError?.includes("главной") && (
@@ -1005,6 +1012,13 @@ const BlackCatalogDossier = ({ item, onBack, onRefresh }: BlackCatalogDossierPro
                                                 disabled={!item.registration_passport_page || isDeletingPassport}
                                             >
                                                 Удалить
+                                            </DefaultButton>
+                                            <DefaultButton
+                                                type="button"
+                                                onClick={() => setIsRegistrationRevealed(false)}
+                                                disabled={!isRegistrationRevealed}
+                                            >
+                                                Скрыть
                                             </DefaultButton>
                                         </PassportButtons>
                                         <PassportHint>Максимальный размер файла: 12 МБ.</PassportHint>

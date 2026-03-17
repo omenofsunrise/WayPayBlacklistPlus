@@ -9,6 +9,8 @@ interface BlackCatalogModalProps {
   onSave: (itemData: BlackCatalogFormData) => Promise<void>;
   editingItem: Partial<BlackCatalogItem> | null;
   mode?: ModalMode;
+  showDebtSection?: boolean;
+  requireDebtDate?: boolean;
 }
 
 const TextArea = styled.textarea`
@@ -49,21 +51,6 @@ const FileInput = styled.input`
 const FileMeta = styled.span`
   font-size: 12px;
   color: #6b7280;
-`;
-
-const CheckboxRow = styled.label`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 14px;
-  color: #111827;
-  cursor: pointer;
-`;
-
-const CheckboxInput = styled.input`
-  width: 16px;
-  height: 16px;
-  accent-color: #007d88;
 `;
 
 const formatFullNameLive = (
@@ -139,7 +126,9 @@ export const BlackCatalogModal: React.FC<BlackCatalogModalProps> = ({
   onClose,
   onSave,
   editingItem,
-  mode = "create"
+  mode = "create",
+  showDebtSection = true,
+  requireDebtDate = false,
 }) => {
   const [formData, setFormData] = useState<BlackCatalogFormData>({
     fullname: '',
@@ -153,7 +142,6 @@ export const BlackCatalogModal: React.FC<BlackCatalogModalProps> = ({
     debt_ending_at: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isDebtActive, setIsDebtActive] = useState(false);
 
   useEffect(() => {
     if (editingItem) {
@@ -183,9 +171,8 @@ export const BlackCatalogModal: React.FC<BlackCatalogModalProps> = ({
         main_page: null,
         registration_page: null,
         is_swindler: Boolean(editingItem.is_swindler),
-        debt_ending_at: normalizeIncomingDate(editingItem.debt_ending_at),
+        debt_ending_at: showDebtSection ? normalizeIncomingDate(editingItem.debt_ending_at) : '',
       });
-      setIsDebtActive(false);
     } else {
       setFormData({
         fullname: '',
@@ -198,9 +185,8 @@ export const BlackCatalogModal: React.FC<BlackCatalogModalProps> = ({
         is_swindler: false,
         debt_ending_at: '',
       });
-      setIsDebtActive(false);
     }
-  }, [editingItem, isOpen]);
+  }, [editingItem, isOpen, showDebtSection]);
 
   const formatDateForAPI = (dateStr: string): string => {
     if (!dateStr) return '';
@@ -226,6 +212,10 @@ export const BlackCatalogModal: React.FC<BlackCatalogModalProps> = ({
     
     setIsSubmitting(true);
     try {
+      if (requireDebtDate && isCreate && !formData.debt_ending_at) {
+        alert('Укажите дату окончания оформления');
+        return;
+      }
       const dataToSend: BlackCatalogFormData = {
         fullname: formData.fullname || '',
         doc: formData.doc || '',
@@ -235,7 +225,7 @@ export const BlackCatalogModal: React.FC<BlackCatalogModalProps> = ({
         main_page: formData.main_page || null,
         registration_page: formData.registration_page || null,
         is_swindler: formData.is_swindler,
-        debt_ending_at: formData.debt_ending_at
+        debt_ending_at: showDebtSection && formData.debt_ending_at
           ? formatDateForAPI(formData.debt_ending_at)
           : '',
       };
@@ -285,18 +275,6 @@ export const BlackCatalogModal: React.FC<BlackCatalogModalProps> = ({
       formatted = `${digits.slice(0, 2)}.${digits.slice(2, 4)}.${digits.slice(4)}`;
     }
     handleFieldChange(field, formatted);
-  };
-
-  const handleCheckboxChange = (field: 'is_swindler') => (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({ ...prev, [field]: e.target.checked }));
-  };
-
-  const handleDebtToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const checked = e.target.checked;
-    setIsDebtActive(checked);
-    if (!checked) {
-      setFormData(prev => ({ ...prev, debt_ending_at: '' }));
-    }
   };
 
   const handleFileChange = (field: 'main_page' | 'registration_page') => (
@@ -359,36 +337,15 @@ export const BlackCatalogModal: React.FC<BlackCatalogModalProps> = ({
 
       {isCreate && (
         <>
-          <InputRow>
-            <CheckboxRow>
-              <CheckboxInput
-                type="checkbox"
-                checked={formData.is_swindler}
-                onChange={handleCheckboxChange('is_swindler')}
-              />
-              Аферист
-            </CheckboxRow>
-          </InputRow>
-
-          <InputRow>
-            <CheckboxRow>
-              <CheckboxInput
-                type="checkbox"
-                checked={isDebtActive}
-                onChange={handleDebtToggle}
-              />
-              Оформлен
-            </CheckboxRow>
-          </InputRow>
-
-          {isDebtActive && (
+          {showDebtSection && (
             <InputRow>
-            <CustomInput
-              type="text"
-              value={formData.debt_ending_at || ''}
-              onChange={handleDateTextChange('debt_ending_at')}
-              placeholder="Оформлен до (ДД.ММ.ГГГГ)"
-            />
+              <CustomInput
+                type="text"
+                value={formData.debt_ending_at || ''}
+                onChange={handleDateTextChange('debt_ending_at')}
+                placeholder="Оформлен до (ДД.ММ.ГГГГ)"
+                required={requireDebtDate}
+              />
             </InputRow>
           )}
 
