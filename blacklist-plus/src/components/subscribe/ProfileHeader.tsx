@@ -20,10 +20,10 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ name, phone }) => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-const handleLogout = async () => {
-    await authStorage.logout();
-    window.location.reload();
-};
+  const handleLogout = async () => {
+      await authStorage.logout();
+      window.location.reload();
+  };
 
   const formatPhone = (phone: string) => {
     return phone.replace(/(\d{1})(\d{3})(\d{3})(\d{2})(\d{2})/, '$1 ($2) $3-$4-$5');
@@ -36,7 +36,6 @@ const handleLogout = async () => {
         marginBottom: '16px',
         position: 'relative',
       }}>
-        {/* Кнопка выхода в правом верхнем углу */}
         <div style={{
           position: 'absolute',
           top: '16px',
