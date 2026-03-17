@@ -17,6 +17,29 @@ export const TitleContainer = styled.div`
   @media (max-width: 768px) {
     flex-wrap: wrap;
     gap: 8px;
+    align-items: flex-start;
+  }
+`;
+
+const StickyHeader = styled(TitleContainer)`
+  position: sticky;
+  top: 0;
+  z-index: 11;
+  padding: 12px 0;
+  background: white;
+
+  @media (max-width: 768px) {
+    padding: 8px 0;
+  }
+`;
+
+const HeaderTitleGroup = styled(TitleContainer)`
+  max-width: 290px;
+
+  @media (max-width: 768px) {
+    max-width: none;
+    width: 100%;
+    justify-content: flex-start;
   }
 `;
 
@@ -73,6 +96,7 @@ const FilterField = styled.div`
     color: black;
     background-color: rgba(249, 250, 250, 1);
     gap: 15px;
+    flex-wrap: wrap;
 `;
 
 const StickyFilterField = styled(FilterField)`
@@ -81,10 +105,14 @@ const StickyFilterField = styled(FilterField)`
   z-index: 10;
   padding: 16px 0;
   background: none;
+  align-items: center;
 
   @media (max-width: 768px) {
     top: 0;
     padding: 12px 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
   }
 `;
 
@@ -146,6 +174,10 @@ const Backdrop = styled.div`
 
 const StyledCountInfo = styled(CountInfoTitle)`
     margin-left: auto;
+    
+    @media (max-width: 768px) {
+      margin-left: 0;
+    }
 `;
 
 const Container = styled.div`
@@ -153,11 +185,13 @@ const Container = styled.div`
     flex-direction: row;
     width: 50vw;
     gap: 15px;
+    align-items: center;
 
     @media (max-width: 768px) {
         width: 100%;
         flex-direction: column;
         gap: 10px;
+        align-items: stretch;
     }
 `;
 
@@ -170,6 +204,16 @@ const DarkCyanButton = styled(DefaultButton)`
 
     @media (max-width: 768px) {
         width: 100%;
+    }
+`;
+
+const AddButton = styled(DarkCyanButton)`
+    width: 25vw;
+    margin-left: auto;
+
+    @media (max-width: 768px) {
+        width: 100%;
+        margin-left: 0;
     }
 `;
 
@@ -471,15 +515,15 @@ const BlackCatalogPage = () => {
                 </>
             ) : (
                 <>
-                    <TitleContainer style={{ position: "sticky"}}>
-                        <TitleContainer style={{maxWidth: "290px"}}>
+                    <StickyHeader>
+                        <HeaderTitleGroup>
                             <PageTitle>Черный список</PageTitle>
                             {searchResults && searchResults.black_catalogs.length > 0 && (
                                 <span>({searchResults.count})</span>
                             )}
-                        </TitleContainer>
+                        </HeaderTitleGroup>
                         <StyledCountInfo total={totalCount} />
-                    </TitleContainer>
+                    </StickyHeader>
                     
                     <StickyFilterField>
                         <Container>
@@ -501,12 +545,11 @@ const BlackCatalogPage = () => {
                             </DarkCyanButton>
                         </Container>
                         {isSuperAdminCompany() && (
-                            <DarkCyanButton 
-                                style={{ width: "25vw", marginLeft: "auto" }}
+                            <AddButton
                                 onClick={handleAddToBlacklist}
                             >
                                 + Добавить
-                            </DarkCyanButton>
+                            </AddButton>
                         )}
                     </StickyFilterField>
                     
