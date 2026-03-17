@@ -92,7 +92,7 @@ const SubscriptionPendingPage: React.FC<SubscriptionPendingPageProps> = ({
       setAutoCheckError(null);
       
       const statusResponse = await subscriptionService.getStatus(tariffType);
-      
+      console.log(statusResponse.transaction_status);
       if (statusResponse.success && statusResponse.status === 'active') {
         setPaymentStep(3);
         stopTimer();
@@ -106,6 +106,11 @@ const SubscriptionPendingPage: React.FC<SubscriptionPendingPageProps> = ({
         stopTimer();
       }
       
+      if (statusResponse.transaction_status === 'Authorized') {
+        console.log("2");
+        setPaymentStep(2);
+      }
+
       if (onCheckStatus) {
         await onCheckStatus();
       }
@@ -119,6 +124,16 @@ const SubscriptionPendingPage: React.FC<SubscriptionPendingPageProps> = ({
       }
     }
   }, [tariffType, onCheckStatus, onPaymentComplete, paymentStep, stopTimer]);
+
+  useEffect(() => {
+    if (paymentStep === 3) {
+      const timer = setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [paymentStep]);
 
   const startAutoCheck = useCallback(() => {
     if (checkIntervalRef.current) {
@@ -687,18 +702,17 @@ const SubscriptionPendingPage: React.FC<SubscriptionPendingPageProps> = ({
           <div style={{
             marginTop: '24px',
             padding: '16px',
-            backgroundColor: '#E3F2FD',
+            backgroundColor: '#F9FAFA',
             borderRadius: '12px',
             textAlign: 'center'
           }}>
             <p style={{ 
-              color: '#1976D2', 
+              color: '#007D88', 
               fontSize: '14px',
               margin: 0,
               lineHeight: '1.5'
             }}>
-              Идёт автоматическая проверка статуса каждые 5 секунд.
-              Платёж обрабатывается банком. Обычно это занимает несколько секунд.
+              Платёж обрабатывается банком. Это может занять от нескольких секунд до часа.
             </p>
           </div>
         )}
