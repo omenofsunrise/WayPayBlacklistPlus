@@ -70,15 +70,6 @@ const BadgeRow = styled.div`
     margin-top: 10px;
 `;
 
-const Badge = styled.span<{ $tone: "danger" | "info" }>`
-    padding: 4px 10px;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 600;
-    color: ${({ $tone }) => ($tone === "danger" ? "#991B1B" : "#92400E")};
-    background: ${({ $tone }) => ($tone === "danger" ? "#FEE2E2" : "#FEF3C7")};
-`;
-
 const ClientId = styled.span`
     display: block;
     font-size: 12px;

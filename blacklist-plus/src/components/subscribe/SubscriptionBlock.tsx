@@ -53,7 +53,7 @@ const SubscriptionBlock: React.FC<SubscriptionBlockProps> = ({
     { 
       days: 30, 
       price: 600, 
-      promoPrice: 1,
+      promoPrice: 150,
       label: '1 месяц', 
       pricePerDay: '20.00',
       promoPricePerDay: '0.03',
