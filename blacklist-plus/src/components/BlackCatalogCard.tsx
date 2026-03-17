@@ -1,8 +1,8 @@
 import React, { useRef, useState } from 'react';
 import styled from 'styled-components';
-import { FaIdCard, FaEllipsisV, FaMapMarkerAlt, FaBirthdayCake } from 'react-icons/fa';
+import { FaIdCard, FaEllipsisV, FaMapMarkerAlt, FaBirthdayCake, FaExclamationTriangle } from 'react-icons/fa';
 
-const Card = styled.div`
+const Card = styled.div<{ $isBlacklisted?: boolean; $hasActiveDebt?: boolean }>`
   background: white;
   border-radius: 12px;
   border: 1px solid rgba(209, 213, 219, 1);
@@ -12,7 +12,16 @@ const Card = styled.div`
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
   position: relative;
-  border-left: 4px solid #EF4444;
+
+  ${props => props.$isBlacklisted && `
+    border-color: #EF4444;
+    background: linear-gradient(135deg, #ffffff 0%, #fff5f5 100%);
+  `}
+
+  ${props => props.$hasActiveDebt && !props.$isBlacklisted && `
+    border-color: #F59E0B;
+    background: linear-gradient(135deg, #ffffff 0%, #fffbeb 100%);
+  `}
 
   &:hover {
     transform: translateY(-2px);
@@ -49,24 +58,11 @@ const CardTitle = styled.h3`
   }
 `;
 
-const CardTitleText = styled.span`
+const CardTitleText = styled.span<{ $hasLeftBadge?: boolean }>`
   display: inline-block;
-`;
-
-const BadgeRow = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-left: 12px;
-`;
-
-const Badge = styled.span<{ $tone: "danger" | "info" }>`
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 600;
-  color: ${({ $tone }) => ($tone === "danger" ? "#991B1B" : "#92400E")};
-  background: ${({ $tone }) => ($tone === "danger" ? "#FEE2E2" : "#FEF3C7")};
+  ${props => props.$hasLeftBadge && `
+    margin-left: 170px;
+  `}
 `;
 
 const InfoGrid = styled.div`
@@ -95,10 +91,15 @@ const InfoLabel = styled.span`
   gap: 6px;
 `;
 
-const InfoValue = styled.span<{ $highlight?: boolean }>`
+const InfoValue = styled.span<{ $highlight?: boolean; $warning?: boolean; $debt?: boolean }>`
   font-size: 14px;
   font-weight: ${props => props.$highlight ? '600' : '400'};
-  color: ${props => props.$highlight ? '#EF4444' : '#111827'};
+  color: ${props => {
+    if (props.$warning) return '#EF4444';
+    if (props.$debt) return '#B45309';
+    if (props.$highlight) return '#007D88';
+    return '#111827';
+  }};
   min-height: 20px;
   display: flex;
   align-items: center;
@@ -109,7 +110,6 @@ const IconWrapper = styled.span`
   display: flex;
   align-items: center;
 `;
-
 
 const MenuButton = styled.button`
   background: transparent;
@@ -163,6 +163,27 @@ const MenuItem = styled.button`
   &.danger {
     color: #EF4444;
   }
+`;
+
+const LeftBadge = styled.div<{ $type: 'blacklist' | 'debt' }>`
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  background: ${({ $type }) => $type === 'blacklist' 
+    ? '#000000' 
+    : '#F59E0B'};
+  color: ${({ $type }) => $type === 'blacklist' ? '#EF4444' : 'white'};
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: ${({ $type }) => $type === 'blacklist' 
+    ? '0 2px 12px rgba(239, 68, 68, 0.5)' 
+    : '0 2px 12px rgba(245, 158, 11, 0.5)'};
+  z-index: 10;
 `;
 
 export interface BlackCatalogItem {
@@ -262,16 +283,28 @@ const BlackCatalogCard: React.FC<BlackCatalogCardProps> = ({
     <Card 
       onClick={handleCardClick}
       onContextMenu={handleRightClick}
+      $isBlacklisted={!isCurrentlyDebt}
+      $hasActiveDebt={isCurrentlyDebt}
     >
+      {!isCurrentlyDebt && (
+        <LeftBadge $type="blacklist">
+          <FaExclamationTriangle size={14} />
+          Чёрный список
+        </LeftBadge>
+      )}
+      
+      {isCurrentlyDebt && (
+        <LeftBadge $type="debt">
+          <FaExclamationTriangle size={14} />
+          Оформлен
+        </LeftBadge>
+      )}
+      
       <CardContent>
         <CardTitle>
-          <CardTitleText>
+          <CardTitleText $hasLeftBadge={true}>
             {item.fullname || 'Не указано'}
           </CardTitleText>
-          <BadgeRow>
-            {item.is_swindler && <Badge $tone="danger">Аферист</Badge>}
-            {isCurrentlyDebt && <Badge $tone="info">Оформлен</Badge>}
-          </BadgeRow>
         </CardTitle>
         
         {showMenu && (
@@ -293,7 +326,7 @@ const BlackCatalogCard: React.FC<BlackCatalogCardProps> = ({
               <IconWrapper><FaIdCard size={12} /></IconWrapper>
               ID
             </InfoLabel>
-            <InfoValue $highlight>
+            <InfoValue $warning={!isCurrentlyDebt} $debt={isCurrentlyDebt}>
               {item.id}
             </InfoValue>
           </InfoItem>
@@ -303,7 +336,7 @@ const BlackCatalogCard: React.FC<BlackCatalogCardProps> = ({
               <IconWrapper><FaBirthdayCake size={12} /></IconWrapper>
               Дата рождения
             </InfoLabel>
-            <InfoValue>
+            <InfoValue $warning={!isCurrentlyDebt} $debt={isCurrentlyDebt}>
               {formatDate(item.birthdate)}
             </InfoValue>
           </InfoItem>
@@ -313,7 +346,7 @@ const BlackCatalogCard: React.FC<BlackCatalogCardProps> = ({
               <IconWrapper><FaIdCard size={12} /></IconWrapper>
               Документ
             </InfoLabel>
-            <InfoValue>
+            <InfoValue $warning={!isCurrentlyDebt} $debt={isCurrentlyDebt}>
               {item.doc || 'Не указан'}
             </InfoValue>
           </InfoItem>
@@ -323,7 +356,7 @@ const BlackCatalogCard: React.FC<BlackCatalogCardProps> = ({
               <IconWrapper><FaMapMarkerAlt size={12} /></IconWrapper>
               Адрес
             </InfoLabel>
-            <InfoValue>
+            <InfoValue $warning={!isCurrentlyDebt} $debt={isCurrentlyDebt}>
               {item.address || 'Не указан'}
             </InfoValue>
           </InfoItem>

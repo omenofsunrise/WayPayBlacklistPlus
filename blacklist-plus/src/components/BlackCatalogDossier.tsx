@@ -840,8 +840,6 @@ const BlackCatalogDossier = ({ item, onBack, onRefresh }: BlackCatalogDossierPro
                             <ClientName>{item.fullname}</ClientName>
                             <ClientId>ID: {item.id}</ClientId>
                             <BadgeRow>
-                                {item.is_swindler && <Badge $tone="danger">Аферист</Badge>}
-                                {debtStatus?.isActive && <Badge $tone="info">Оформлен</Badge>}
                             </BadgeRow>
                         </div>
                     </DossierHeader>

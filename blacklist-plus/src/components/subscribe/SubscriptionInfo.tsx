@@ -18,9 +18,9 @@ const SubscriptionInfo: React.FC<SubscriptionInfoProps> = ({
         textAlign: 'center',
         border: '2px dashed #ccc',
       }}>
-        <h3 style={{ color: '#666', marginBottom: '12px' }}>
+        {/* <h3 style={{ color: '#666', marginBottom: '12px' }}>
           Здесь снизу предлагаю разместить мини лендинг, я попытаюсь сделать красивые скрины и придумать описание завтра
-        </h3>
+        </h3> */}
       </div>
     );
 };

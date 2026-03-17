@@ -150,6 +150,18 @@ const ContextMenu = styled.div<{ x: number; y: number }>`
   top: ${props => props.y}px;
 `;
 
+const ContentContainer = styled.div`
+  position: relative;
+  z-index: 1;
+  overflow: auto;
+  max-height: calc(100vh - 200px);
+  
+  & > div {
+    position: relative;
+    z-index: 1;
+  }
+`;
+
 const MenuItem = styled.div<{ danger?: boolean }>`
   padding: 8px 16px;
   display: flex;
@@ -466,7 +478,7 @@ const BlackCatalogPage = () => {
         }
 
         return (
-            <div>
+            <ContentContainer>
                 {searchResults?.black_catalogs.map((item) => (
                     <BlackCatalogCard
                         key={item.id}
@@ -478,7 +490,7 @@ const BlackCatalogPage = () => {
                         showMenu={isSuperAdminCompany()}
                     />
                 ))}
-            </div>
+            </ContentContainer>
         );
     };
 
