@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
-import { CustomInput, DefaultButton } from "waypay_react_library";
+import { useCallback, useEffect, useState, useRef } from "react";
+import { CustomInput, CustomTitle } from "waypay_react_library";
 import useBlackCatalog from "../../api/BlackCatalog/useBlackCatalog";
 import type { BlackCatalogFormData, BlackCatalogItem } from "../../api/BlackCatalog/blackCatalog";
 import BlackCatalogCard from "../BlackCatalogCard";
@@ -8,28 +8,39 @@ import BlackCatalogDossier from "../BlackCatalogDossier";
 import type { BlackCatalogPageContentProps } from "./types";
 import {
   AddButton,
+  AddButtonMenu,
+  AddButtonMenuItem,
   Backdrop,
   Container,
   ContextMenu,
-  DarkCyanButton,
   EmptyStateContainer,
   EmptyStateIcon,
   EmptyStateText,
   EmptyStateTitle,
   HeaderTitleGroup,
   MenuItem,
-  PageTitle,
-  ResetButton,
-  StickyFilterField,
   StickyHeader,
   StyledCountInfo,
+  UserAvatar,
+  SearchInputContainer,
+  ClearSearchButton,
+  AddButtonMenuBackdrop,
+  BlacklistIcon,
+  CompletedIcon,
+  MobileBottomSheet,
+  MobileBottomSheetOverlay,
+  MobileBottomSheetContent,
+  MobileBottomSheetHeader,
+  MobileBottomSheetTitle,
+  MobileBottomSheetClose,
+  MobileBottomSheetOption,
+  MobileFilterField,
+  WildInputContainer,
 } from "./styles";
 
 const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
   texts,
   userId,
-  showDebtSection = true,
-  requireDebtDate = false,
   allowEdit = true,
 }) => {
   const formatDateForAPI = (dateStr?: string): string => {
@@ -50,6 +61,27 @@ const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
       
       return dateStr.trim();
   };
+  
+  const UserIcon = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M20 21V19C20 16.7909 18.2091 15 16 15H8C5.79086 15 4 16.7909 4 19V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+      <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2"/>
+    </svg>
+  );
+
+ const BlacklistIconSvg = () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="#94A3B8" fillOpacity="0.8"/>
+    </svg>
+  );
+
+  const CompletedIconSvg = () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M6 4h10l3 3v12H6V4z" stroke="#64748B" strokeWidth="1.5" strokeOpacity="0.7" fill="none" strokeLinejoin="round"/>
+      <path d="M16 4v3h3M9 8h8M9 12h8M9 16h5" stroke="#64748B" strokeWidth="1.5" strokeOpacity="0.8" strokeLinecap="round"/>
+    </svg>
+  );
+
   const storageKey = "black_catalog_search_state";
   const readStoredState = () => {
     try {
@@ -70,14 +102,20 @@ const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
       return { nameFilter: '', hasSearched: false, searchTriggered: false };
     }
   };
+  
   const initialState = readStoredState();
   const [nameFilter, setNameFilter] = useState(initialState.nameFilter);
-  const [searchTriggered, setSearchTriggered] = useState(initialState.searchTriggered);
   const [hasSearched, setHasSearched] = useState(initialState.hasSearched);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Partial<BlackCatalogItem> | null>(null);
   const [selectedItemDossier, setSelectedItemDossier] = useState<BlackCatalogItem | null>(null);
   const [totalCount, setTotalCount] = useState<number>(0);
+  const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
+  const [isMobileSheetOpen, setIsMobileSheetOpen] = useState(false);
+  const [addMenuPosition, setAddMenuPosition] = useState<{ x: number; y: number } | null>(null);
+  const [selectedAddOption, setSelectedAddOption] = useState<'blacklist' | 'completed' | null>(null);
+  
+  const addButtonRef = useRef<HTMLButtonElement>(null);
 
   const {
     isLoading,
@@ -96,6 +134,11 @@ const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
     item: BlackCatalogItem | null;
   } | null>(null);
 
+  const addButtonContainerRef = useRef<HTMLDivElement>(null);
+  const isMobile = () => {
+    return window.innerWidth <= 768;
+  };
+
   useEffect(() => {
     sessionStorage.setItem(
       storageKey,
@@ -113,9 +156,22 @@ const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
     loadTotalCount();
   }, [getTotalCount]);
 
+  useEffect(() => {
+    const searchTimeout = setTimeout(() => {
+      if (nameFilter.length >= 5) {
+        loadBlacklist();
+      } else if (nameFilter.length === 0) {
+        setHasSearched(false);
+      } else {
+        setHasSearched(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(searchTimeout);
+  }, [nameFilter]);
+
   const resetFilters = useCallback(() => {
     setNameFilter('');
-    setSearchTriggered(false);
     setHasSearched(false);
   }, []);
 
@@ -137,30 +193,8 @@ const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
     setHasSearched(true);
   }, [nameFilter, searchEntries]);
 
-  useEffect(() => {
-    if (searchTriggered) {
-      loadBlacklist();
-    }
-  }, [searchTriggered, loadBlacklist]);
-
   const handleFilterChange = (value: string) => {
     setNameFilter(value);
-    setSearchTriggered(false);
-    setHasSearched(false);
-  };
-
-  const handleSearch = () => {
-    const isNameValid = nameFilter.length >= 5;
-
-    if (isNameValid) {
-      setSearchTriggered(true);
-    }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSearch();
-    }
   };
 
   const handleContextMenuAction = useCallback(
@@ -182,26 +216,75 @@ const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
     setContextMenu(null);
   }, []);
 
+  const closeAddMenu = useCallback(() => {
+    setIsAddMenuOpen(false);
+    setAddMenuPosition(null);
+  }, []);
+
+  const closeMobileSheet = useCallback(() => {
+    setIsMobileSheetOpen(false);
+  }, []);
+
   useEffect(() => {
-    const handleClickOutside = () => {
+    const handleClickOutside = (event: MouseEvent) => {
       if (contextMenu) {
-        closeContextMenu();
+        const menuElement = document.getElementById('context-menu');
+        if (menuElement && !menuElement.contains(event.target as Node)) {
+          closeContextMenu();
+        }
+      }
+      
+      if (isAddMenuOpen && !isMobile()) {
+        const menuElement = document.getElementById('add-menu');
+        const buttonElement = addButtonRef.current;
+        
+        if (menuElement && !menuElement.contains(event.target as Node) && 
+            buttonElement && !buttonElement.contains(event.target as Node)) {
+          closeAddMenu();
+        }
       }
     };
 
-    document.addEventListener('click', handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
     return () => {
-      document.removeEventListener('click', handleClickOutside);
+      document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [contextMenu, closeContextMenu]);
+  }, [contextMenu, isAddMenuOpen, closeContextMenu, closeAddMenu]);
 
-  const handleAddToBlacklist = () => {
+  const handleAddButtonClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    
+    if (isMobile()) {
+      setIsMobileSheetOpen(true);
+    } else {
+      if (isAddMenuOpen) {
+        closeAddMenu();
+      } else {
+        const rect = e.currentTarget.getBoundingClientRect();
+        setAddMenuPosition({
+          x: rect.right - 180,
+          y: rect.bottom + 5,
+        });
+        setIsAddMenuOpen(true);
+      }
+    }
+  };
+
+  const handleAddMenuSelect = (option: 'blacklist' | 'completed') => {
+    setSelectedAddOption(option);
+    closeAddMenu();
+    closeMobileSheet();
     setEditingItem(null);
     setIsModalOpen(true);
   };
 
+  const handleAddMenuClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
   const handleEditItem = (item: BlackCatalogItem) => {
     setEditingItem(item);
+    setSelectedAddOption(null);
     setIsModalOpen(true);
   };
 
@@ -225,7 +308,6 @@ const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
           comment: itemData.comment?.trim() || undefined,
           main_page: itemData.main_page || undefined,
           registration_page: itemData.registration_page || undefined,
-          is_swindler: itemData.is_swindler,
           debt_ending_at: itemData.debt_ending_at
             ? formatDateForAPI(itemData.debt_ending_at)
             : undefined,
@@ -244,6 +326,7 @@ const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
 
       setIsModalOpen(false);
       setEditingItem(null);
+      setSelectedAddOption(null);
     } catch (err) {
       console.error('Ошибка при сохранении записи:', err);
     }
@@ -268,6 +351,7 @@ const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
 
   const handleCardRightClick = (e: React.MouseEvent, item: BlackCatalogItem) => {
     e.preventDefault();
+    e.stopPropagation();
     setContextMenu({
       x: e.clientX,
       y: e.clientY,
@@ -280,13 +364,13 @@ const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
   };
 
   const isSuperAdminCompany = () => {
-    // Заглушка для проверки прав администратора
     return true;
   };
 
   const handleModalClose = () => {
     setIsModalOpen(false);
     setEditingItem(null);
+    setSelectedAddOption(null);
   };
 
   const renderContent = () => {
@@ -304,11 +388,7 @@ const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
           <EmptyStateIcon>📋</EmptyStateIcon>
           <EmptyStateTitle>{texts.emptyStateTitle}</EmptyStateTitle>
           <EmptyStateText>{texts.emptyStateDescription}</EmptyStateText>
-          {isSuperAdminCompany() && (
-            <DefaultButton onClick={handleAddToBlacklist}>
-              {texts.addToCatalogLabel}
-            </DefaultButton>
-          )}
+          <StyledCountInfo total={totalCount} />
         </EmptyStateContainer>
       );
     }
@@ -319,20 +399,12 @@ const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
           <EmptyStateIcon>🔍</EmptyStateIcon>
           <EmptyStateTitle>{texts.notFoundTitle}</EmptyStateTitle>
           <EmptyStateText>{texts.notFoundDescription(nameFilter)}</EmptyStateText>
-          {isSuperAdminCompany() && (
-            <DefaultButton onClick={handleAddToBlacklist}>
-              {texts.addToCatalogLabel}
-            </DefaultButton>
-          )}
-          <ResetButton onClick={resetFilters} style={{ marginTop: '16px' }}>
-            Сбросить фильтры
-          </ResetButton>
         </EmptyStateContainer>
       );
     }
 
     return (
-      <div>
+      <div style={{marginTop: "20px"}}>
         {searchResults?.black_catalogs.map((item) => (
           <BlackCatalogCard
             key={item.id}
@@ -350,20 +422,19 @@ const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
   };
 
   return (
-    <div onClick={closeContextMenu}>
+    <div>
       <BlackCatalogModal
         isOpen={isModalOpen}
         onClose={handleModalClose}
         onSave={handleSaveItem}
         editingItem={editingItem}
         mode={editingItem ? 'edit' : 'create'}
-        showDebtSection={showDebtSection}
-        requireDebtDate={requireDebtDate}
+        showDebtSection={selectedAddOption !== 'blacklist'}
+        requireDebtDate={selectedAddOption !== 'blacklist'}
       />
 
       {selectedItemDossier ? (
         <>
-          {/* Досье клиента вынесено в отдельный компонент для читаемости. */}
           <BlackCatalogDossier
             item={selectedItemDossier}
             userId={userId}
@@ -384,44 +455,65 @@ const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
           />
         </>
       ) : (
-        <>
+        <div style={{padding: "15px"}}>
           <StickyHeader>
             <HeaderTitleGroup>
-              <PageTitle>{texts.pageTitle}</PageTitle>
-              {searchResults && searchResults.black_catalogs.length > 0 && (
-                <span>({searchResults.count})</span>
-              )}
+              <UserAvatar>
+                <UserIcon />
+              </UserAvatar>
+              <CustomTitle style={{whiteSpace: 'nowrap'}}>{texts.pageTitle}</CustomTitle>
+              <WildInputContainer>
+                <CustomInput
+                  inputType="fullname"
+                  placeholder="ФИО (минимум 5 символов)"
+                  value={nameFilter}
+                  onChange={(e) => handleFilterChange(e.target.value)}
+                />
+                {nameFilter && (
+                  <ClearSearchButton onClick={resetFilters} title="Очистить поиск">
+                    ✕
+                  </ClearSearchButton>
+                )}
+              </WildInputContainer>
+              <div ref={addButtonContainerRef} style={{ marginLeft: 'auto' }}>
+                <AddButton onClick={handleAddButtonClick}>
+                  {texts.addButtonLabel}
+                </AddButton>
+              </div>
             </HeaderTitleGroup>
-            <StyledCountInfo total={totalCount} />
           </StickyHeader>
 
-          <StickyFilterField>
+          <MobileFilterField>
             <Container>
-              <CustomInput
-                inputType="fullname"
-                placeholder="ФИО (минимум 5 символов)"
-                value={nameFilter}
-                onChange={(e) => handleFilterChange(e.target.value)}
-                onKeyPress={handleKeyPress}
-              />
-              <ResetButton onClick={resetFilters}>Сбросить</ResetButton>
-              <DarkCyanButton onClick={handleSearch} disabled={!(nameFilter.length >= 5)}>
-                Поиск
-              </DarkCyanButton>
+              <SearchInputContainer>
+                <CustomInput
+                  inputType="fullname"
+                  placeholder="ФИО (минимум 5 символов)"
+                  value={nameFilter}
+                  onChange={(e) => handleFilterChange(e.target.value)}
+                />
+                {nameFilter && (
+                  <ClearSearchButton onClick={resetFilters} title="Очистить поиск">
+                    ✕
+                  </ClearSearchButton>
+                )}
+              </SearchInputContainer>
             </Container>
-            {isSuperAdminCompany() && (
-              <AddButton onClick={handleAddToBlacklist}>{texts.addButtonLabel}</AddButton>
-            )}
-          </StickyFilterField>
+          </MobileFilterField>
 
           {renderContent()}
-        </>
+        </div>
       )}
 
       {contextMenu && (
         <>
           <Backdrop onClick={closeContextMenu} />
-          <ContextMenu x={contextMenu.x} y={contextMenu.y}>
+          <ContextMenu 
+            id="context-menu"
+            x={contextMenu.x} 
+            y={contextMenu.y}
+            onClick={(e) => e.stopPropagation()}
+          >
             {allowEdit && (
               <MenuItem onClick={() => handleContextMenuAction('edit')}>Редактировать</MenuItem>
             )}
@@ -430,6 +522,55 @@ const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
             </MenuItem>
           </ContextMenu>
         </>
+      )}
+
+      {isAddMenuOpen && addMenuPosition && !isMobile() && (
+        <>
+          <AddButtonMenuBackdrop onClick={closeAddMenu} />
+          <AddButtonMenu 
+            id="add-menu"
+            x={addMenuPosition.x} 
+            y={addMenuPosition.y}
+            onClick={handleAddMenuClick}
+          >
+            <AddButtonMenuItem onClick={() => handleAddMenuSelect('blacklist')}>
+              <BlacklistIcon>
+                <BlacklistIconSvg />
+              </BlacklistIcon>
+              Чёрный список
+            </AddButtonMenuItem>
+            <AddButtonMenuItem onClick={() => handleAddMenuSelect('completed')}>
+              <CompletedIcon>
+                <CompletedIconSvg />
+              </CompletedIcon>
+              Оформленный
+            </AddButtonMenuItem>
+          </AddButtonMenu>
+        </>
+      )}
+
+      {isMobileSheetOpen && (
+        <MobileBottomSheet onClick={closeMobileSheet}>
+          <MobileBottomSheetOverlay onClick={closeMobileSheet} />
+          <MobileBottomSheetContent onClick={(e) => e.stopPropagation()}>
+            <MobileBottomSheetHeader>
+              <MobileBottomSheetTitle>Добавить</MobileBottomSheetTitle>
+              <MobileBottomSheetClose onClick={closeMobileSheet}>✕</MobileBottomSheetClose>
+            </MobileBottomSheetHeader>
+            <MobileBottomSheetOption onClick={() => handleAddMenuSelect('blacklist')}>
+              <BlacklistIcon>
+                <BlacklistIconSvg />
+              </BlacklistIcon>
+              Чёрный список
+            </MobileBottomSheetOption>
+            <MobileBottomSheetOption onClick={() => handleAddMenuSelect('completed')}>
+              <CompletedIcon>
+                <CompletedIconSvg />
+              </CompletedIcon>
+              Оформлененный
+            </MobileBottomSheetOption>
+          </MobileBottomSheetContent>
+        </MobileBottomSheet>
       )}
     </div>
   );

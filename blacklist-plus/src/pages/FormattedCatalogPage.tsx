@@ -6,11 +6,11 @@ const texts: BlackCatalogPageContentTexts = {
   pageTitle: "Оформленные",
   emptyStateTitle: "Оформленные",
   emptyStateDescription:
-    "Введите ФИО клиента (минимум 5 символов) или полный номер телефона для поиска оформленных.",
+    "Введите ФИО клиента (минимум 5 символов) для поиска оформленных.",
   notFoundTitle: "Запись не найдена",
   notFoundDescription: (query) =>
     `По вашему запросу "${query}" ничего не найдено.`,
-  addButtonLabel: "+ Добавить",
+  addButtonLabel: "+",
   addToCatalogLabel: "+ Добавить оформленного",
   deleteConfirmText: (fullname) =>
     `Вы уверены, что хотите удалить ${fullname} из оформленных?`,

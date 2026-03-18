@@ -13,10 +13,8 @@ const CalculatorIcon = () => (
 );
 
 const BlacklistIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M20 21V19C20 16.7909 18.2091 15 16 15H8C5.79086 15 4 16.7909 4 19V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-    <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2"/>
-    <path d="M18 9L22 13M22 9L18 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M21 19.75C21 17.66 19.33 14.682 17 14.023M15 19.75C15 17.099 12.314 13.75 9 13.75C5.686 13.75 3 17.099 3 19.75M15 10.25C15.7956 10.25 16.5587 9.93393 17.1213 9.37132C17.6839 8.80871 18 8.04565 18 7.25C18 6.45435 17.6839 5.69129 17.1213 5.12868C16.5587 4.56607 15.7956 4.25 15 4.25M7.586 17.086L9 18.5M9 18.5L10.414 19.914M9 18.5L10.414 17.086M9 18.5L7.586 19.914M12 7.25C12 8.04565 11.6839 8.80871 11.1213 9.37132C10.5587 9.93393 9.79565 10.25 9 10.25C8.20435 10.25 7.44129 9.93393 6.87868 9.37132C6.31607 8.80871 6 8.04565 6 7.25C6 6.45435 6.31607 5.69129 6.87868 5.12868C7.44129 4.56607 8.20435 4.25 9 4.25C9.79565 4.25 10.5587 4.56607 11.1213 5.12868C11.6839 5.69129 12 6.45435 12 7.25Z" stroke="#111111" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
   </svg>
 );
 
@@ -78,18 +76,6 @@ const Layout: React.FC<LayoutProps> = ({ children, userInfo }) => {
       label: 'Чёрный список',
       icon: <BlacklistIcon />,
       onClick: () => navigate('/blacklist'),
-    },
-    {
-      key: 'my-blacklist',
-      label: 'Свой ЧС',
-      icon: <BlacklistIcon />,
-      onClick: () => navigate('/my-blacklist'),
-    },
-    {
-      key: 'formatted',
-      label: 'Оформленные',
-      icon: <BlacklistIcon />,
-      onClick: () => navigate('/formatted'),
     },
     {
       key: 'profile',

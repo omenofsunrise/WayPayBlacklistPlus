@@ -11,7 +11,6 @@ import ProfilePage from "./pages/ProfilePage";
 import Layout from "./components/Layout";
 import BlackCatalogPage from "./pages/BlackCatalogPage";
 import FormattedCatalogPage from "./pages/FormattedCatalogPage";
-import OwnBlackCatalogPage from "./pages/OwnBlackCatalogPage";
 import { NotModeratedMessage } from "./components/Moderation";
 import type { TariffType } from "./api/Subscription/subscription";
 import { subscriptionService } from "./api/Subscription/SubscriptionService";
