@@ -30,10 +30,46 @@ const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
   userId,
   showDebtSection = true,
   requireDebtDate = false,
+  allowEdit = true,
 }) => {
-  const [nameFilter, setNameFilter] = useState('');
-  const [searchTriggered, setSearchTriggered] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
+  const formatDateForAPI = (dateStr?: string): string => {
+    if (!dateStr) return '';
+    if (dateStr.includes('T')) {
+      return dateStr.split('T')[0];
+    }
+    if (/^\\d{2}\\.\\d{2}\\.\\d{4}$/.test(dateStr)) {
+      const [day, month, year] = dateStr.split('.');
+      return `${year}-${month}-${day}`;
+    }
+    if (/^\\d{4}-\\d{2}-\\d{2}$/.test(dateStr)) {
+      return dateStr;
+    }
+    return dateStr.trim();
+  };
+  const storageKey = "black_catalog_search_state";
+  const readStoredState = () => {
+    try {
+      const storedRaw = sessionStorage.getItem(storageKey);
+      if (!storedRaw) {
+        return { nameFilter: '', hasSearched: false, searchTriggered: false };
+      }
+      const stored = JSON.parse(storedRaw) as { nameFilter?: string; hasSearched?: boolean };
+      const nameFilter = typeof stored.nameFilter === 'string' ? stored.nameFilter : '';
+      const canSearch = nameFilter.length >= 5;
+      return {
+        nameFilter,
+        hasSearched: Boolean(stored.hasSearched) && canSearch,
+        searchTriggered: Boolean(stored.hasSearched) && canSearch,
+      };
+    } catch {
+      sessionStorage.removeItem(storageKey);
+      return { nameFilter: '', hasSearched: false, searchTriggered: false };
+    }
+  };
+  const initialState = readStoredState();
+  const [nameFilter, setNameFilter] = useState(initialState.nameFilter);
+  const [searchTriggered, setSearchTriggered] = useState(initialState.searchTriggered);
+  const [hasSearched, setHasSearched] = useState(initialState.hasSearched);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Partial<BlackCatalogItem> | null>(null);
   const [selectedItemDossier, setSelectedItemDossier] = useState<BlackCatalogItem | null>(null);
@@ -57,6 +93,13 @@ const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
   } | null>(null);
 
   useEffect(() => {
+    sessionStorage.setItem(
+      storageKey,
+      JSON.stringify({ nameFilter, hasSearched })
+    );
+  }, [nameFilter, hasSearched, storageKey]);
+
+  useEffect(() => {
     const loadTotalCount = async () => {
       const total = await getTotalCount();
       if (total !== null) {
@@ -76,9 +119,14 @@ const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
     const params: {
       name?: string;
     } = {};
-
+    
     if (nameFilter && nameFilter.length >= 5) {
       params.name = nameFilter;
+    }
+
+    if (!params.name) {
+      setHasSearched(false);
+      return;
     }
 
     await searchEntries(params);
@@ -115,7 +163,7 @@ const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
     (action: 'edit' | 'delete') => {
       if (!contextMenu?.item) return;
 
-      if (action === 'edit') {
+      if (action === 'edit' && allowEdit) {
         handleEditItem(contextMenu.item);
       } else if (action === 'delete') {
         handleDeleteFromBlackCatalog(contextMenu.item);
@@ -123,7 +171,7 @@ const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
 
       setContextMenu(null);
     },
-    [contextMenu]
+    [contextMenu, allowEdit]
   );
 
   const closeContextMenu = useCallback(() => {
@@ -162,19 +210,21 @@ const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
           fullname: itemData.fullname!,
           doc: itemData.doc!,
           address: itemData.address!,
-          birthdate: itemData.birthdate!,
+          birthdate: formatDateForAPI(itemData.birthdate),
         });
       } else {
         result = await createEntry({
           fullname: itemData.fullname!,
           doc: itemData.doc!,
           address: itemData.address!,
-          birthdate: itemData.birthdate!,
+          birthdate: formatDateForAPI(itemData.birthdate),
           comment: itemData.comment?.trim() || undefined,
           main_page: itemData.main_page || undefined,
           registration_page: itemData.registration_page || undefined,
           is_swindler: itemData.is_swindler,
-          debt_ending_at: itemData.debt_ending_at || undefined,
+          debt_ending_at: itemData.debt_ending_at
+            ? formatDateForAPI(itemData.debt_ending_at)
+            : undefined,
         });
       }
 
@@ -288,6 +338,7 @@ const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
             onRightClick={(e) => handleCardRightClick(e, item)}
             onOpenDossier={handleOpenDossier}
             showMenu={isSuperAdminCompany()}
+            allowEdit={allowEdit}
           />
         ))}
       </div>
@@ -367,7 +418,9 @@ const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
         <>
           <Backdrop onClick={closeContextMenu} />
           <ContextMenu x={contextMenu.x} y={contextMenu.y}>
-            <MenuItem onClick={() => handleContextMenuAction('edit')}>Редактировать</MenuItem>
+            {allowEdit && (
+              <MenuItem onClick={() => handleContextMenuAction('edit')}>Редактировать</MenuItem>
+            )}
             <MenuItem danger onClick={() => handleContextMenuAction('delete')}>
               Удалить
             </MenuItem>

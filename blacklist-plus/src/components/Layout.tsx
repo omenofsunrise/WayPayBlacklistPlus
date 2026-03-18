@@ -80,6 +80,12 @@ const Layout: React.FC<LayoutProps> = ({ children, userInfo }) => {
       onClick: () => navigate('/blacklist'),
     },
     {
+      key: 'my-blacklist',
+      label: 'Свой ЧС',
+      icon: <BlacklistIcon />,
+      onClick: () => navigate('/my-blacklist'),
+    },
+    {
       key: 'formatted',
       label: 'Оформленные',
       icon: <BlacklistIcon />,

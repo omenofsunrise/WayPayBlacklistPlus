@@ -8,7 +8,8 @@ const texts: BlackCatalogPageContentTexts = {
   emptyStateDescription:
     "Введите ФИО клиента (минимум 5 символов) или полный номер телефона для поиска в чёрном каталоге.",
   notFoundTitle: "Запись в чёрном каталоге не найдена",
-  notFoundDescription: (query) => `По вашему запросу "${query}" ничего не найдено.`,
+  notFoundDescription: (query) =>
+    `По вашему запросу "${query}" ничего не найдено.`,
   addButtonLabel: "+ Добавить",
   addToCatalogLabel: "+ Добавить в чёрный каталог",
   deleteConfirmText: (fullname) =>
@@ -16,7 +17,13 @@ const texts: BlackCatalogPageContentTexts = {
 };
 
 const BlackCatalogPage = ({ userId }: { userId: string }) => {
-  return <BlackCatalogPageContent texts={texts} showDebtSection={false} userId={userId}/>;
+  return (
+    <BlackCatalogPageContent
+      texts={texts}
+      showDebtSection={false}
+      userId={userId}
+    />
+  );
 };
 
 export default BlackCatalogPage;

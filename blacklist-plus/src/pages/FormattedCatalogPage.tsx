@@ -8,7 +8,8 @@ const texts: BlackCatalogPageContentTexts = {
   emptyStateDescription:
     "Введите ФИО клиента (минимум 5 символов) или полный номер телефона для поиска оформленных.",
   notFoundTitle: "Запись не найдена",
-  notFoundDescription: (query) => `По вашему запросу "${query}" ничего не найдено.`,
+  notFoundDescription: (query) =>
+    `По вашему запросу "${query}" ничего не найдено.`,
   addButtonLabel: "+ Добавить",
   addToCatalogLabel: "+ Добавить оформленного",
   deleteConfirmText: (fullname) =>

@@ -203,6 +203,8 @@ interface BlackCatalogCardProps {
   onRightClick: (e: React.MouseEvent, item: BlackCatalogItem) => void;
   onOpenDossier: (item: BlackCatalogItem) => void;
   showMenu?: boolean;
+  allowEdit?: boolean;
+  allowDelete?: boolean;
 }
 
 const formatDate = (dateString: string): string => {
@@ -227,6 +229,8 @@ const BlackCatalogCard: React.FC<BlackCatalogCardProps> = ({
   onRightClick,
   onOpenDossier,
   showMenu = true,
+  allowEdit = true,
+  allowDelete = true,
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -262,13 +266,17 @@ const BlackCatalogCard: React.FC<BlackCatalogCardProps> = ({
   const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsMenuOpen(false);
-    onEdit(item);
+    if (allowEdit) {
+      onEdit(item);
+    }
   };
 
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsMenuOpen(false);
-    onDelete(item);
+    if (allowDelete) {
+      onDelete(item);
+    }
   };
 
   const handleCardClick = () => {
@@ -307,15 +315,17 @@ const BlackCatalogCard: React.FC<BlackCatalogCardProps> = ({
           </CardTitleText>
         </CardTitle>
         
-        {showMenu && (
+        {showMenu && (allowEdit || allowDelete) && (
           <>
             <MenuButton onClick={handleMenuClick}>
               <FaEllipsisV size={16} />
             </MenuButton>
 
             <ContextMenu $isVisible={isMenuOpen} ref={menuRef}>
-              <MenuItem onClick={handleEditClick}>Редактировать</MenuItem>
-              <MenuItem className="danger" onClick={handleDeleteClick}>Удалить</MenuItem>
+              {allowEdit && <MenuItem onClick={handleEditClick}>Редактировать</MenuItem>}
+              {allowDelete && (
+                <MenuItem className="danger" onClick={handleDeleteClick}>Удалить</MenuItem>
+              )}
             </ContextMenu>
           </>
         )}

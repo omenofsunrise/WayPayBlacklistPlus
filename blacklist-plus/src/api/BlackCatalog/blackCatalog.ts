@@ -68,6 +68,7 @@ export interface CreateBlackCatalogResponse {
 export interface SearchBlackCatalogResponse {
   black_catalogs: BlackCatalogItem[];
   count: number;
+  next_page_token?: string;
   success: boolean;
   error?: string;
 }
@@ -82,4 +83,7 @@ export interface ErrorResponse {
 
 export interface SearchParams {
   name?: string;
+  mine?: boolean;
+  page_token?: string;
+  page_size?: number;
 }

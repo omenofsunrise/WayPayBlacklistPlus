@@ -557,7 +557,7 @@ const CalculatorPage = () => {
                       <FloatingLabel>Округлять до, ₽</FloatingLabel>
                       <RoundSelect
                         value={formData.round}
-                        onChange={(e) => handleRoundChange(e.target.value)}
+                        onChange={(e) => handleRoundChange(String(e.target.value))}
                         options={roundOptions}
                         placeholder="Без округления"
                         customPlaceholder="Без округления"
@@ -654,7 +654,7 @@ const CalculatorPage = () => {
                       <FloatingLabel>Округлять до, ₽</FloatingLabel>
                       <RoundSelect
                         value={formData.round}
-                        onChange={(e) => handleRoundChange(e.target.value)}
+                        onChange={(e) => handleRoundChange(String(e.target.value))}
                         options={roundOptions}
                         placeholder="Без округления"
                         customPlaceholder="Без округления"
@@ -1013,27 +1013,27 @@ const MainContent = styled.div`
 const InputsSection = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
   background: white;
 
   @media (max-width: 768px) {
-    gap: 12px;
+    gap: 14px;
   }
 `;
 
 const InputRow = styled.div<{ $compactOnMobile?: boolean }>`
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 20px;
   background: white;
 
   @media (max-width: 768px) {
     grid-template-columns: ${props => (props.$compactOnMobile ? '1fr 1fr' : '1fr')};
-    gap: 10px;
+    gap: 12px;
   }
 
   @media (max-width: 480px) {
-    gap: 10px;
+    gap: 12px;
   }
 `;
 

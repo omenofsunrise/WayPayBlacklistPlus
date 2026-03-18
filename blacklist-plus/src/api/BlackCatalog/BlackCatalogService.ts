@@ -233,6 +233,15 @@ class BlackCatalogService {
       queryParams.append('name', params.name);
       queryParams.append('fullname', params.name);
     }
+    if (params.mine) {
+      queryParams.append('mine', 'true');
+    }
+    if (params.page_token) {
+      queryParams.append('page_token', params.page_token);
+    }
+    if (params.page_size) {
+      queryParams.append('page_size', String(params.page_size));
+    }
     const queryString = queryParams.toString();
     const endpoint = queryString 
       ? `${this.baseEndpoint}/search?${queryString}`

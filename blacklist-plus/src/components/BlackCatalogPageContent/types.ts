@@ -14,4 +14,5 @@ export interface BlackCatalogPageContentProps {
   showDebtSection?: boolean;
   requireDebtDate?: boolean;
   userId: string;
+  allowEdit?: boolean;
 }
