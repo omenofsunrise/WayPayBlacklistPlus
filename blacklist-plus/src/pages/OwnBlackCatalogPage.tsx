@@ -3,7 +3,6 @@ import styled from "styled-components";
 import type { BlackCatalogFormData, BlackCatalogItem } from "../api/BlackCatalog/blackCatalog";
 import { blackCatalogService } from "../api/BlackCatalog/BlackCatalogService";
 import BlackCatalogCard from "../components/BlackCatalogCard";
-import BlackCatalogDossier from "../components/BlackCatalogDossier";
 import { BlackCatalogModal } from "../components/BlackCatalogModal";
 import {
   EmptyStateContainer,
@@ -212,13 +211,7 @@ const OwnBlackCatalogPage = () => {
       />
 
       {selectedItemDossier ? (
-        <BlackCatalogDossier
-          item={selectedItemDossier}
-          onBack={() => setSelectedItemDossier(null)}
-          onRefresh={async () => {
-            await loadPage();
-          }}
-        />
+        <></>
       ) : (
         <>
           <StickyHeader>
