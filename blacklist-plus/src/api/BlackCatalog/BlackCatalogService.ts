@@ -12,37 +12,22 @@ class BlackCatalogService {
   private baseEndpoint = '/black-catalog';
   private accessTokenKey = 'access_token';
 
-  private appendFormValue(form: FormData, key: string, value: unknown) {
-    if (value === undefined || value === null) return;
-    if (typeof value === 'string' && value.trim() === '') return;
-
-    if (value instanceof File) {
-      if (value.size > 0) form.append(key, value);
-      return;
-    }
-
-    if (typeof value === 'boolean') {
-      form.append(key, value ? 'true' : 'false');
-      return;
-    }
-
-    form.append(key, String(value));
-  }
-
   private readCookie(name: string): string | null {
     if (typeof document === 'undefined') return null;
     const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
     return match ? decodeURIComponent(match[1]) : null;
   }
 
-  private async requestFormData<T>(endpoint: string, formData: FormData): Promise<T> {
-    const token =
-      window.localStorage.getItem(this.accessTokenKey) || this.readCookie(this.accessTokenKey);
-    const headers: Record<string, string> = {};
-    if (token) {
-      headers.Authorization = token.startsWith('Bearer ') ? token : token;
-    }
+  private getAuthHeaders(): Record<string, string> {
+    const token = window.localStorage.getItem(this.accessTokenKey) || this.readCookie(this.accessTokenKey);
+    return token ? { Authorization: token.startsWith('Bearer ') ? token : `Bearer ${token}` } : {};
+  }
+
+  private async uploadFile<T>(endpoint: string, formData: FormData): Promise<T> {
+    const headers = this.getAuthHeaders();
+    // Не устанавливаем Content-Type, браузер сам добавит boundary для FormData
     const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
+    
     const response = await fetch(url, {
       method: 'POST',
       headers,
@@ -80,7 +65,7 @@ class BlackCatalogService {
     if (data.main_page) formData.append('main_page', data.main_page);
     if (data.registration_page) formData.append('registration_page', data.registration_page);
 
-    return this.requestFormData<{ success: boolean; error?: string }>(
+    return this.uploadFile<{ success: boolean; error?: string }>(
       `${this.baseEndpoint}/passport/set`,
       formData
     );
@@ -122,8 +107,9 @@ class BlackCatalogService {
   }> {
     const queryParams = new URLSearchParams();
     queryParams.append('page_size', String(pageSize));
-    const endpoint = `${this.baseEndpoint}/${id}/comments?${queryParams.toString()}`;
-    return apiRequest(endpoint, { method: 'GET' });
+    return apiRequest(`${this.baseEndpoint}/${id}/comments?${queryParams.toString()}`, { 
+      method: 'GET' 
+    });
   }
 
   async createComment(
@@ -135,7 +121,7 @@ class BlackCatalogService {
     if (data.parent_id) formData.append('parent_id', data.parent_id);
     if (data.file) formData.append('files', data.file);
 
-    return this.requestFormData(`${this.baseEndpoint}/${id}/comments`, formData);
+    return this.uploadFile(`${this.baseEndpoint}/${id}/comments`, formData);
   }
 
   async updateComment(
@@ -157,44 +143,44 @@ class BlackCatalogService {
     });
   }
 
-
-  /**
-   * Подготавливает данные для обновления
-   * Для обновления: пустые даты превращаем в null
-   */
-  private prepareUpdateData(data: BlackCatalogUpdatePayload): BlackCatalogUpdatePayload {
-    const prepared: BlackCatalogUpdatePayload = { ...data };
-    
-    if (prepared.birthdate === '') {
-      (prepared as any).birthdate = null;
-    }
-    if (prepared.debt_ending_at === '') {
-      (prepared as any).debt_ending_at = null;
-    }
-    return prepared;
-  }
-
   /**
    * Создать запись в черном каталоге
    * POST /black-catalog
-   * При создании: пустые даты не отправляются
    */
   async create(data: BlackCatalogCreatePayload): Promise<CreateBlackCatalogResponse> {
     const formData = new FormData();
-    (Object.keys(data) as Array<keyof BlackCatalogCreatePayload>).forEach(key => {
-      this.appendFormValue(formData, key, data[key]);
+    
+    Object.entries(data).forEach(([key, value]) => {
+      if (value === undefined || value === null) return;
+      
+      if (value instanceof File) {
+        if (value.size > 0) formData.append(key, value);
+      } else if (typeof value === 'boolean') {
+        formData.append(key, value ? 'true' : 'false');
+      } else if (typeof value === 'string' && value.trim() !== '') {
+        formData.append(key, value);
+      } else if (typeof value === 'number') {
+        formData.append(key, String(value));
+      }
     });
 
-    return this.requestFormData<CreateBlackCatalogResponse>(this.baseEndpoint, formData);
+    return this.uploadFile<CreateBlackCatalogResponse>(this.baseEndpoint, formData);
   }
 
   /**
    * Обновить запись в черном каталоге
    * PUT /black-catalog/{id}
-   * При обновлении: пустые даты отправляются как null
    */
   async update(id: number, data: BlackCatalogUpdatePayload): Promise<CreateBlackCatalogResponse> {
-    const preparedData = this.prepareUpdateData(data);
+    // Для обновления пустые строки превращаем в null
+    const preparedData = { ...data };
+    
+    if (preparedData.birthdate === '') {
+      (preparedData as any).birthdate = null;
+    }
+    if (preparedData.debt_ending_at === '') {
+      (preparedData as any).debt_ending_at = null;
+    }
     
     return apiRequest<CreateBlackCatalogResponse>(`${this.baseEndpoint}/${id}`, {
       method: 'PUT',
@@ -229,6 +215,7 @@ class BlackCatalogService {
    */
   async search(params: SearchParams): Promise<SearchBlackCatalogResponse> {
     const queryParams = new URLSearchParams();
+    
     if (params.name) {
       queryParams.append('name', params.name);
       queryParams.append('fullname', params.name);
@@ -242,6 +229,7 @@ class BlackCatalogService {
     if (params.page_size) {
       queryParams.append('page_size', String(params.page_size));
     }
+    
     const queryString = queryParams.toString();
     const endpoint = queryString 
       ? `${this.baseEndpoint}/search?${queryString}`
