@@ -11,6 +11,33 @@ interface SubscriptionBlockProps {
   title?: string;
 }
 
+// Определяем интерфейсы для стилей
+interface DisclaimerStyles {
+  overlay: React.CSSProperties;
+  content: React.CSSProperties;
+  title: React.CSSProperties;
+  text: React.CSSProperties;
+  checkboxContainer: React.CSSProperties;
+  checkbox: React.CSSProperties;
+  checkboxLabel: React.CSSProperties;
+  buttonsContainer: React.CSSProperties;
+  confirmButton: React.CSSProperties;
+  cancelButton: React.CSSProperties;
+}
+
+interface MobileStyles {
+  container: React.CSSProperties;
+  title: React.CSSProperties;
+  subtitle: React.CSSProperties;
+  plansGrid: React.CSSProperties;
+  planCard: React.CSSProperties;
+  planTitle: React.CSSProperties;
+  planPrice: React.CSSProperties;
+  button: React.CSSProperties;
+  errorMessage: React.CSSProperties;
+  disclaimer: DisclaimerStyles;
+}
+
 const SubscriptionBlock: React.FC<SubscriptionBlockProps> = ({ 
   tariffType, 
   onPaymentSuccess,
@@ -19,6 +46,8 @@ const SubscriptionBlock: React.FC<SubscriptionBlockProps> = ({
 }) => {
   const [selectedDays, setSelectedDays] = useState<number>(365);
   const [isMobile, setIsMobile] = useState(false);
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
+  const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
   
   const {
     isLoading,
@@ -67,7 +96,18 @@ const SubscriptionBlock: React.FC<SubscriptionBlockProps> = ({
     setSelectedDays(days);
   };
 
-  const handleSubscribe = async () => {
+  const handleSubscribeClick = () => {
+    setShowDisclaimer(true);
+  };
+
+  const handleConfirmSubscribe = async () => {
+    if (!disclaimerAccepted) {
+      alert('Пожалуйста, подтвердите ознакомление с дисклеймером');
+      return;
+    }
+
+    setShowDisclaimer(false);
+    
     const result = await createOrExtend({
       days: selectedDays,
       tariff_type: tariffType,
@@ -83,6 +123,11 @@ const SubscriptionBlock: React.FC<SubscriptionBlockProps> = ({
     }
   };
 
+  const handleCloseDisclaimer = () => {
+    setShowDisclaimer(false);
+    setDisclaimerAccepted(false);
+  };
+
   const getTariffDisplayName = (type: TariffType) => {
     switch (type) {
       case 'blacklist_plus':
@@ -92,7 +137,8 @@ const SubscriptionBlock: React.FC<SubscriptionBlockProps> = ({
     }
   };
 
-  const mobileStyles = {
+  // Создаем объект со стилями как обычный объект, а не через styled-components
+  const getMobileStyles = (): MobileStyles => ({
     container: {
       padding: isMobile ? '20px 15px' : '40px',
     },
@@ -128,8 +174,94 @@ const SubscriptionBlock: React.FC<SubscriptionBlockProps> = ({
       padding: isMobile ? '12px' : '15px',
       fontSize: isMobile ? '14px' : '16px',
     },
-  };
+    disclaimer: {
+      overlay: {
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 1000,
+        padding: isMobile ? '15px' : '20px',
+      },
+      content: {
+        backgroundColor: 'white',
+        borderRadius: isMobile ? '15px' : '20px',
+        padding: isMobile ? '20px' : '30px',
+        maxWidth: '600px',
+        width: '100%',
+        maxHeight: '90vh',
+        overflowY: 'auto',
+        boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+      },
+      title: {
+        fontSize: isMobile ? '20px' : '24px',
+        marginBottom: '20px',
+        color: '#333',
+      },
+      text: {
+        fontSize: isMobile ? '14px' : '16px',
+        lineHeight: '1.6',
+        color: '#666',
+        marginBottom: '25px',
+      },
+      checkboxContainer: {
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: '12px',
+        marginBottom: '25px',
+        cursor: 'pointer',
+      },
+      checkbox: {
+        width: isMobile ? '20px' : '18px',
+        height: isMobile ? '20px' : '18px',
+        cursor: 'pointer',
+        marginTop: '2px',
+      },
+      checkboxLabel: {
+        fontSize: isMobile ? '14px' : '16px',
+        color: '#333',
+        lineHeight: '1.5',
+        flex: 1,
+      },
+      buttonsContainer: {
+        display: 'flex',
+        gap: '15px',
+        justifyContent: 'flex-end',
+        flexDirection: isMobile ? 'column' : 'row',
+      },
+      confirmButton: {
+        backgroundColor: '#007D88',
+        color: 'white',
+        border: 'none',
+        padding: isMobile ? '12px 20px' : '12px 30px',
+        borderRadius: '8px',
+        fontSize: isMobile ? '16px' : '16px',
+        fontWeight: 'bold',
+        cursor: 'pointer',
+        transition: 'background-color 0.3s',
+        flex: isMobile ? 1 : '0 1 auto',
+      },
+      cancelButton: {
+        backgroundColor: '#f0f0f0',
+        color: '#333',
+        border: 'none',
+        padding: isMobile ? '12px 20px' : '12px 30px',
+        borderRadius: '8px',
+        fontSize: isMobile ? '16px' : '16px',
+        fontWeight: 'bold',
+        cursor: 'pointer',
+        transition: 'background-color 0.3s',
+        flex: isMobile ? 1 : '0 1 auto',
+      },
+    },
+  });
 
+  const styles = getMobileStyles();
   const promoActive = isPromoActive();
 
   return (
@@ -145,23 +277,23 @@ const SubscriptionBlock: React.FC<SubscriptionBlockProps> = ({
         width: '100%',
         backgroundColor: 'white',
         borderRadius: isMobile ? '15px' : '20px',
-        padding: mobileStyles.container.padding,
+        padding: styles.container.padding,
         boxShadow: isMobile ? '0 10px 30px rgba(0,0,0,0.2)' : '0 20px 60px rgba(0,0,0,0.3)',
       }}>
         <h1 style={{ 
           textAlign: 'center', 
-          marginBottom: mobileStyles.title.marginBottom,
+          marginBottom: styles.title.marginBottom,
           color: '#333',
-          fontSize: mobileStyles.title.fontSize,
+          fontSize: styles.title.fontSize,
         }}>
           {title}
         </h1>
         
         <p style={{ 
           textAlign: 'center', 
-          marginBottom: mobileStyles.subtitle.marginBottom,
+          marginBottom: styles.subtitle.marginBottom,
           color: '#666',
-          fontSize: mobileStyles.subtitle.fontSize,
+          fontSize: styles.subtitle.fontSize,
         }}>
           {getTariffDisplayName(tariffType)}
         </p>
@@ -170,13 +302,13 @@ const SubscriptionBlock: React.FC<SubscriptionBlockProps> = ({
           <div style={{
             backgroundColor: '#fee',
             color: '#c33',
-            padding: mobileStyles.errorMessage.padding,
+            padding: styles.errorMessage.padding,
             borderRadius: '8px',
             marginBottom: '20px',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            fontSize: mobileStyles.errorMessage.fontSize,
+            fontSize: styles.errorMessage.fontSize,
           }}>
             <span style={{ flex: 1 }}>{error}</span>
             <button 
@@ -197,7 +329,7 @@ const SubscriptionBlock: React.FC<SubscriptionBlockProps> = ({
           </div>
         )}
 
-        <div style={mobileStyles.plansGrid}>
+        <div style={styles.plansGrid}>
           {subscriptionPlans.map((plan) => (
             <div
               key={plan.days}
@@ -205,7 +337,7 @@ const SubscriptionBlock: React.FC<SubscriptionBlockProps> = ({
               style={{
                 border: `2px solid ${selectedDays === plan.days ? '#007D88' : '#e0e0e0'}`,
                 borderRadius: '10px',
-                padding: mobileStyles.planCard.padding,
+                padding: styles.planCard.padding,
                 cursor: 'pointer',
                 transition: 'all 0.3s',
                 backgroundColor: selectedDays === plan.days ? '#F9FAFA' : 'white',
@@ -251,7 +383,7 @@ const SubscriptionBlock: React.FC<SubscriptionBlockProps> = ({
               <h3 style={{ 
                 margin: '0 0 10px 0', 
                 color: '#333',
-                fontSize: mobileStyles.planTitle.fontSize,
+                fontSize: styles.planTitle.fontSize,
                 paddingRight: plan.discount || (plan.promoPrice && promoActive && plan.days === 30) ? '70px' : '0',
               }}>
                 {plan.label}
@@ -260,7 +392,7 @@ const SubscriptionBlock: React.FC<SubscriptionBlockProps> = ({
               {plan.promoPrice && promoActive && plan.days === 30 ? (
                 <>
                   <div style={{ 
-                    fontSize: mobileStyles.planPrice.fontSize, 
+                    fontSize: styles.planPrice.fontSize, 
                     fontWeight: 'bold', 
                     color: '#007D88',
                     display: 'flex',
@@ -298,7 +430,7 @@ const SubscriptionBlock: React.FC<SubscriptionBlockProps> = ({
               ) : (
                 <>
                   <div style={{ 
-                    fontSize: mobileStyles.planPrice.fontSize, 
+                    fontSize: styles.planPrice.fontSize, 
                     fontWeight: 'bold', 
                     color: '#007D88' 
                   }}>
@@ -324,20 +456,20 @@ const SubscriptionBlock: React.FC<SubscriptionBlockProps> = ({
           gap: isMobile ? '15px' : '20px',
         }}>
           <button
-            onClick={handleSubscribe}
+            onClick={handleSubscribeClick}
             disabled={isLoading}
             style={{
               backgroundColor: '#007D88',
               color: 'white',
               border: 'none',
-              padding: mobileStyles.button.padding,
+              padding: styles.button.padding,
               borderRadius: '8px',
-              fontSize: mobileStyles.button.fontSize,
+              fontSize: styles.button.fontSize,
               fontWeight: 'bold',
               cursor: isLoading ? 'not-allowed' : 'pointer',
               opacity: isLoading ? 0.7 : 1,
               transition: 'background-color 0.3s',
-              width: mobileStyles.button.width,
+              width: styles.button.width,
               ...(isMobile && {
                 touchAction: 'manipulation',
                 WebkitTapHighlightColor: 'transparent',
@@ -348,6 +480,57 @@ const SubscriptionBlock: React.FC<SubscriptionBlockProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Модальное окно с дисклеймером */}
+      {showDisclaimer && (
+        <div style={styles.disclaimer.overlay}>
+          <div style={styles.disclaimer.content}>
+            <h2 style={styles.disclaimer.title}>
+              ВНИМАНИЕ
+            </h2>
+            
+            <div style={styles.disclaimer.text}>
+              Авторы проекта не гарантируют актуальность информации, 
+              представленной в данном проекте, и не несут ответственности 
+              за её достоверность. Источником данных является открытое 
+              сообщество людей, практикующих рассрочки, поэтому информация 
+              может быстро устаревать или требовать перепроверки.
+            </div>
+
+            <label style={styles.disclaimer.checkboxContainer}>
+              <input
+                type="checkbox"
+                checked={disclaimerAccepted}
+                onChange={(e) => setDisclaimerAccepted(e.target.checked)}
+                style={styles.disclaimer.checkbox}
+              />
+              <span style={styles.disclaimer.checkboxLabel}>
+                Я ознакомился и принимаю условия использования сервиса
+              </span>
+            </label>
+
+            <div style={styles.disclaimer.buttonsContainer}>
+              <button
+                onClick={handleCloseDisclaimer}
+                style={styles.disclaimer.cancelButton}
+              >
+                Отмена
+              </button>
+              <button
+                onClick={handleConfirmSubscribe}
+                disabled={!disclaimerAccepted}
+                style={{
+                  ...styles.disclaimer.confirmButton,
+                  opacity: disclaimerAccepted ? 1 : 0.5,
+                  cursor: disclaimerAccepted ? 'pointer' : 'not-allowed',
+                }}
+              >
+                Подтвердить и продолжить
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
