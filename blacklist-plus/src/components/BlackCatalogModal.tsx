@@ -230,8 +230,6 @@ export const BlackCatalogModal: React.FC<BlackCatalogModalProps> = ({
           : '',
       };
       
-      console.log('Отправляемые данные:', dataToSend);
-      
       await onSave(dataToSend);
     } finally {
       setIsSubmitting(false);

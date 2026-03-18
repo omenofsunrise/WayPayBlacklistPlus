@@ -33,18 +33,22 @@ const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
   allowEdit = true,
 }) => {
   const formatDateForAPI = (dateStr?: string): string => {
-    if (!dateStr) return '';
-    if (dateStr.includes('T')) {
-      return dateStr.split('T')[0];
-    }
-    if (/^\\d{2}\\.\\d{2}\\.\\d{4}$/.test(dateStr)) {
-      const [day, month, year] = dateStr.split('.');
-      return `${year}-${month}-${day}`;
-    }
-    if (/^\\d{4}-\\d{2}-\\d{2}$/.test(dateStr)) {
-      return dateStr;
-    }
-    return dateStr.trim();
+      if (!dateStr) return '';
+      
+      if (dateStr.includes('T')) {
+          return dateStr.split('T')[0];
+      }
+      
+      if (/^\d{2}\.\d{2}\.\d{4}$/.test(dateStr)) {
+          const [day, month, year] = dateStr.split('.');
+          return `${year}-${month}-${day}`;
+      }
+      
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+          return new Date(dateStr).toISOString();
+      }
+      
+      return dateStr.trim();
   };
   const storageKey = "black_catalog_search_state";
   const readStoredState = () => {
