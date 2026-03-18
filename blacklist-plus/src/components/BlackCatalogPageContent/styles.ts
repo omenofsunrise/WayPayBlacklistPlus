@@ -354,7 +354,7 @@ export const MobileBottomSheet = styled.div`
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 20000;
+  z-index: 2147483647;
   display: flex;
   align-items: flex-end;
   isolation: isolate;
@@ -365,13 +365,14 @@ export const MobileBottomSheet = styled.div`
 `;
 
 export const MobileBottomSheetOverlay = styled.div`
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
   background-color: rgba(0, 0, 0, 0.5);
   animation: fadeIn 0.2s ease-out;
+  z-index: 2147483646;
   
   @keyframes fadeIn {
     from {
@@ -392,6 +393,7 @@ export const MobileBottomSheetContent = styled.div`
   animation: slideUp 0.3s ease-out;
   max-height: 80vh;
   overflow-y: auto;
+  z-index: 2147483647;
   
   @keyframes slideUp {
     from {
