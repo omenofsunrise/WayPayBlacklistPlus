@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import styled from "styled-components";
 import { BaseModal, CustomInput, InputRow, type ModalMode } from "waypay_react_library";
 import type { BlackCatalogFormData, BlackCatalogItem } from "../api/BlackCatalog/blackCatalog";
@@ -12,6 +13,26 @@ interface BlackCatalogModalProps {
   showDebtSection?: boolean;
   requireDebtDate?: boolean;
 }
+
+const ModalPortalContainer = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2147483647;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+`;
+
+const ModalWrapper = styled.div`
+  pointer-events: auto;
+  width: 100%;
+  max-width: 600px;
+  margin: 20px;
+`;
 
 const TextArea = styled.textarea`
   width: 100%;
@@ -52,6 +73,45 @@ const FileMeta = styled.span`
   font-size: 12px;
   color: #6b7280;
 `;
+
+const ModalPortal: React.FC<{ children: React.ReactNode; isOpen: boolean }> = ({ 
+  children, 
+  isOpen 
+}) => {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    }
+    
+    return () => {
+      setMounted(false);
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+  }, [isOpen]);
+
+  if (!isOpen || !mounted) return null;
+
+  return createPortal(
+    <ModalPortalContainer>
+      <ModalWrapper>
+        {children}
+      </ModalWrapper>
+    </ModalPortalContainer>,
+    document.body
+  );
+};
 
 const formatFullNameLive = (
   value: string, 
@@ -212,7 +272,7 @@ export const BlackCatalogModal: React.FC<BlackCatalogModalProps> = ({
     
     setIsSubmitting(true);
     try {
-      if (requireDebtDate && isCreate && !formData.debt_ending_at) {
+      if (requireDebtDate && !editingItem && !formData.debt_ending_at) {
         alert('Укажите дату окончания оформления');
         return;
       }
@@ -282,106 +342,105 @@ export const BlackCatalogModal: React.FC<BlackCatalogModalProps> = ({
     setFormData(prev => ({ ...prev, [field]: file }));
   };
 
-  if (!isOpen) return null;
-
-  const title = editingItem ? 'Редактировать запись' : 'Добавить в ЧС';
+  const title = editingItem ? 'Редактировать запись' : editingItem === null && mode === 'create' ? 'Добавить запись' : 'Редактировать запись';
   const saveButtonText = editingItem ? 'Сохранить' : 'Добавить';
-  const isCreate = mode === "create";
 
   return (
-    <BaseModal
-      title={title}
-      onClose={onClose}
-      onCancel={onClose}
-      onSave={handleSubmit}
-      isSubmitting={isSubmitting}
-      saveButtonText={saveButtonText}
-      mode={mode}
-    >
-      <InputRow>
-        <CustomInput
-          type="fullname"
-          value={formData.fullname || ''}
-          onChange={handleFullnameChange}
-          placeholder="ФИО"
-        />
-      </InputRow>
-      
-      <InputRow>
-        <CustomInput
-          type="text"
-          value={formData.birthdate || ''}
-          onChange={handleDateTextChange('birthdate')}
-          placeholder="Дата рождения (ДД.ММ.ГГГГ)"
-        />
-      </InputRow>
-      
-      <InputRow>
-        <CustomInput
-          type="text"
-          value={formData.doc || ''}
-          onChange={e => handleFieldChange('doc', e.target.value)}
-          placeholder="Документ (серия и номер)"
-        />
-      </InputRow>
-      
-      <InputRow>
-        <CustomInput
-          value={formData.address || ''}
-          onChange={e => handleFieldChange('address', e.target.value)}
-          placeholder="Адрес"
-        />
-      </InputRow>
+    <ModalPortal isOpen={isOpen}>
+      <BaseModal
+        title={title}
+        onClose={onClose}
+        onCancel={onClose}
+        onSave={handleSubmit}
+        isSubmitting={isSubmitting}
+        saveButtonText={saveButtonText}
+        mode={mode}
+      >
+        <InputRow>
+          <CustomInput
+            type="fullname"
+            value={formData.fullname || ''}
+            onChange={handleFullnameChange}
+            placeholder="ФИО"
+          />
+        </InputRow>
+        
+        <InputRow>
+          <CustomInput
+            type="text"
+            value={formData.birthdate || ''}
+            onChange={handleDateTextChange('birthdate')}
+            placeholder="Дата рождения (ДД.ММ.ГГГГ)"
+          />
+        </InputRow>
+        
+        <InputRow>
+          <CustomInput
+            type="text"
+            value={formData.doc || ''}
+            onChange={e => handleFieldChange('doc', e.target.value)}
+            placeholder="Документ (серия и номер)"
+          />
+        </InputRow>
+        
+        <InputRow>
+          <CustomInput
+            value={formData.address || ''}
+            onChange={e => handleFieldChange('address', e.target.value)}
+            placeholder="Адрес"
+          />
+        </InputRow>
 
-      {isCreate && (
-        <>
-          {showDebtSection && (
+        {!editingItem && (
+          <>
+            {showDebtSection && (
+              <InputRow>
+                <CustomInput
+                  type="text"
+                  value={formData.debt_ending_at || ''}
+                  onChange={handleDateTextChange('debt_ending_at')}
+                  placeholder="Оформлен до (ДД.ММ.ГГГГ)"
+                  required={requireDebtDate}
+                />
+              </InputRow>
+            )}
+
             <InputRow>
-              <CustomInput
-                type="text"
-                value={formData.debt_ending_at || ''}
-                onChange={handleDateTextChange('debt_ending_at')}
-                placeholder="Оформлен до (ДД.ММ.ГГГГ)"
-                required={requireDebtDate}
+              <TextArea
+                value={formData.comment}
+                onChange={e => handleFieldChange('comment', e.target.value)}
+                placeholder="Комментарий"
               />
             </InputRow>
-          )}
 
-          <InputRow>
-            <TextArea
-              value={formData.comment}
-              onChange={e => handleFieldChange('comment', e.target.value)}
-              placeholder="Комментарий"
-            />
-          </InputRow>
+            <InputRow>
+              <FileRow>
+                <FileLabel>Фото паспорта — основная страница</FileLabel>
+                <FileInput
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange('main_page')}
+                />
+                <FileMeta>{formData.main_page ? formData.main_page.name : 'Файл не выбран'}</FileMeta>
+              </FileRow>
+            </InputRow>
 
-          <InputRow>
-            <FileRow>
-              <FileLabel>Фото паспорта — основная страница</FileLabel>
-              <FileInput
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange('main_page')}
-              />
-              <FileMeta>{formData.main_page ? formData.main_page.name : 'Файл не выбран'}</FileMeta>
-            </FileRow>
-          </InputRow>
-
-          <InputRow>
-            <FileRow>
-              <FileLabel>Фото паспорта — регистрация</FileLabel>
-              <FileInput
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange('registration_page')}
-              />
-              <FileMeta>
-                {formData.registration_page ? formData.registration_page.name : 'Файл не выбран'}
-              </FileMeta>
-            </FileRow>
-          </InputRow>
-        </>
-      )}
-    </BaseModal>
+            <InputRow>
+              <FileRow>
+                <FileLabel>Фото паспорта — регистрация</FileLabel>
+                <FileInput
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange('registration_page')}
+                />
+                <FileMeta>
+                  {formData.registration_page ? formData.registration_page.name : 'Файл не выбран'}
+                </FileMeta>
+              </FileRow>
+            </InputRow>
+          </>
+        )}
+      </BaseModal>
+    </ModalPortal>
   );
 };
