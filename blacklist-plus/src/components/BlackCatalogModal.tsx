@@ -57,26 +57,26 @@ const TextArea = styled.textarea`
   }
 `;
 
-const FileRow = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  width: 100%;
-`;
+// const FileRow = styled.div`
+//   display: flex;
+//   flex-direction: column;
+//   gap: 6px;
+//   width: 100%;
+// `;
 
-const FileLabel = styled.span`
-  font-size: 12px;
-  color: #6b7280;
-`;
+// const FileLabel = styled.span`
+//   font-size: 12px;
+//   color: #6b7280;
+// `;
 
-const FileInput = styled.input`
-  width: 100%;
-`;
+// const FileInput = styled.input`
+//   width: 100%;
+// `;
 
-const FileMeta = styled.span`
-  font-size: 12px;
-  color: #6b7280;
-`;
+// const FileMeta = styled.span`
+//   font-size: 12px;
+//   color: #6b7280;
+// `;
 
 const ModalPortal: React.FC<{ children: React.ReactNode; isOpen: boolean }> = ({ 
   children, 
@@ -339,12 +339,12 @@ export const BlackCatalogModal: React.FC<BlackCatalogModalProps> = ({
     handleFieldChange(field, formatted);
   };
 
-  const handleFileChange = (field: 'main_page' | 'registration_page') => (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = e.target.files?.[0] ?? null;
-    setFormData(prev => ({ ...prev, [field]: file }));
-  };
+  // const handleFileChange = (field: 'main_page' | 'registration_page') => (
+  //   e: React.ChangeEvent<HTMLInputElement>
+  // ) => {
+  //   const file = e.target.files?.[0] ?? null;
+  //   setFormData(prev => ({ ...prev, [field]: file }));
+  // };
 
   const title = editingItem ? 'Редактировать запись' : editingItem === null && mode === 'create' ? 'Добавить запись' : 'Редактировать запись';
   const saveButtonText = editingItem ? 'Сохранить' : 'Добавить';
@@ -417,7 +417,7 @@ export const BlackCatalogModal: React.FC<BlackCatalogModalProps> = ({
               />
             </InputRow>
 
-            <InputRow>
+            {/* <InputRow>
               <FileRow>
                 <FileLabel>Фото паспорта — основная страница</FileLabel>
                 <FileInput
@@ -427,9 +427,9 @@ export const BlackCatalogModal: React.FC<BlackCatalogModalProps> = ({
                 />
                 <FileMeta>{formData.main_page ? formData.main_page.name : 'Файл не выбран'}</FileMeta>
               </FileRow>
-            </InputRow>
+            </InputRow> */}
 
-            <InputRow>
+            {/* <InputRow>
               <FileRow>
                 <FileLabel>Фото паспорта — регистрация</FileLabel>
                 <FileInput
@@ -441,7 +441,7 @@ export const BlackCatalogModal: React.FC<BlackCatalogModalProps> = ({
                   {formData.registration_page ? formData.registration_page.name : 'Файл не выбран'}
                 </FileMeta>
               </FileRow>
-            </InputRow>
+            </InputRow> */}
           </>
         )}
       </BaseModal>

@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { BackButton as LibBackButton, DefaultButton, apiRequest, API_BASE_URL, PhotoViewerModal } from "waypay_react_library";
 import type { BlackCatalogItem } from "../api/BlackCatalog/blackCatalog";
 import { blackCatalogService } from "../api/BlackCatalog/BlackCatalogService";
@@ -142,141 +142,141 @@ const InfoValue = styled.span`
     font-weight: 600;
 `;
 
-const PassportSection = styled.div`
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 24px;
-    margin-top: 16px;
+// const PassportSection = styled.div`
+//     display: grid;
+//     grid-template-columns: 1fr 1fr;
+//     gap: 24px;
+//     margin-top: 16px;
 
-    @media (max-width: 768px) {
-        grid-template-columns: 1fr;
-    }
-`;
+//     @media (max-width: 768px) {
+//         grid-template-columns: 1fr;
+//     }
+// `;
 
-const PassportPhotoSection = styled.div`
-    margin-top: 16px;
-`;
+// const PassportPhotoSection = styled.div`
+//     margin-top: 16px;
+// `;
 
-const PassportPhotoTitle = styled.h4`
-    font-size: 14px;
-    font-weight: 600;
-    color: #374151;
-    margin: 0;
-`;
+// const PassportPhotoTitle = styled.h4`
+//     font-size: 14px;
+//     font-weight: 600;
+//     color: #374151;
+//     margin: 0;
+// `;
 
-const PassportPhotoPlaceholder = styled.div`
-    border: 1px dashed #d1d5db;
-    border-radius: 6px;
-    padding: 28px 16px;
-    text-align: center;
-    transition: border-color 0.2s;
-    background: white;
+// const PassportPhotoPlaceholder = styled.div`
+//     border: 1px dashed #d1d5db;
+//     border-radius: 6px;
+//     padding: 28px 16px;
+//     text-align: center;
+//     transition: border-color 0.2s;
+//     background: white;
 
-    &:hover {
-        border-color: #007D88;
-    }
+//     &:hover {
+//         border-color: #007D88;
+//     }
 
-    @media (max-width: 480px) {
-        padding: 18px 12px;
-    }
-`;
+//     @media (max-width: 480px) {
+//         padding: 18px 12px;
+//     }
+// `;
 
-const PassportPhoto = styled.img`
-    width: 100%;
-    max-height: 240px;
-    object-fit: cover;
-    border-radius: 8px;
-    border: 1px solid #e5e7eb;
-    cursor: pointer;
+// const PassportPhoto = styled.img`
+//     width: 100%;
+//     max-height: 240px;
+//     object-fit: cover;
+//     border-radius: 8px;
+//     border: 1px solid #e5e7eb;
+//     cursor: pointer;
 
-    @media (max-width: 640px) {
-        max-height: 320px;
-    }
-`;
+//     @media (max-width: 640px) {
+//         max-height: 320px;
+//     }
+// `;
 
-const SpoilerMedia = styled.div<{ $revealed: boolean }>`
-    position: relative;
-    border-radius: 8px;
-    overflow: hidden;
+// const SpoilerMedia = styled.div<{ $revealed: boolean }>`
+//     position: relative;
+//     border-radius: 8px;
+//     overflow: hidden;
 
-    ${PassportPhoto} {
-        filter: ${({ $revealed }) => ($revealed ? "none" : "blur(18px)")};
-        transform: ${({ $revealed }) => ($revealed ? "none" : "scale(1.03)")};
-        transition: filter 0.2s ease, transform 0.2s ease;
-    }
-`;
+//     ${PassportPhoto} {
+//         filter: ${({ $revealed }) => ($revealed ? "none" : "blur(18px)")};
+//         transform: ${({ $revealed }) => ($revealed ? "none" : "scale(1.03)")};
+//         transition: filter 0.2s ease, transform 0.2s ease;
+//     }
+// `;
 
-const SpoilerOverlay = styled.button<{ $revealed: boolean }>`
-    position: absolute;
-    inset: 0;
-    border: none;
-    background: ${({ $revealed }) =>
-        $revealed ? "transparent" : "rgba(17, 24, 39, 0.35)"};
-    color: #fff;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    display: ${({ $revealed }) => ($revealed ? "none" : "flex")};
-    align-items: center;
-    justify-content: center;
-`;
+// const SpoilerOverlay = styled.button<{ $revealed: boolean }>`
+//     position: absolute;
+//     inset: 0;
+//     border: none;
+//     background: ${({ $revealed }) =>
+//         $revealed ? "transparent" : "rgba(17, 24, 39, 0.35)"};
+//     color: #fff;
+//     font-size: 12px;
+//     font-weight: 600;
+//     cursor: pointer;
+//     display: ${({ $revealed }) => ($revealed ? "none" : "flex")};
+//     align-items: center;
+//     justify-content: center;
+// `;
 
-const PassportStatus = styled.span`
-    font-size: 12px;
-    color: #6b7280;
-`;
+// const PassportStatus = styled.span`
+//     font-size: 12px;
+//     color: #6b7280;
+// `;
 
-const PassportHeaderRow = styled.div`
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 6px;
-`;
+// const PassportHeaderRow = styled.div`
+//     display: flex;
+//     align-items: center;
+//     gap: 10px;
+//     margin-top: 6px;
+// `;
 
-const PassportHideButton = styled.button`
-    border: none;
-    background: transparent;
-    padding: 0;
-    font-size: 12px;
-    color: #0f766e;
-    cursor: pointer;
+// const PassportHideButton = styled.button`
+//     border: none;
+//     background: transparent;
+//     padding: 0;
+//     font-size: 12px;
+//     color: #0f766e;
+//     cursor: pointer;
 
-    &:hover {
-        text-decoration: underline;
-    }
-`;
+//     &:hover {
+//         text-decoration: underline;
+//     }
+// `;
 
-const HiddenPassportInput = styled.input`
-    display: none;
-`;
+// const HiddenPassportInput = styled.input`
+//     display: none;
+// `;
 
-const PassportActions = styled.div`
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-top: 12px;
-`;
+// const PassportActions = styled.div`
+//     display: flex;
+//     flex-direction: column;
+//     gap: 8px;
+//     margin-top: 12px;
+// `;
 
-const PassportButtons = styled.div`
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
+// const PassportButtons = styled.div`
+//     display: flex;
+//     gap: 8px;
+//     flex-wrap: wrap;
 
-    @media (max-width: 640px) {
-        flex-direction: column;
-        align-items: stretch;
-    }
-`;
+//     @media (max-width: 640px) {
+//         flex-direction: column;
+//         align-items: stretch;
+//     }
+// `;
 
-const PassportHint = styled.div`
-    font-size: 12px;
-    color: #6b7280;
-`;
+// const PassportHint = styled.div`
+//     font-size: 12px;
+//     color: #6b7280;
+// `;
 
-const PassportError = styled.div`
-    font-size: 12px;
-    color: #b91c1c;
-`;
+// const PassportError = styled.div`
+//     font-size: 12px;
+//     color: #b91c1c;
+// `;
 
 const CommentsSection = styled(Section)`
     grid-column: 1 / -1;
@@ -395,27 +395,27 @@ const CommentFormRow = styled.div`
     }
 `;
 
-const CommentFileInput = styled.input`
-    display: none;
-`;
+// const CommentFileInput = styled.input`
+//     display: none;
+// `;
 
-const CommentFilePicker = styled.label`
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-    border-radius: 8px;
-    border: 1px dashed #d1d5db;
-    cursor: pointer;
-    font-size: 12px;
-    color: #6b7280;
+// const CommentFilePicker = styled.label`
+//     display: inline-flex;
+//     align-items: center;
+//     gap: 8px;
+//     padding: 8px 12px;
+//     border-radius: 8px;
+//     border: 1px dashed #d1d5db;
+//     cursor: pointer;
+//     font-size: 12px;
+//     color: #6b7280;
 
-    @media (max-width: 640px) {
-        width: 100%;
-        justify-content: center;
-        text-align: center;
-    }
-`;
+//     @media (max-width: 640px) {
+//         width: 100%;
+//         justify-content: center;
+//         text-align: center;
+//     }
+// `;
 
 const CommentError = styled.div`
     font-size: 12px;
@@ -458,20 +458,20 @@ type BlackCatalogDossierProps = {
     userId: string;
 };
 
-const BlackCatalogDossier = ({ item, onBack, onRefresh, userId }: BlackCatalogDossierProps) => {
-    const mainInputRef = useRef<HTMLInputElement | null>(null);
-    const registrationInputRef = useRef<HTMLInputElement | null>(null);
+const BlackCatalogDossier = ({ item, onBack, userId }: BlackCatalogDossierProps) => {
+    // const mainInputRef = useRef<HTMLInputElement | null>(null);
+    // const registrationInputRef = useRef<HTMLInputElement | null>(null);
     const [mainPassportUrl, setMainPassportUrl] = useState<string | null>(null);
     const [registrationPassportUrl, setRegistrationPassportUrl] = useState<string | null>(null);
-    const [mainFile, setMainFile] = useState<File | null>(null);
-    const [registrationFile, setRegistrationFile] = useState<File | null>(null);
-    const [isUpdatingPassport, setIsUpdatingPassport] = useState(false);
-    const [isDeletingPassport, setIsDeletingPassport] = useState(false);
-    const [passportError, setPassportError] = useState<string | null>(null);
-    const [isMainRevealed, setIsMainRevealed] = useState(false);
-    const [isRegistrationRevealed, setIsRegistrationRevealed] = useState(false);
+    // const [mainFile, setMainFile] = useState<File | null>(null);
+    // const [registrationFile, setRegistrationFile] = useState<File | null>(null);
+    // const [isUpdatingPassport, setIsUpdatingPassport] = useState(false);
+    // const [isDeletingPassport, setIsDeletingPassport] = useState(false);
+    // const [passportError, setPassportError] = useState<string | null>(null);
+    // const [isMainRevealed, setIsMainRevealed] = useState(false);
+    // const [isRegistrationRevealed, setIsRegistrationRevealed] = useState(false);
     const [isPhotoViewerOpen, setIsPhotoViewerOpen] = useState(false);
-    const [photoViewerIndex, setPhotoViewerIndex] = useState(0);
+    // const [photoViewerIndex, setPhotoViewerIndex] = useState(0);
     const [commentViewerUrl, setCommentViewerUrl] = useState<string | null>(null);
     const [comments, setComments] = useState<Array<{
         id: string;
@@ -558,8 +558,8 @@ const BlackCatalogDossier = ({ item, onBack, onRefresh, userId }: BlackCatalogDo
 
         setMainPassportUrl(null);
         setRegistrationPassportUrl(null);
-        setIsMainRevealed(false);
-        setIsRegistrationRevealed(false);
+        // setIsMainRevealed(false);
+        // setIsRegistrationRevealed(false);
 
         if (item.main_passport_page) {
             fetchPassportUrl(item.main_passport_page, setMainPassportUrl);
@@ -598,75 +598,75 @@ const BlackCatalogDossier = ({ item, onBack, onRefresh, userId }: BlackCatalogDo
         };
     }, [item.id]);
 
-    const handleUploadPassport = async (kind: "main" | "registration") => {
-        const file = kind === "main" ? mainFile : registrationFile;
-        if (!file) return;
-        if (file.size > maxFileSizeBytes) {
-            setPassportError(
-                kind === "main"
-                    ? "Ошибка загрузки главной страницы: размер файла больше 12 МБ."
-                    : "Ошибка загрузки страницы регистрации: размер файла больше 12 МБ."
-            );
-            return;
-        }
-        setIsUpdatingPassport(true);
-        setPassportError(null);
-        try {
-            await blackCatalogService.setPassport({
-                black_catalog_id: String(item.id),
-                main_page: kind === "main" ? file : undefined,
-                registration_page: kind === "registration" ? file : undefined,
-            });
-            if (kind === "main") setMainFile(null);
-            if (kind === "registration") setRegistrationFile(null);
-            if (onRefresh) {
-                await onRefresh(item.id);
-            } else if (kind === "main" && item.main_passport_page) {
-                setMainPassportUrl(null);
-            } else if (kind === "registration" && item.registration_passport_page) {
-                setRegistrationPassportUrl(null);
-            }
-        } catch (error) {
-            const message = error instanceof Error ? error.message : "Ошибка загрузки паспорта";
-            setPassportError(
-                kind === "main"
-                    ? `Ошибка загрузки главной страницы: ${message}`
-                    : `Ошибка загрузки страницы регистрации: ${message}`
-            );
-        } finally {
-            setIsUpdatingPassport(false);
-        }
-    };
+    // const handleUploadPassport = async (kind: "main" | "registration") => {
+    //     const file = kind === "main" ? mainFile : registrationFile;
+    //     if (!file) return;
+    //     if (file.size > maxFileSizeBytes) {
+    //         setPassportError(
+    //             kind === "main"
+    //                 ? "Ошибка загрузки главной страницы: размер файла больше 12 МБ."
+    //                 : "Ошибка загрузки страницы регистрации: размер файла больше 12 МБ."
+    //         );
+    //         return;
+    //     }
+    //     setIsUpdatingPassport(true);
+    //     setPassportError(null);
+    //     try {
+    //         await blackCatalogService.setPassport({
+    //             black_catalog_id: String(item.id),
+    //             main_page: kind === "main" ? file : undefined,
+    //             registration_page: kind === "registration" ? file : undefined,
+    //         });
+    //         if (kind === "main") setMainFile(null);
+    //         if (kind === "registration") setRegistrationFile(null);
+    //         if (onRefresh) {
+    //             await onRefresh(item.id);
+    //         } else if (kind === "main" && item.main_passport_page) {
+    //             setMainPassportUrl(null);
+    //         } else if (kind === "registration" && item.registration_passport_page) {
+    //             setRegistrationPassportUrl(null);
+    //         }
+    //     } catch (error) {
+    //         const message = error instanceof Error ? error.message : "Ошибка загрузки паспорта";
+    //         setPassportError(
+    //             kind === "main"
+    //                 ? `Ошибка загрузки главной страницы: ${message}`
+    //                 : `Ошибка загрузки страницы регистрации: ${message}`
+    //         );
+    //     } finally {
+    //         setIsUpdatingPassport(false);
+    //     }
+    // };
 
-    const handleDeletePassport = async (kind: "main" | "registration") => {
-        const fileId = kind === "main" ? item.main_passport_page : item.registration_passport_page;
-        if (!fileId) return;
-        setIsDeletingPassport(true);
-        setPassportError(null);
-        try {
-            await blackCatalogService.deletePassport({
-                black_catalog_id: String(item.id),
-                main_page_id: kind === "main" ? fileId : undefined,
-                registration_page_id: kind === "registration" ? fileId : undefined,
-            });
-            if (onRefresh) {
-                await onRefresh(item.id);
-            } else if (kind === "main") {
-                setMainPassportUrl(null);
-            } else {
-                setRegistrationPassportUrl(null);
-            }
-        } catch (error) {
-            const message = error instanceof Error ? error.message : "Ошибка удаления паспорта";
-            setPassportError(
-                kind === "main"
-                    ? `Ошибка удаления главной страницы: ${message}`
-                    : `Ошибка удаления страницы регистрации: ${message}`
-            );
-        } finally {
-            setIsDeletingPassport(false);
-        }
-    };
+    // const handleDeletePassport = async (kind: "main" | "registration") => {
+    //     const fileId = kind === "main" ? item.main_passport_page : item.registration_passport_page;
+    //     if (!fileId) return;
+    //     setIsDeletingPassport(true);
+    //     setPassportError(null);
+    //     try {
+    //         await blackCatalogService.deletePassport({
+    //             black_catalog_id: String(item.id),
+    //             main_page_id: kind === "main" ? fileId : undefined,
+    //             registration_page_id: kind === "registration" ? fileId : undefined,
+    //         });
+    //         if (onRefresh) {
+    //             await onRefresh(item.id);
+    //         } else if (kind === "main") {
+    //             setMainPassportUrl(null);
+    //         } else {
+    //             setRegistrationPassportUrl(null);
+    //         }
+    //     } catch (error) {
+    //         const message = error instanceof Error ? error.message : "Ошибка удаления паспорта";
+    //         setPassportError(
+    //             kind === "main"
+    //                 ? `Ошибка удаления главной страницы: ${message}`
+    //                 : `Ошибка удаления страницы регистрации: ${message}`
+    //         );
+    //     } finally {
+    //         setIsDeletingPassport(false);
+    //     }
+    // };
 
     const handleCreateComment = async () => {
         if (!commentContent.trim()) {
@@ -696,10 +696,10 @@ const BlackCatalogDossier = ({ item, onBack, onRefresh, userId }: BlackCatalogDo
         }
     };
 
-    const openPhotoViewer = (index: number) => {
-        setPhotoViewerIndex(index);
-        setIsPhotoViewerOpen(true);
-    };
+    // const openPhotoViewer = (index: number) => {
+    //     setPhotoViewerIndex(index);
+    //     setIsPhotoViewerOpen(true);
+    // };
 
     const openCommentViewer = (url: string) => {
         setCommentViewerUrl(url);
@@ -866,7 +866,7 @@ const BlackCatalogDossier = ({ item, onBack, onRefresh, userId }: BlackCatalogDo
                             </InfoGrid>
                         </Section>
 
-                        <Section>
+                        {/* <Section>
                             <SectionTitle>
                                 Паспорт
                             </SectionTitle>
@@ -1034,7 +1034,7 @@ const BlackCatalogDossier = ({ item, onBack, onRefresh, userId }: BlackCatalogDo
                                     </PassportActions>
                                 </PassportPhotoSection>
                             </PassportSection>
-                        </Section>
+                        </Section> */}
 
                         <CommentsSection>
                             <CommentsHeader>
@@ -1059,13 +1059,13 @@ const BlackCatalogDossier = ({ item, onBack, onRefresh, userId }: BlackCatalogDo
                                     placeholder="Добавить комментарий"
                                 />
                                 <CommentFormRow>
-                                    <CommentFilePicker>
+                                    {/* <CommentFilePicker>
                                         <CommentFileInput
                                             type="file"
                                             onChange={(e) => setCommentFile(e.target.files?.[0] ?? null)}
                                         />
                                         {commentFile ? commentFile.name : "Прикрепить файл (до 12 МБ)"}
-                                    </CommentFilePicker>
+                                    </CommentFilePicker> */}
                                     <DefaultButton
                                         type="button"
                                         onClick={handleCreateComment}
@@ -1083,7 +1083,8 @@ const BlackCatalogDossier = ({ item, onBack, onRefresh, userId }: BlackCatalogDo
                             images={[mainPassportUrl, registrationPassportUrl].filter(
                                 (url): url is string => Boolean(url)
                             )}
-                            initialIndex={photoViewerIndex}
+                            // initialIndex={photoViewerIndex}
+                            initialIndex={2}
                             onClose={() => setIsPhotoViewerOpen(false)}
                         />
                     )}
