@@ -34,13 +34,17 @@ const ModalWrapper = styled.div`
   margin: 20px;
 `;
 
+const MobileInput = styled(CustomInput)`
+  font-size: 16px;
+`;
+
 const TextArea = styled.textarea`
   width: 100%;
   min-height: 90px;
   border: 1px solid #d1d5db;
   border-radius: 8px;
   padding: 10px 12px;
-  font-size: 14px;
+  font-size: 16px;
   font-family: inherit;
   color: #111827;
   background: #ffffff;
@@ -357,7 +361,7 @@ export const BlackCatalogModal: React.FC<BlackCatalogModalProps> = ({
         mode={mode}
       >
         <InputRow>
-          <CustomInput
+          <MobileInput
             type="fullname"
             value={formData.fullname || ''}
             onChange={handleFullnameChange}
@@ -366,7 +370,7 @@ export const BlackCatalogModal: React.FC<BlackCatalogModalProps> = ({
         </InputRow>
         
         <InputRow>
-          <CustomInput
+          <MobileInput
             type="text"
             value={formData.birthdate || ''}
             onChange={handleDateTextChange('birthdate')}
@@ -375,7 +379,7 @@ export const BlackCatalogModal: React.FC<BlackCatalogModalProps> = ({
         </InputRow>
         
         <InputRow>
-          <CustomInput
+          <MobileInput
             type="text"
             value={formData.doc || ''}
             onChange={e => handleFieldChange('doc', e.target.value)}
@@ -384,7 +388,7 @@ export const BlackCatalogModal: React.FC<BlackCatalogModalProps> = ({
         </InputRow>
         
         <InputRow>
-          <CustomInput
+          <MobileInput
             value={formData.address || ''}
             onChange={e => handleFieldChange('address', e.target.value)}
             placeholder="Адрес"
@@ -395,7 +399,7 @@ export const BlackCatalogModal: React.FC<BlackCatalogModalProps> = ({
           <>
             {showDebtSection && (
               <InputRow>
-                <CustomInput
+                <MobileInput
                   type="text"
                   value={formData.debt_ending_at || ''}
                   onChange={handleDateTextChange('debt_ending_at')}
