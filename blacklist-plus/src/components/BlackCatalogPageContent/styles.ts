@@ -357,6 +357,7 @@ export const MobileBottomSheet = styled.div`
   z-index: 20000;
   display: flex;
   align-items: flex-end;
+  isolation: isolate;
 
   @media (min-width: 769px) {
     display: none;
