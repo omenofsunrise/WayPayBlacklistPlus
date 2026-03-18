@@ -485,6 +485,7 @@ const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
             <Container>
               <SearchInputContainer>
                 <CustomInput
+                style={{fontSize: "16px"}}
                   inputType="fullname"
                   placeholder="ФИО (минимум 5 символов)"
                   value={nameFilter}
