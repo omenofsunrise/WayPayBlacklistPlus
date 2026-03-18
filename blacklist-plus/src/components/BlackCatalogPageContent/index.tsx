@@ -27,9 +27,6 @@ import {
   AddButtonMenuBackdrop,
   BlacklistIcon,
   CompletedIcon,
-  MobileBottomSheet,
-  MobileBottomSheetOverlay,
-  MobileBottomSheetContent,
   MobileBottomSheetHeader,
   MobileBottomSheetTitle,
   MobileBottomSheetClose,
@@ -37,6 +34,7 @@ import {
   MobileFilterField,
   WildInputContainer,
 } from "./styles";
+import MobileBottomSheetPortal from "../Portal";
 
 const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
   texts,
@@ -550,27 +548,27 @@ const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
       )}
 
       {isMobileSheetOpen && (
-        <MobileBottomSheet onClick={closeMobileSheet}>
-          <MobileBottomSheetOverlay onClick={closeMobileSheet} />
-          <MobileBottomSheetContent onClick={(e) => e.stopPropagation()}>
-            <MobileBottomSheetHeader>
-              <MobileBottomSheetTitle>Добавить</MobileBottomSheetTitle>
-              <MobileBottomSheetClose onClick={closeMobileSheet}>✕</MobileBottomSheetClose>
-            </MobileBottomSheetHeader>
-            <MobileBottomSheetOption onClick={() => handleAddMenuSelect('blacklist')}>
-              <BlacklistIcon>
-                <BlacklistIconSvg />
-              </BlacklistIcon>
-              Чёрный список
-            </MobileBottomSheetOption>
-            <MobileBottomSheetOption onClick={() => handleAddMenuSelect('completed')}>
-              <CompletedIcon>
-                <CompletedIconSvg />
-              </CompletedIcon>
-              Оформлененный
-            </MobileBottomSheetOption>
-          </MobileBottomSheetContent>
-        </MobileBottomSheet>
+        <MobileBottomSheetPortal
+          isOpen={isMobileSheetOpen}
+          onClose={closeMobileSheet}
+        >
+          <MobileBottomSheetHeader>
+            <MobileBottomSheetTitle>Добавить</MobileBottomSheetTitle>
+            <MobileBottomSheetClose onClick={closeMobileSheet}>✕</MobileBottomSheetClose>
+          </MobileBottomSheetHeader>
+          <MobileBottomSheetOption onClick={() => handleAddMenuSelect('blacklist')}>
+            <BlacklistIcon>
+              <BlacklistIconSvg />
+            </BlacklistIcon>
+            Чёрный список
+          </MobileBottomSheetOption>
+          <MobileBottomSheetOption onClick={() => handleAddMenuSelect('completed')}>
+            <CompletedIcon>
+              <CompletedIconSvg />
+            </CompletedIcon>
+            Оформленный
+          </MobileBottomSheetOption>
+        </MobileBottomSheetPortal>
       )}
     </div>
   );
