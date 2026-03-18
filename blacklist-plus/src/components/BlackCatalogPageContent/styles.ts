@@ -354,10 +354,10 @@ export const MobileBottomSheet = styled.div`
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 2000;
+  z-index: 20000;
   display: flex;
   align-items: flex-end;
-  
+
   @media (min-width: 769px) {
     display: none;
   }
