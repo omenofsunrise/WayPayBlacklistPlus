@@ -1,4 +1,4 @@
-import { apiRequest, API_BASE_URL } from "waypay_react_library";
+import { apiRequest } from "waypay_react_library";
 import type { 
   CreateBlackCatalogResponse, 
   CountResponse, 
