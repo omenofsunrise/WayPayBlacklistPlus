@@ -58,10 +58,13 @@ const CardTitle = styled.h3`
   }
 `;
 
-const CardTitleText = styled.span<{ $hasLeftBadge?: boolean }>`
+const CardTitleText = styled.span<{ $hasBlackBadge?: boolean, $hasDebtBadge?: boolean }>`
   display: inline-block;
-  ${props => props.$hasLeftBadge && `
+  ${props => props.$hasBlackBadge && `
     margin-left: 170px;
+  `}
+  ${props => props.$hasDebtBadge && `
+    margin-left: 130px;
   `}
 `;
 
@@ -244,6 +247,11 @@ const BlackCatalogCard: React.FC<BlackCatalogCardProps> = ({
     const endDateStart = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
     return endDateStart >= todayStart;
   })();
+
+  const isBlackList = (() => {
+    if (!item.debt_ending_at) return true;
+    return false;
+  })();
   
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -291,10 +299,10 @@ const BlackCatalogCard: React.FC<BlackCatalogCardProps> = ({
     <Card 
       onClick={handleCardClick}
       onContextMenu={handleRightClick}
-      $isBlacklisted={!isCurrentlyDebt}
+      $isBlacklisted={isBlackList}
       $hasActiveDebt={isCurrentlyDebt}
     >
-      {!isCurrentlyDebt && (
+      {isBlackList && (
         <LeftBadge $type="blacklist">
           <FaExclamationTriangle size={14} />
           Чёрный список
@@ -310,7 +318,7 @@ const BlackCatalogCard: React.FC<BlackCatalogCardProps> = ({
       
       <CardContent>
         <CardTitle>
-          <CardTitleText $hasLeftBadge={true}>
+          <CardTitleText $hasBlackBadge={isBlackList} $hasDebtBadge={isCurrentlyDebt}>
             {item.fullname || 'Не указано'}
           </CardTitleText>
         </CardTitle>
@@ -336,7 +344,7 @@ const BlackCatalogCard: React.FC<BlackCatalogCardProps> = ({
               <IconWrapper><FaIdCard size={12} /></IconWrapper>
               ID
             </InfoLabel>
-            <InfoValue $warning={!isCurrentlyDebt} $debt={isCurrentlyDebt}>
+            <InfoValue $warning={isBlackList} $debt={isCurrentlyDebt}>
               {item.id}
             </InfoValue>
           </InfoItem>
@@ -346,7 +354,7 @@ const BlackCatalogCard: React.FC<BlackCatalogCardProps> = ({
               <IconWrapper><FaBirthdayCake size={12} /></IconWrapper>
               Дата рождения
             </InfoLabel>
-            <InfoValue $warning={!isCurrentlyDebt} $debt={isCurrentlyDebt}>
+            <InfoValue $warning={isBlackList} $debt={isCurrentlyDebt}>
               {formatDate(item.birthdate)}
             </InfoValue>
           </InfoItem>
@@ -356,7 +364,7 @@ const BlackCatalogCard: React.FC<BlackCatalogCardProps> = ({
               <IconWrapper><FaIdCard size={12} /></IconWrapper>
               Документ
             </InfoLabel>
-            <InfoValue $warning={!isCurrentlyDebt} $debt={isCurrentlyDebt}>
+            <InfoValue $warning={isBlackList} $debt={isCurrentlyDebt}>
               {item.doc || 'Не указан'}
             </InfoValue>
           </InfoItem>
@@ -366,7 +374,7 @@ const BlackCatalogCard: React.FC<BlackCatalogCardProps> = ({
               <IconWrapper><FaMapMarkerAlt size={12} /></IconWrapper>
               Адрес
             </InfoLabel>
-            <InfoValue $warning={!isCurrentlyDebt} $debt={isCurrentlyDebt}>
+            <InfoValue $warning={isBlackList} $debt={isCurrentlyDebt}>
               {item.address || 'Не указан'}
             </InfoValue>
           </InfoItem>

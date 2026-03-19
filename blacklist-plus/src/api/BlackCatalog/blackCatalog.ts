@@ -9,6 +9,7 @@ export interface BlackCatalogItem {
   debt_ending_at?: string;
   main_passport_page?: string;
   registration_passport_page?: string;
+  creator_id?: string;
 }
 
 export interface BlackCatalogCreatePayload {

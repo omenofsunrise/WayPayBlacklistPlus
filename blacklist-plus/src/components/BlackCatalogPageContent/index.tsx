@@ -195,19 +195,39 @@ const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
     setNameFilter(value);
   };
 
+  const canEditItem = (item: BlackCatalogItem): boolean => {
+    if (userId === 'b3873201-0ae4-44ff-ba1f-de55daf8318b'   // Аюб
+      || userId === 'bcec9c2b-5cee-4a1c-aac6-d0336ef59802'  // Ибрагим
+      || userId === 'e57d8bdf-77f2-4e07-b54a-4044754da41d'  // Второй номер Ибрагима
+      || userId === '01eb28db-609b-4906-9423-aa4b65f622cf'  // Микиев Турпал 
+      || userId === '221bf643-573e-4e61-be7b-8557d462743f') // Элипханов Идрис
+      return true;
+
+    if (!allowEdit) return false;
+    
+    if (!item.creator_id) return false;
+    
+    return item.creator_id === userId;
+  };
+
   const handleContextMenuAction = useCallback(
     (action: 'edit' | 'delete') => {
       if (!contextMenu?.item) return;
 
-      if (action === 'edit' && allowEdit) {
-        handleEditItem(contextMenu.item);
+      if (action === 'edit') {
+        if (canEditItem(contextMenu.item)) {
+          handleEditItem(contextMenu.item);
+        } else {
+          console.warn('Нет прав на редактирование этой записи');
+          alert('У вас нет прав на редактирование этой записи');
+        }
       } else if (action === 'delete') {
         handleDeleteFromBlackCatalog(contextMenu.item);
       }
 
       setContextMenu(null);
     },
-    [contextMenu, allowEdit]
+    [contextMenu, userId, allowEdit]
   );
 
   const closeContextMenu = useCallback(() => {
@@ -281,6 +301,12 @@ const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
   };
 
   const handleEditItem = (item: BlackCatalogItem) => {
+    if (!canEditItem(item)) {
+      console.warn('Нет прав на редактирование этой записи');
+      alert('У вас нет прав на редактирование этой записи');
+      return;
+    }
+    
     setEditingItem(item);
     setSelectedAddOption(null);
     setIsModalOpen(true);
@@ -350,11 +376,15 @@ const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
   const handleCardRightClick = (e: React.MouseEvent, item: BlackCatalogItem) => {
     e.preventDefault();
     e.stopPropagation();
-    setContextMenu({
-      x: e.clientX,
-      y: e.clientY,
-      item,
-    });
+    
+    if (canEditItem(item))
+    {
+      setContextMenu({
+        x: e.clientX,
+        y: e.clientY,
+        item,
+      });
+    }
   };
 
   const handleOpenDossier = (item: BlackCatalogItem) => {
@@ -403,18 +433,23 @@ const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
 
     return (
       <div style={{marginTop: "20px"}}>
-        {searchResults?.black_catalogs.map((item) => (
-          <BlackCatalogCard
-            key={item.id}
-            item={item}
-            onEdit={() => handleEditItem(item)}
-            onDelete={() => handleDeleteFromBlackCatalog(item)}
-            onRightClick={(e) => handleCardRightClick(e, item)}
-            onOpenDossier={handleOpenDossier}
-            showMenu={isSuperAdminCompany()}
-            allowEdit={allowEdit}
-          />
-        ))}
+        {searchResults?.black_catalogs.map((item) => {
+          const canEdit = canEditItem(item);
+          
+          return (
+            <BlackCatalogCard
+              key={item.id}
+              item={item}
+              onEdit={() => canEdit && handleEditItem(item)}
+              onDelete={() => handleDeleteFromBlackCatalog(item)}
+              onRightClick={(e) => handleCardRightClick(e, item)}
+              onOpenDossier={handleOpenDossier}
+              showMenu={isSuperAdminCompany()}
+              allowEdit={canEditItem(item)}
+              allowDelete={canEditItem(item)}
+            />
+          );
+        })}
       </div>
     );
   };
@@ -513,12 +548,10 @@ const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
             y={contextMenu.y}
             onClick={(e) => e.stopPropagation()}
           >
-            {allowEdit && (
+            {allowEdit && contextMenu.item && canEditItem(contextMenu.item) && (
               <MenuItem onClick={() => handleContextMenuAction('edit')}>Редактировать</MenuItem>
             )}
-            <MenuItem danger onClick={() => handleContextMenuAction('delete')}>
-              Удалить
-            </MenuItem>
+            <MenuItem danger onClick={() => handleContextMenuAction('delete')}>Удалить</MenuItem>
           </ContextMenu>
         </>
       )}
