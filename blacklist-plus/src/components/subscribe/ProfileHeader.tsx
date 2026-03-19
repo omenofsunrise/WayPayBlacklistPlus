@@ -67,7 +67,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ name, phone }) => {
           </button>
         </div>
 
-        {/* Заголовок */}
         <h1 style={{ 
           margin: '24px 0 8px 0',
           color: '#333',
@@ -78,7 +77,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ name, phone }) => {
           Здравствуйте, <span style={{ fontWeight: 'bold', color: '#007D88' }}>{name}</span>
         </h1>
         
-        {/* Телефон */}
         <p style={{ 
           margin: '0',
           color: '#666',
@@ -94,7 +92,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ name, phone }) => {
     );
   }
 
-  // Десктопная версия (без изменений)
   return (
     <div style={{
       padding: '24px 32px',

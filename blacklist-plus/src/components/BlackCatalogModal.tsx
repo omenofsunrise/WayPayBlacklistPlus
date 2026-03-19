@@ -57,27 +57,6 @@ const TextArea = styled.textarea`
   }
 `;
 
-// const FileRow = styled.div`
-//   display: flex;
-//   flex-direction: column;
-//   gap: 6px;
-//   width: 100%;
-// `;
-
-// const FileLabel = styled.span`
-//   font-size: 12px;
-//   color: #6b7280;
-// `;
-
-// const FileInput = styled.input`
-//   width: 100%;
-// `;
-
-// const FileMeta = styled.span`
-//   font-size: 12px;
-//   color: #6b7280;
-// `;
-
 const ModalPortal: React.FC<{ children: React.ReactNode; isOpen: boolean }> = ({ 
   children, 
   isOpen 
@@ -206,6 +185,7 @@ export const BlackCatalogModal: React.FC<BlackCatalogModalProps> = ({
     debt_ending_at: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (editingItem) {
@@ -250,6 +230,8 @@ export const BlackCatalogModal: React.FC<BlackCatalogModalProps> = ({
         debt_ending_at: '',
       });
     }
+    
+    setValidationErrors({});
   }, [editingItem, isOpen, showDebtSection]);
 
   const formatDateForAPI = (dateStr: string): string => {
@@ -271,15 +253,26 @@ export const BlackCatalogModal: React.FC<BlackCatalogModalProps> = ({
     return dateStr;
   };
 
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {};
+    
+    if (showDebtSection && requireDebtDate && !editingItem && !formData.debt_ending_at) {
+      errors.debt_ending_at = 'Укажите дату окончания оформления';
+    }
+    
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!validateForm()) {
+      return;
+    }
+    
     setIsSubmitting(true);
     try {
-      if (requireDebtDate && !editingItem && !formData.debt_ending_at) {
-        alert('Укажите дату окончания оформления');
-        return;
-      }
       const dataToSend: BlackCatalogFormData = {
         fullname: formData.fullname || '',
         doc: formData.doc || '',
@@ -322,6 +315,14 @@ export const BlackCatalogModal: React.FC<BlackCatalogModalProps> = ({
   ) => {
     if (field !== 'fullname') {
       setFormData(prev => ({ ...prev, [field]: value }));
+      
+      if (validationErrors[field]) {
+        setValidationErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors[field];
+          return newErrors;
+        });
+      }
     }
   };
 
@@ -338,13 +339,6 @@ export const BlackCatalogModal: React.FC<BlackCatalogModalProps> = ({
     }
     handleFieldChange(field, formatted);
   };
-
-  // const handleFileChange = (field: 'main_page' | 'registration_page') => (
-  //   e: React.ChangeEvent<HTMLInputElement>
-  // ) => {
-  //   const file = e.target.files?.[0] ?? null;
-  //   setFormData(prev => ({ ...prev, [field]: file }));
-  // };
 
   const title = editingItem ? 'Редактировать запись' : editingItem === null && mode === 'create' ? 'Добавить запись' : 'Редактировать запись';
   const saveButtonText = editingItem ? 'Сохранить' : 'Добавить';
@@ -405,7 +399,13 @@ export const BlackCatalogModal: React.FC<BlackCatalogModalProps> = ({
                   onChange={handleDateTextChange('debt_ending_at')}
                   placeholder="Оформлен до (ДД.ММ.ГГГГ)"
                   required={requireDebtDate}
+                  style={validationErrors.debt_ending_at ? { borderColor: 'red' } : {}}
                 />
+                {validationErrors.debt_ending_at && (
+                  <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                    {validationErrors.debt_ending_at}
+        </div>
+                )}
               </InputRow>
             )}
 
@@ -416,32 +416,6 @@ export const BlackCatalogModal: React.FC<BlackCatalogModalProps> = ({
                 placeholder="Комментарий"
               />
             </InputRow>
-
-            {/* <InputRow>
-              <FileRow>
-                <FileLabel>Фото паспорта — основная страница</FileLabel>
-                <FileInput
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange('main_page')}
-                />
-                <FileMeta>{formData.main_page ? formData.main_page.name : 'Файл не выбран'}</FileMeta>
-              </FileRow>
-            </InputRow> */}
-
-            {/* <InputRow>
-              <FileRow>
-                <FileLabel>Фото паспорта — регистрация</FileLabel>
-                <FileInput
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange('registration_page')}
-                />
-                <FileMeta>
-                  {formData.registration_page ? formData.registration_page.name : 'Файл не выбран'}
-                </FileMeta>
-              </FileRow>
-            </InputRow> */}
           </>
         )}
       </BaseModal>

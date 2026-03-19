@@ -18,41 +18,40 @@ class BlackCatalogService {
     return match ? decodeURIComponent(match[1]) : null;
   }
 
-  private getAuthHeaders(): Record<string, string> {
-    const token = window.localStorage.getItem(this.accessTokenKey) || this.readCookie(this.accessTokenKey);
-    return token ? { Authorization: token.startsWith('Bearer ') ? token : `Bearer ${token}` } : {};
+  private getAuthToken(): string | undefined {
+    return window.localStorage.getItem(this.accessTokenKey) || this.readCookie(this.accessTokenKey) || undefined;
   }
 
-  private async uploadFile<T>(endpoint: string, formData: FormData): Promise<T> {
-    const headers = this.getAuthHeaders();
-    // Не устанавливаем Content-Type, браузер сам добавит boundary для FormData
-    const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
+  private prepareFormData(data: Record<string, any>): FormData {
+    const formData = new FormData();
     
-    const response = await fetch(url, {
-      method: 'POST',
-      headers,
-      body: formData,
-      credentials: 'include',
+    Object.entries(data).forEach(([key, value]) => {
+      if (value === undefined || value === null) return;
+      
+      if (value instanceof File) {
+        if (value.size > 0) formData.append(key, value);
+      } else if (Array.isArray(value)) {
+        // Для массивов отправляем каждый элемент с одинаковым ключом
+        value.forEach(item => {
+          if (item instanceof File) {
+            formData.append(key, item);
+          } else {
+            formData.append(key, String(item));
+          }
+        });
+      } else if (typeof value === 'boolean') {
+        formData.append(key, value ? 'true' : 'false');
+      } else if (typeof value === 'string' && value.trim() !== '') {
+        formData.append(key, value);
+      } else if (typeof value === 'number') {
+        formData.append(key, String(value));
+      } else if (typeof value === 'object') {
+        // Для вложенных объектов отправляем как JSON строку
+        formData.append(key, JSON.stringify(value));
+      }
     });
 
-    const text = await response.text();
-    const payload = text ? (() => {
-      try {
-        return JSON.parse(text);
-      } catch {
-        return text;
-      }
-    })() : null;
-
-    if (!response.ok) {
-      const message =
-        payload && typeof payload === 'object' && 'error' in payload
-          ? String((payload as any).error)
-          : `Request failed with status ${response.status}`;
-      throw new Error(message);
-    }
-
-    return payload as T;
+    return formData;
   }
 
   async setPassport(data: {
@@ -60,14 +59,16 @@ class BlackCatalogService {
     main_page?: File;
     registration_page?: File;
   }): Promise<{ success: boolean; error?: string }> {
-    const formData = new FormData();
-    formData.append('black_catalog_id', data.black_catalog_id);
-    if (data.main_page) formData.append('main_page', data.main_page);
-    if (data.registration_page) formData.append('registration_page', data.registration_page);
-
-    return this.uploadFile<{ success: boolean; error?: string }>(
+    const formData = this.prepareFormData(data);
+    
+    return apiRequest<{ success: boolean; error?: string }>(
       `${this.baseEndpoint}/passport/set`,
-      formData
+      {
+        method: 'POST',
+        body: formData,
+        token: this.getAuthToken(),
+        isFormData: true
+      }
     );
   }
 
@@ -79,6 +80,7 @@ class BlackCatalogService {
     return apiRequest<{ success: boolean; error?: string }>(`${this.baseEndpoint}/passport/delete`, {
       method: 'POST',
       body: data,
+      token: this.getAuthToken()
     });
   }
 
@@ -108,7 +110,8 @@ class BlackCatalogService {
     const queryParams = new URLSearchParams();
     queryParams.append('page_size', String(pageSize));
     return apiRequest(`${this.baseEndpoint}/${id}/comments?${queryParams.toString()}`, { 
-      method: 'GET' 
+      method: 'GET',
+      token: this.getAuthToken()
     });
   }
 
@@ -116,12 +119,21 @@ class BlackCatalogService {
     id: string,
     data: { content: string; parent_id?: string; file?: File }
   ): Promise<{ success: boolean; error?: string }> {
-    const formData = new FormData();
-    formData.append('content', data.content);
-    if (data.parent_id) formData.append('parent_id', data.parent_id);
-    if (data.file) formData.append('files', data.file);
+    const formData = this.prepareFormData({
+      content: data.content,
+      parent_id: data.parent_id,
+      files: data.file ? [data.file] : []
+    });
 
-    return this.uploadFile(`${this.baseEndpoint}/${id}/comments`, formData);
+    return apiRequest(
+      `${this.baseEndpoint}/${id}/comments`,
+      {
+        method: 'POST',
+        body: formData,
+        token: this.getAuthToken(),
+        isFormData: true
+      }
+    );
   }
 
   async updateComment(
@@ -131,6 +143,7 @@ class BlackCatalogService {
     return apiRequest(`/comments/${commentId}`, {
       method: 'PUT',
       body: { content },
+      token: this.getAuthToken()
     });
   }
 
@@ -140,6 +153,7 @@ class BlackCatalogService {
   ): Promise<{ success: boolean; error?: string }> {
     return apiRequest(`${this.baseEndpoint}/${id}/comments/${commentId}`, {
       method: 'DELETE',
+      token: this.getAuthToken()
     });
   }
 
@@ -148,23 +162,17 @@ class BlackCatalogService {
    * POST /black-catalog
    */
   async create(data: BlackCatalogCreatePayload): Promise<CreateBlackCatalogResponse> {
-    const formData = new FormData();
+    const formData = this.prepareFormData(data);
     
-    Object.entries(data).forEach(([key, value]) => {
-      if (value === undefined || value === null) return;
-      
-      if (value instanceof File) {
-        if (value.size > 0) formData.append(key, value);
-      } else if (typeof value === 'boolean') {
-        formData.append(key, value ? 'true' : 'false');
-      } else if (typeof value === 'string' && value.trim() !== '') {
-        formData.append(key, value);
-      } else if (typeof value === 'number') {
-        formData.append(key, String(value));
+    return apiRequest<CreateBlackCatalogResponse>(
+      this.baseEndpoint,
+      {
+        method: 'POST',
+        body: formData,
+        token: this.getAuthToken(),
+        isFormData: true
       }
-    });
-
-    return this.uploadFile<CreateBlackCatalogResponse>(this.baseEndpoint, formData);
+    );
   }
 
   /**
@@ -184,7 +192,8 @@ class BlackCatalogService {
     
     return apiRequest<CreateBlackCatalogResponse>(`${this.baseEndpoint}/${id}`, {
       method: 'PUT',
-      body: { black_catalog: preparedData }
+      body: { black_catalog: preparedData },
+      token: this.getAuthToken()
     });
   }
 
@@ -194,7 +203,8 @@ class BlackCatalogService {
    */
   async delete(id: number) {
     return apiRequest(`${this.baseEndpoint}/${id}`, {
-      method: 'DELETE'
+      method: 'DELETE',
+      token: this.getAuthToken()
     });
   }
 
@@ -204,7 +214,8 @@ class BlackCatalogService {
    */
   async getCount(): Promise<number> {
     const response = await apiRequest<CountResponse>(`${this.baseEndpoint}/count`, {
-      method: 'GET'
+      method: 'GET',
+      token: this.getAuthToken()
     });
     return response.count;
   }
@@ -236,7 +247,8 @@ class BlackCatalogService {
       : `${this.baseEndpoint}/search`;
 
     return apiRequest<SearchBlackCatalogResponse>(endpoint, {
-      method: 'GET'
+      method: 'GET',
+      token: this.getAuthToken()
     });
   }
 }

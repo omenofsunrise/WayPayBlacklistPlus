@@ -253,7 +253,6 @@ const SubscriptionPendingPage: React.FC<SubscriptionPendingPageProps> = ({
         position: 'relative',
         margin: '12px 0'
       }}>
-        {/* Кнопка отмены для десктопа (только на экранах шире 768px) */}
         {paymentStep === 1 && !showCancelConfirm && (
           <button
             onClick={() => setShowCancelConfirm(true)}
@@ -287,7 +286,6 @@ const SubscriptionPendingPage: React.FC<SubscriptionPendingPageProps> = ({
           </button>
         )}
 
-        {/* Модалка подтверждения отмены */}
         {showCancelConfirm && (
           <div style={{
             position: 'fixed',
@@ -418,7 +416,6 @@ const SubscriptionPendingPage: React.FC<SubscriptionPendingPageProps> = ({
           </div>
         )}
 
-        {/* Заголовок */}
         <div style={{ 
           textAlign: 'center', 
           marginBottom: '24px',
@@ -448,7 +445,6 @@ const SubscriptionPendingPage: React.FC<SubscriptionPendingPageProps> = ({
           </p>
         </div>
 
-        {/* Прогресс процесса оплаты */}
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',

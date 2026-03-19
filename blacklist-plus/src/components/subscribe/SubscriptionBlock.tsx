@@ -11,7 +11,6 @@ interface SubscriptionBlockProps {
   title?: string;
 }
 
-// Определяем интерфейсы для стилей
 interface DisclaimerStyles {
   overlay: React.CSSProperties;
   content: React.CSSProperties;
@@ -68,7 +67,6 @@ const SubscriptionBlock: React.FC<SubscriptionBlockProps> = ({
   }, []);
 
   const isPromoActive = () => {
-    // Если акция отключена через пропс, сразу возвращаем false
     if (disablePromo) {
       return false;
     }
@@ -137,7 +135,6 @@ const SubscriptionBlock: React.FC<SubscriptionBlockProps> = ({
     }
   };
 
-  // Создаем объект со стилями как обычный объект, а не через styled-components
   const getMobileStyles = (): MobileStyles => ({
     container: {
       padding: isMobile ? '20px 15px' : '40px',
@@ -481,7 +478,6 @@ const SubscriptionBlock: React.FC<SubscriptionBlockProps> = ({
         </div>
       </div>
 
-      {/* Модальное окно с дисклеймером */}
       {showDisclaimer && (
         <div style={styles.disclaimer.overlay}>
           <div style={styles.disclaimer.content}>
