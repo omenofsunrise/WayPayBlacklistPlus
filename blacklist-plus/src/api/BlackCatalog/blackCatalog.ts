@@ -88,3 +88,8 @@ export interface SearchParams {
   page_token?: string;
   page_size?: number;
 }
+
+export interface AddDebtRequest {
+  blacklist_id: number;
+  debt_ending_at: Date;
+}

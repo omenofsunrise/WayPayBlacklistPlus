@@ -6,21 +6,11 @@ import type {
   BlackCatalogUpdatePayload,
   SearchParams, 
   SearchBlackCatalogResponse,
+  AddDebtRequest,
 } from "./blackCatalog";
 
 class BlackCatalogService {
   private baseEndpoint = '/black-catalog';
-  private accessTokenKey = 'access_token';
-
-  private readCookie(name: string): string | null {
-    if (typeof document === 'undefined') return null;
-    const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
-    return match ? decodeURIComponent(match[1]) : null;
-  }
-
-  private getAuthToken(): string | undefined {
-    return window.localStorage.getItem(this.accessTokenKey) || this.readCookie(this.accessTokenKey) || undefined;
-  }
 
   private prepareFormData(data: Record<string, any>): FormData {
     const formData = new FormData();
@@ -31,7 +21,6 @@ class BlackCatalogService {
       if (value instanceof File) {
         if (value.size > 0) formData.append(key, value);
       } else if (Array.isArray(value)) {
-        // Для массивов отправляем каждый элемент с одинаковым ключом
         value.forEach(item => {
           if (item instanceof File) {
             formData.append(key, item);
@@ -46,7 +35,6 @@ class BlackCatalogService {
       } else if (typeof value === 'number') {
         formData.append(key, String(value));
       } else if (typeof value === 'object') {
-        // Для вложенных объектов отправляем как JSON строку
         formData.append(key, JSON.stringify(value));
       }
     });
@@ -66,7 +54,6 @@ class BlackCatalogService {
       {
         method: 'POST',
         body: formData,
-        token: this.getAuthToken(),
         isFormData: true
       }
     );
@@ -80,7 +67,6 @@ class BlackCatalogService {
     return apiRequest<{ success: boolean; error?: string }>(`${this.baseEndpoint}/passport/delete`, {
       method: 'POST',
       body: data,
-      token: this.getAuthToken()
     });
   }
 
@@ -111,8 +97,26 @@ class BlackCatalogService {
     queryParams.append('page_size', String(pageSize));
     return apiRequest(`${this.baseEndpoint}/${id}/comments?${queryParams.toString()}`, { 
       method: 'GET',
-      token: this.getAuthToken()
     });
+  }
+
+  async addDebt(request: AddDebtRequest) {
+    apiRequest(
+      `${this.baseEndpoint}/debt`,
+      {
+        method: 'POST',
+        body: request,
+      }
+    );
+  }
+
+  async deleteDebt(id: number) {
+    apiRequest(
+      `${this.baseEndpoint}/debt/${id}`,
+      {
+        method: 'DELETE',
+      }
+    );
   }
 
   async createComment(
@@ -130,7 +134,6 @@ class BlackCatalogService {
       {
         method: 'POST',
         body: formData,
-        token: this.getAuthToken(),
         isFormData: true
       }
     );
@@ -143,7 +146,6 @@ class BlackCatalogService {
     return apiRequest(`/comments/${commentId}`, {
       method: 'PUT',
       body: { content },
-      token: this.getAuthToken()
     });
   }
 
@@ -153,7 +155,6 @@ class BlackCatalogService {
   ): Promise<{ success: boolean; error?: string }> {
     return apiRequest(`${this.baseEndpoint}/${id}/comments/${commentId}`, {
       method: 'DELETE',
-      token: this.getAuthToken()
     });
   }
 
@@ -169,7 +170,6 @@ class BlackCatalogService {
       {
         method: 'POST',
         body: formData,
-        token: this.getAuthToken(),
         isFormData: true
       }
     );
@@ -193,7 +193,6 @@ class BlackCatalogService {
     return apiRequest<CreateBlackCatalogResponse>(`${this.baseEndpoint}/${id}`, {
       method: 'PUT',
       body: { black_catalog: preparedData },
-      token: this.getAuthToken()
     });
   }
 
@@ -204,7 +203,6 @@ class BlackCatalogService {
   async delete(id: number) {
     return apiRequest(`${this.baseEndpoint}/${id}`, {
       method: 'DELETE',
-      token: this.getAuthToken()
     });
   }
 
@@ -215,7 +213,6 @@ class BlackCatalogService {
   async getCount(): Promise<number> {
     const response = await apiRequest<CountResponse>(`${this.baseEndpoint}/count`, {
       method: 'GET',
-      token: this.getAuthToken()
     });
     return response.count;
   }
@@ -248,7 +245,6 @@ class BlackCatalogService {
 
     return apiRequest<SearchBlackCatalogResponse>(endpoint, {
       method: 'GET',
-      token: this.getAuthToken()
     });
   }
 }

@@ -4,6 +4,7 @@ import type {
   BlackCatalogCreatePayload,
   BlackCatalogUpdatePayload,
   SearchParams,
+  AddDebtRequest,
 } from './blackCatalog';
 import { blackCatalogService } from './BlackCatalogService';
 
@@ -14,6 +15,8 @@ interface UseBlackCatalogReturn {
   count: number | null;
   
   createEntry: (data: BlackCatalogCreatePayload) => Promise<{ id: number; success: boolean } | null>;
+  addDebt: (data: AddDebtRequest) => void;
+  deleteDebt: (id: number) => void;
   updateEntry: (id: number, data: BlackCatalogUpdatePayload) => Promise<{ id: number; success: boolean } | null>;
   deleteEntry: (id: number) => void;
   searchEntries: (params: SearchParams) => Promise<SearchBlackCatalogResponse | null>;
@@ -46,6 +49,33 @@ const useBlackCatalog = (): UseBlackCatalogReturn => {
       }
       
       return { id: response.id, success: response.success };
+    } catch (err) {
+      return handleError(err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const addDebt = useCallback(async (data: AddDebtRequest) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      await blackCatalogService.addDebt(data);
+      
+    } catch (err) {
+      return handleError(err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const deleteDebt = useCallback(async (id: number) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      await blackCatalogService.deleteDebt(id);
     } catch (err) {
       return handleError(err);
     } finally {
@@ -137,12 +167,14 @@ const useBlackCatalog = (): UseBlackCatalogReturn => {
     count,
     
     createEntry,
+    addDebt,
     updateEntry,
     deleteEntry,
     searchEntries,
     getTotalCount,
     reset,
-    clearError
+    clearError,
+    deleteDebt
   };
 };
 

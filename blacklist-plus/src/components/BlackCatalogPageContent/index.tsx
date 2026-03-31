@@ -200,9 +200,11 @@ const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
       || userId === 'bcec9c2b-5cee-4a1c-aac6-d0336ef59802'  // Ибрагим
       || userId === 'e57d8bdf-77f2-4e07-b54a-4044754da41d'  // Второй номер Ибрагима
       || userId === '01eb28db-609b-4906-9423-aa4b65f622cf'  // Микиев Турпал 
-      || userId === '221bf643-573e-4e61-be7b-8557d462743f') // Элипханов Идрис
+      || userId === '221bf643-573e-4e61-be7b-8557d462743f' // Элипханов Идрис
+      || userId === '354ab5e9-3446-4380-811e-ff93df5d2f01') // Кирилл
       return true;
 
+      console.log(userId);
     if (!allowEdit) return false;
     
     if (!item.creator_id) return false;

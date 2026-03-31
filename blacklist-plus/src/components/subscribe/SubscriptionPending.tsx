@@ -253,7 +253,7 @@ const SubscriptionPendingPage: React.FC<SubscriptionPendingPageProps> = ({
         position: 'relative',
         margin: '12px 0'
       }}>
-        {paymentStep === 1 && !showCancelConfirm && (
+        {paymentStep !== 3 && !showCancelConfirm && (
           <button
             onClick={() => setShowCancelConfirm(true)}
             className="desktop-cancel-button"
@@ -647,7 +647,7 @@ const SubscriptionPendingPage: React.FC<SubscriptionPendingPageProps> = ({
                   {timeLeft}
                 </div>
               </div>
-              {paymentStep === 1 && !showCancelConfirm && (
+              {!showCancelConfirm && (
                 <button
                   onClick={() => setShowCancelConfirm(true)}
                   className="mobile-cancel-button"
