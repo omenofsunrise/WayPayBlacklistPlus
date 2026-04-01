@@ -185,102 +185,6 @@ const SubscriptionGuard: React.FC<{
   return <>{children}</>;
 };
 
-// Создаем отдельный компонент для части с навигацией
-const AuthenticatedApp: React.FC<{
-  userData: { name: string; phone: string; id: string };
-  subscriptionInfo: { hasActive: boolean; hasPending: boolean; endDate?: string };
-  collapsed: boolean;
-  toggleCollapsed: () => void;
-  selectedSideMenuItem: string | null;
-  setSelectedSideMenuItem: (value: string | null) => void;
-  selectedTopMenuItem: string | null;
-  setSelectedTopMenuItem: (value: string | null) => void;
-}> = ({
-  userData,
-  subscriptionInfo,
-  collapsed,
-  toggleCollapsed,
-  selectedSideMenuItem,
-  setSelectedSideMenuItem,
-  selectedTopMenuItem,
-  setSelectedTopMenuItem,
-}) => {
-  const navigate = useNavigate();
-  const { getNotifications, markAsReadNotification } = useBlackCatalog();
-
-  const handleNotificationClick = async (notification: any) => {
-    if (notification.entity_id) {
-      // Сохраняем в sessionStorage, чтобы BlackCatalogPageContent знал, какой клиент открыть
-      sessionStorage.setItem('open_dossier_id', notification.entity_id.toString());
-      
-      // Переходим на страницу черного списка
-      navigate('/blacklist');
-      
-      // Небольшая задержка для обновления страницы
-      setTimeout(() => {
-        // Очищаем флаг
-        sessionStorage.removeItem('open_dossier_id');
-      }, 500);
-    }
-  };
-
-  return (
-    <SideMenuContext.Provider
-      value={{
-        collapsed,
-        toggleCollapsed,
-        selectedSideMenuItem,
-        setSelectedSideMenuItem,
-        selectedTopMenuItem,
-        setSelectedTopMenuItem,
-      }}
-    >
-      <SubscriptionGuard
-        onSubscriptionCheck={() => {}} // Этот пропс должен быть передан из родителя
-        onUserDataLoad={() => {}} // Этот пропс должен быть передан из родителя
-      >
-        <Layout
-          userInfo={{
-            name: userData.name,
-            phone: userData.phone,
-            licenseEndDate: subscriptionInfo.endDate,
-          }}
-        >
-          <Notifications 
-            getNotifications={getNotifications}
-            markAsRead={markAsReadNotification}
-            onNotificationClick={handleNotificationClick}
-          />
-          
-          <Routes>
-            <Route path="/" element={<Navigate to="/blacklist" replace />} />
-            <Route path="/calculator" element={<CalculatorPage />} />
-            <Route
-              path="/blacklist"
-              element={<BlackCatalogPage userId={userData.id} />}
-            />
-            <Route
-              path="/formatted"
-              element={<FormattedCatalogPage userId={userData.id} />}
-            />
-            <Route
-              path="/profile"
-              element={
-                <ProfilePage
-                  userName={userData.name}
-                  userPhone={userData.phone}
-                  subscriptionEndDate={subscriptionInfo.endDate}
-                  hasActiveSubscription={subscriptionInfo.hasActive}
-                />
-              }
-            />
-          </Routes>
-        </Layout>
-      </SubscriptionGuard>
-    </SideMenuContext.Provider>
-  );
-};
-
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isModerated, setIsModerated] = useState<boolean>(true);
@@ -288,6 +192,7 @@ function App() {
   const [collapsed, setCollapsed] = useState<boolean>(false);
   const [selectedSideMenuItem, setSelectedSideMenuItem] = useState<string | null>(null);
   const [selectedTopMenuItem, setSelectedTopMenuItem] = useState<string | null>(null);
+  const navigate = useNavigate();
   const [userData, setUserData] = useState<{
     name: string;
     phone: string;
@@ -305,6 +210,8 @@ function App() {
     hasActive: false,
     hasPending: false,
   });
+
+  const { getNotifications, markAsReadNotification } = useBlackCatalog();
 
   useEffect(() => {
     checkAuth();
@@ -350,6 +257,39 @@ function App() {
 
   const toggleCollapsed = () => {
     setCollapsed((prev) => !prev);
+  };
+
+  const handleSubscriptionCheck = (status: any) => {
+    setSubscriptionInfo({
+      hasActive: status.hasActive,
+      hasPending: status.hasPending,
+      endDate: status.endDate,
+    });
+  };
+
+    const handleNotificationClick = async (notification: any) => {
+    if (notification.entity_id) {
+      // Если есть entity_id, переходим к досье клиента
+      // Сохраняем в sessionStorage, чтобы BlackCatalogPageContent знал, какой клиент открыть
+      sessionStorage.setItem('open_dossier_id', notification.entity_id.toString());
+      
+      // Переходим на страницу черного списка
+      navigate('/blacklist');
+      
+      // Небольшая задержка для обновления страницы
+      setTimeout(() => {
+        // Очищаем флаг
+        sessionStorage.removeItem('open_dossier_id');
+      }, 500);
+    }
+  };
+
+  const handleUserDataLoad = (data: {
+    name: string;
+    phone: string;
+    id: string;
+  }) => {
+    setUserData(data);
   };
 
   if (isLoading) {
@@ -412,16 +352,60 @@ function App() {
 
   return (
     <BrowserRouter>
-      <AuthenticatedApp
-        userData={userData}
-        subscriptionInfo={subscriptionInfo}
-        collapsed={collapsed}
-        toggleCollapsed={toggleCollapsed}
-        selectedSideMenuItem={selectedSideMenuItem}
-        setSelectedSideMenuItem={setSelectedSideMenuItem}
-        selectedTopMenuItem={selectedTopMenuItem}
-        setSelectedTopMenuItem={setSelectedTopMenuItem}
-      />
+      <SideMenuContext.Provider
+        value={{
+          collapsed,
+          toggleCollapsed,
+          selectedSideMenuItem,
+          setSelectedSideMenuItem,
+          selectedTopMenuItem,
+          setSelectedTopMenuItem,
+        }}
+      >
+        <SubscriptionGuard
+          onSubscriptionCheck={handleSubscriptionCheck}
+          onUserDataLoad={handleUserDataLoad}
+        >
+          <Layout
+            userInfo={{
+              name: userData.name,
+              phone: userData.phone,
+              licenseEndDate: subscriptionInfo.endDate,
+            }}
+          >
+            {/* Добавляем компонент уведомлений */}
+            <Notifications 
+              getNotifications={getNotifications}
+              markAsRead={markAsReadNotification}
+              onNotificationClick={handleNotificationClick}
+            />
+            
+            <Routes>
+              <Route path="/" element={<Navigate to="/blacklist" replace />} />
+              <Route path="/calculator" element={<CalculatorPage />} />
+              <Route
+                path="/blacklist"
+                element={<BlackCatalogPage userId={userData.id} />}
+              />
+              <Route
+                path="/formatted"
+                element={<FormattedCatalogPage userId={userData.id} />}
+              />
+              <Route
+                path="/profile"
+                element={
+                  <ProfilePage
+                    userName={userData.name}
+                    userPhone={userData.phone}
+                    subscriptionEndDate={subscriptionInfo.endDate}
+                    hasActiveSubscription={subscriptionInfo.hasActive}
+                  />
+                }
+              />
+            </Routes>
+          </Layout>
+        </SubscriptionGuard>
+      </SideMenuContext.Provider>
     </BrowserRouter>
   );
 }
