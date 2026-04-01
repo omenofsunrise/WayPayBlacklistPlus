@@ -5,6 +5,7 @@ import type {
   BlackCatalogUpdatePayload,
   SearchParams,
   AddDebtRequest,
+  NotificationsResponse,
 } from './blackCatalog';
 import { blackCatalogService } from './BlackCatalogService';
 
@@ -13,14 +14,16 @@ interface UseBlackCatalogReturn {
   error: string | null;
   searchResults: SearchBlackCatalogResponse | null;
   count: number | null;
-  
+  notifications: NotificationsResponse | null;
   createEntry: (data: BlackCatalogCreatePayload) => Promise<{ id: number; success: boolean } | null>;
   addDebt: (data: AddDebtRequest) => void;
+  markAsReadNotification: (id: number) => void;
   deleteDebt: (id: number) => void;
   updateEntry: (id: number, data: BlackCatalogUpdatePayload) => Promise<{ id: number; success: boolean } | null>;
   deleteEntry: (id: number) => void;
   searchEntries: (params: SearchParams) => Promise<SearchBlackCatalogResponse | null>;
   getTotalCount: () => Promise<number | null>;
+  getNotifications: () => Promise<NotificationsResponse | null>;
   reset: () => void;
   clearError: () => void;
 }
@@ -30,6 +33,7 @@ const useBlackCatalog = (): UseBlackCatalogReturn => {
   const [error, setError] = useState<string | null>(null);
   const [searchResults, setSearchResults] = useState<SearchBlackCatalogResponse | null>(null);
   const [count, setCount] = useState<number | null>(null);
+  const [notifications, setnotifications] = useState<NotificationsResponse | null>(null);
 
   const handleError = (err: unknown) => {
     const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
@@ -149,6 +153,34 @@ const useBlackCatalog = (): UseBlackCatalogReturn => {
     }
   }, []);
 
+  const markAsReadNotification = useCallback(async (id: number) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      await blackCatalogService.markAsReadNotification(id);
+    } catch (err) {
+      return handleError(err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const getNotifications = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const notes = await blackCatalogService.getNotifications();
+      setnotifications(notes);
+      return notes;
+    } catch (err) {
+      return handleError(err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   const reset = useCallback(() => {
     setSearchResults(null);
     setCount(null);
@@ -165,7 +197,7 @@ const useBlackCatalog = (): UseBlackCatalogReturn => {
     error,
     searchResults,
     count,
-    
+    notifications,
     createEntry,
     addDebt,
     updateEntry,
@@ -174,6 +206,8 @@ const useBlackCatalog = (): UseBlackCatalogReturn => {
     getTotalCount,
     reset,
     clearError,
+    getNotifications,
+    markAsReadNotification,
     deleteDebt
   };
 };

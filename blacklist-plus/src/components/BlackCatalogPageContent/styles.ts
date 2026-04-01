@@ -197,8 +197,10 @@ export const StyledCountInfo = styled(CountInfoTitle)`
 
 export const Container = styled.div`
   display: flex;
-  flex-direction: row;
-  width: 50vw;
+  flex-direction: column;
+  width: 100%;
+  max-width: 3200px;
+  margin: 0 auto;
   gap: 15px;
   align-items: center;
 
@@ -463,4 +465,78 @@ export const MobileBottomSheetOption = styled.div`
   &:last-child {
     margin-bottom: 0;
   }
+`;
+
+export const CardsContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 20px;
+  width: 100%;
+  max-width: 3200px;
+  
+  @media (max-width: 768px) {
+    width: 100%;
+  }
+`;
+
+export const LoadingContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  color: #64748B;
+`;
+
+export const ErrorContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  color: #EF4444;
+`;
+
+export const PaginationContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+  margin-bottom: 24px;
+`;
+
+export const PaginationButton = styled.button`
+  padding: 8px 24px;
+  background-color: #3B82F6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  
+  &:hover:not(:disabled) {
+    background-color: #2563EB;
+  }
+  
+  &:disabled {
+    background-color: #94A3B8;
+    cursor: not-allowed;
+  }
+`;
+
+export const PaginationInfo = styled.div`
+  font-size: 12px;
+  color: #64748B;
+`;
+
+export const LoadingMoreIndicator = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  margin: 10px 0;
+  color: #6b7280;
+  font-size: 14px;
 `;

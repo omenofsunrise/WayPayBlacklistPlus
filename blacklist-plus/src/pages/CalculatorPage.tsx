@@ -46,21 +46,34 @@ const roundUp = (value: number, increment: number) => {
 
 const STORAGE_KEY = 'waypay.calculator.form.v1';
 
-const getDefaultFormData = () => ({
+type CalculationMode = 'standard' | 'after-initial' | 'month-percent';
+
+interface FormData {
+  amount: string;
+  months: string;
+  initial: string;
+  percent: string;
+  round: string;
+  startDate: string;
+  mode: CalculationMode;
+}
+
+const getDefaultFormData = (): FormData => ({
   amount: '',
   months: '',
   initial: '',
   percent: '',
   round: '',
   startDate: getNextMonthDate().toISOString().split('T')[0],
+  mode: 'standard',
 });
 
-const loadStoredFormData = () => {
+const loadStoredFormData = (): FormData => {
   const defaults = getDefaultFormData();
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return defaults;
-    const parsed = JSON.parse(raw) as Partial<typeof defaults>;
+    const parsed = JSON.parse(raw) as Partial<FormData>;
     return {
       ...defaults,
       amount: typeof parsed.amount === 'string' ? parsed.amount : defaults.amount,
@@ -72,20 +85,20 @@ const loadStoredFormData = () => {
         typeof parsed.startDate === 'string' && parsed.startDate
           ? parsed.startDate
           : defaults.startDate,
+      mode: parsed.mode && ['standard', 'after-initial', 'month-percent'].includes(parsed.mode)
+        ? parsed.mode
+        : defaults.mode,
     };
   } catch {
     return defaults;
   }
 };
 
-// ==================== ТИПЫ ====================
-
-type CalculationMode = 'standard' | 'after-initial' | 'month-percent';
-
 // ==================== ОСНОВНОЙ КОМПОНЕНТ СТРАНИЦЫ ====================
 
 const CalculatorPage = () => {
-  const [selectedMode, setSelectedMode] = useState<CalculationMode>('standard');
+  const initialFormData = loadStoredFormData();
+  const [selectedMode, setSelectedMode] = useState<CalculationMode>(initialFormData.mode);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [isModeMenuOpen, setIsModeMenuOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -93,7 +106,6 @@ const CalculatorPage = () => {
   const modeMenuRef = useRef<HTMLDivElement | null>(null);
   const exportRef = useRef<HTMLDivElement | null>(null);
 
-  const initialFormData = loadStoredFormData();
   const [formData, setFormData] = useState(initialFormData);
   const [displayAmount, setDisplayAmount] = useState(
     initialFormData.amount ? formatMoney(initialFormData.amount) : '',
@@ -131,13 +143,18 @@ const CalculatorPage = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Сохраняем все данные, включая выбранный режим
   useEffect(() => {
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(formData));
+      const dataToStore = {
+        ...formData,
+        mode: selectedMode,
+      };
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToStore));
     } catch {
       // ignore storage errors (quota, etc.)
     }
-  }, [formData]);
+  }, [formData, selectedMode]);
 
   useEffect(() => {
     const inputs = document.querySelectorAll<HTMLInputElement>('input[data-numeric="true"]');
@@ -301,18 +318,20 @@ const CalculatorPage = () => {
   };
 
   const handleReset = () => {
+    const defaultForm = getDefaultFormData();
     setFormData({
       amount: '',
       months: isMobile ? '0' : '',
       initial: '',
       percent: '',
       round: '',
-      startDate: getNextMonthDate().toISOString().split('T')[0],
+      startDate: defaultForm.startDate,
+      mode: 'standard',
     });
     setDisplayAmount('');
     setDisplayInitial('');
+    setSelectedMode('standard');
   };
-
 
   useEffect(() => {
     if (!isModeMenuOpen) return;

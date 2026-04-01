@@ -87,9 +87,23 @@ export interface SearchParams {
   mine?: boolean;
   page_token?: string;
   page_size?: number;
+  id?: number;
 }
 
 export interface AddDebtRequest {
   blacklist_id: number;
   debt_ending_at: Date;
+}
+
+export interface Notification {
+  id: number;
+  content: string
+  is_read: boolean;
+  user_id: string;
+  created_at: Date;
+}
+
+export interface NotificationsResponse {
+  notifications: Notification[];
+  next_page_token?: string;
 }

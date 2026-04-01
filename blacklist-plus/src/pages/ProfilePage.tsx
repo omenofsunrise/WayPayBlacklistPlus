@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authStorage } from 'waypay_react_library';
 import SubscriptionBlock from '../components/subscribe/SubscriptionBlock';
+import ProfileBlackCatalog from '../components/ProfileBlackCatalog';
 
 interface ProfilePageProps {
   userName: string;
@@ -14,7 +15,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
   userName, 
   userPhone, 
   subscriptionEndDate,
-  hasActiveSubscription 
+  hasActiveSubscription,
 }) => {
   const navigate = useNavigate();
   const [showSubscription, setShowSubscription] = useState(false);
@@ -32,7 +33,6 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
     tariffType: 'blacklist_plus'
   });
 
-  // Синхронизируем данные при изменении пропсов
   useEffect(() => {
     setUserData({
       name: userName || 'Пользователь',
@@ -60,7 +60,6 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
 
   const handlePaymentSuccess = () => {
     setShowSubscription(false);
-    // Обновляем страницу или делаем редирект для получения актуальных данных
     window.location.reload();
   };
 
@@ -78,7 +77,6 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
   return (
     <div style={{ 
       padding: '24px',
-      maxWidth: '800px',
       margin: '0 auto'
     }}>
       {/* Карточка профиля */}
@@ -209,7 +207,8 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
       {/* Блок продления подписки */}
       {showSubscription && (
         <div style={{
-          animation: 'slideDown 0.3s ease-out'
+          animation: 'slideDown 0.3s ease-out',
+          marginBottom: '80px'
         }}>
           <SubscriptionBlock
             tariffType="blacklist_plus"
@@ -222,6 +221,11 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
         </div>
       )}
 
+      <ProfileBlackCatalog 
+        allowEdit={true}
+        pageSize={10}
+      />
+      
       {/* Стили для анимации */}
       <style>{`
         @keyframes slideDown {

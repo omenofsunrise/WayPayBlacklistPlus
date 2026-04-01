@@ -7,6 +7,7 @@ import type {
   SearchParams, 
   SearchBlackCatalogResponse,
   AddDebtRequest,
+  NotificationsResponse,
 } from "./blackCatalog";
 
 class BlackCatalogService {
@@ -217,6 +218,19 @@ class BlackCatalogService {
     return response.count;
   }
 
+  async getNotifications(): Promise<NotificationsResponse> {
+    const response = await apiRequest<NotificationsResponse>(`${this.baseEndpoint}/notifications`, {
+      method: 'GET',
+    });
+    return response;
+  }
+
+  async markAsReadNotification(id: number): Promise<void> {
+    await apiRequest(`${this.baseEndpoint}/notifications/${id}/read`, {
+      method: 'PUT',
+    });
+  }
+
   /**
    * Поиск по черному каталогу
    * GET /black-catalog/search
@@ -229,6 +243,9 @@ class BlackCatalogService {
       queryParams.append('fullname', params.name);
     }
     if (params.mine) {
+      queryParams.append('mine', 'true');
+    }
+    if (params.id) {
       queryParams.append('mine', 'true');
     }
     if (params.page_token) {
