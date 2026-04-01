@@ -755,7 +755,6 @@ const BlackCatalogDossier = ({ item, onBack, userId }: BlackCatalogDossierProps)
             <CommentWrapper key={comment.id} $level={0}>
                 <CommentCard>
                     <CommentMeta>
-                        {comment.author?.full_name || "Без имени"} ·{" "}
                         {formatDateShort(comment.created_at)}
                     </CommentMeta>
                     {editId === comment.id ? (
