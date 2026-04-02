@@ -20,6 +20,7 @@ import ProfileHeader from "./components/subscribe/ProfileHeader";
 import { Notifications } from "./components/Notifications";
 import useBlackCatalog from "./api/BlackCatalog/useBlackCatalog";
 import BlackCatalogDossier from "./components/BlackCatalogDossier";
+import PrivacyModal from "./components/PrivacyModal";
 
 const SubscriptionGuard: React.FC<{
   children: React.ReactNode;
@@ -299,9 +300,16 @@ function App() {
     hasActive: false,
     hasPending: false,
   });
+  
+  const [showPrivacyModal, setShowPrivacyModal] = useState<boolean>(false);
 
   useEffect(() => {
     checkAuth();
+    // Проверяем, давал ли пользователь согласие ранее
+    const hasConsented = localStorage.getItem('privacyConsent');
+    if (hasConsented === 'true') {
+      setShowPrivacyModal(false);
+    }
   }, []);
 
   const checkAuth = async () => {
@@ -339,7 +347,23 @@ function App() {
   };
 
   const handleLoginSuccess = () => {
+    setShowPrivacyModal(true);
     checkAuth();
+  };
+
+  const handlePrivacyAccept = () => {
+    localStorage.setItem('privacyConsent', 'true');
+    setShowPrivacyModal(false);
+  };
+
+  const handlePrivacyDecline = () => {
+    // Если пользователь не согласен, можно либо выйти из аккаунта, либо просто закрыть модалку
+    // Вариант 1: просто закрываем и больше не показываем в этой сессии
+    setShowPrivacyModal(false);
+    
+    // Вариант 2: разлогиниваем пользователя (раскомментировать если нужно)
+    // localStorage.removeItem('privacyConsent');
+    // setIsAuthenticated(false);
   };
 
   const toggleCollapsed = () => {
@@ -415,6 +439,61 @@ function App() {
         setSelectedSideMenuItem={setSelectedSideMenuItem}
         selectedTopMenuItem={selectedTopMenuItem}
         setSelectedTopMenuItem={setSelectedTopMenuItem}
+      />
+      <SideMenuContext.Provider
+        value={{
+          collapsed,
+          toggleCollapsed,
+          selectedSideMenuItem,
+          setSelectedSideMenuItem,
+          selectedTopMenuItem,
+          setSelectedTopMenuItem,
+        }}
+      >
+        <SubscriptionGuard
+          onSubscriptionCheck={handleSubscriptionCheck}
+          onUserDataLoad={handleUserDataLoad}
+        >
+          <Layout
+            userInfo={{
+              name: userData.name,
+              phone: userData.phone,
+              licenseEndDate: subscriptionInfo.endDate,
+            }}
+          >
+            <Routes>
+              <Route path="/" element={<Navigate to="/calculator" replace />} />
+              <Route path="/calculator" element={<CalculatorPage />} />
+              <Route
+                path="/blacklist"
+                element={<BlackCatalogPage userId={userData.id} />}
+              />
+              <Route
+                path="/formatted"
+                element={<FormattedCatalogPage userId={userData.id} />}
+              />
+              <Route
+                path="/profile"
+                element={
+                  <ProfilePage
+                    userName={userData.name}
+                    userPhone={userData.phone}
+                    subscriptionEndDate={subscriptionInfo.endDate}
+                    hasActiveSubscription={subscriptionInfo.hasActive}
+                  />
+                }
+              />
+            </Routes>
+          </Layout>
+        </SubscriptionGuard>
+      </SideMenuContext.Provider>
+
+      {/* Модалка согласия */}
+      <PrivacyModal
+        isOpen={showPrivacyModal}
+        onAccept={handlePrivacyAccept}
+        onDecline={handlePrivacyDecline}
+        companyName="ООО WayPay"
       />
     </BrowserRouter>
   );

@@ -418,7 +418,7 @@ const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
           <EmptyStateIcon>📋</EmptyStateIcon>
           <EmptyStateTitle>{texts.emptyStateTitle}</EmptyStateTitle>
           <EmptyStateText>{texts.emptyStateDescription}</EmptyStateText>
-          <StyledCountInfo total={totalCount} />
+          <div style={{display: "none"}}><StyledCountInfo total={totalCount} /> </div>
         </EmptyStateContainer>
       );
     }
