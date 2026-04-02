@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import {
   AuthPage,
@@ -214,6 +214,73 @@ function App() {
   });
   
   const [showPrivacyModal, setShowPrivacyModal] = useState<boolean>(false);
+  
+  const { getNotifications, markAsReadNotification } = useBlackCatalog();
+  
+  const [unreadNotifications, setUnreadNotifications] = useState<any[]>([]);
+  
+  const intervalRef = useRef<number | null>(null);
+  const isMountedRef = useRef<boolean>(true);
+
+  // Стабильная функция загрузки уведомлений без зависимостей
+  const loadUnreadNotifications = useCallback(async () => {
+    if (!isMountedRef.current) return;
+    
+    try {
+      const response = await getNotifications();
+      if (response?.notifications && isMountedRef.current) {
+        const unread = response.notifications.filter(n => !n.is_read);
+        setUnreadNotifications(unread);
+      }
+    } catch (error) {
+      console.error("Ошибка при загрузке уведомлений:", error);
+    }
+  }, [getNotifications]);
+
+  // Отдельный эффект для интервала с правильными зависимостями
+  useEffect(() => {
+    // Очищаем предыдущий интервал если есть
+    if (intervalRef.current) {
+      window.clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+
+    // Запускаем интервал только если пользователь авторизован и есть активная подписка
+    if (isAuthenticated && isModerated && subscriptionInfo.hasActive) {
+      // Первая загрузка
+      loadUnreadNotifications();
+      
+      // Запускаем интервал раз в 7 секунд
+      intervalRef.current = window.setInterval(() => {
+        loadUnreadNotifications();
+      }, 7000);
+    }
+    
+    return () => {
+      if (intervalRef.current) {
+        window.clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [isAuthenticated, isModerated, subscriptionInfo.hasActive]); // Убираем loadUnreadNotifications из зависимостей
+
+  // Очистка при размонтировании
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      if (intervalRef.current) {
+        window.clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, []);
+
+  const handleNotificationClick = async (notification: any) => {
+    await markAsReadNotification(notification.id);
+    // После отметки о прочтении сразу обновляем список
+    await loadUnreadNotifications();
+  };
 
   useEffect(() => {
     checkAuth();
@@ -372,6 +439,13 @@ function App() {
               licenseEndDate: subscriptionInfo.endDate,
             }}
           >
+            {unreadNotifications.length > 0 && (
+              <Notifications
+                getNotifications={getNotifications}
+                markAsRead={markAsReadNotification}
+                onNotificationClick={handleNotificationClick}
+              />
+            )}
             <Routes>
               <Route path="/" element={<Navigate to="/blacklist" replace />} />
               <Route path="/calculator" element={<CalculatorPage />} />
