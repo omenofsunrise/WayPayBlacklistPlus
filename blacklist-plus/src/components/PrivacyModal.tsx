@@ -1,7 +1,6 @@
-// components/PrivacyModal.tsx
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 
 interface PrivacyModalProps {
   isOpen: boolean;
@@ -16,11 +15,9 @@ const PrivacyModal: React.FC<PrivacyModalProps> = ({
   onDecline,
   companyName = 'ООО WayPay',
 }) => {
-  const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
-      setIsAnimating(true);
       // Блокируем прокрутку body при открытии
       document.body.style.overflow = 'hidden';
     } else {
@@ -33,12 +30,10 @@ const PrivacyModal: React.FC<PrivacyModalProps> = ({
   }, [isOpen]);
 
   const handleAccept = () => {
-    setIsAnimating(false);
     onAccept();
   };
 
   const handleDecline = () => {
-    setIsAnimating(false);
     onDecline();
   };
 
@@ -99,26 +94,6 @@ const PrivacyModal: React.FC<PrivacyModalProps> = ({
           >
             Политика обработки персональных данных
           </h2>
-          <button
-            onClick={handleDecline}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              padding: '8px',
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#9ca3af',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = '#4b5563')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = '#9ca3af')}
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M18 6L6 18M6 6l12 12" />
-            </svg>
-          </button>
         </div>
 
         {/* Содержимое с прокруткой */}
