@@ -187,95 +187,6 @@ const SubscriptionGuard: React.FC<{
   return <>{children}</>;
 };
 
-const AuthenticatedApp: React.FC<{
-  userData: { name: string; phone: string; id: string };
-  subscriptionInfo: { hasActive: boolean; hasPending: boolean; endDate?: string };
-  collapsed: boolean;
-  toggleCollapsed: () => void;
-  selectedSideMenuItem: string | null;
-  setSelectedSideMenuItem: (value: string | null) => void;
-  selectedTopMenuItem: string | null;
-  setSelectedTopMenuItem: (value: string | null) => void;
-}> = ({
-  userData,
-  subscriptionInfo,
-  collapsed,
-  toggleCollapsed,
-  selectedSideMenuItem,
-  setSelectedSideMenuItem,
-  selectedTopMenuItem,
-  setSelectedTopMenuItem,
-}) => {
-  const navigate = useNavigate();
-  const { getNotifications, markAsReadNotification } = useBlackCatalog();
-
-  const handleNotificationClick = async (notification: any) => {
-    if (notification.entity_id) {
-      navigate(`/dossier/${notification.entity_id}`);
-    }
-  };
-
-  return (
-    <SideMenuContext.Provider
-      value={{
-        collapsed,
-        toggleCollapsed,
-        selectedSideMenuItem,
-        setSelectedSideMenuItem,
-        selectedTopMenuItem,
-        setSelectedTopMenuItem,
-      }}
-    >
-      <SubscriptionGuard
-        onSubscriptionCheck={() => {}}
-        onUserDataLoad={() => {}}
-      >
-        <Layout
-          userInfo={{
-            name: userData.name,
-            phone: userData.phone,
-            licenseEndDate: subscriptionInfo.endDate,
-          }}
-        >
-          <Notifications 
-            getNotifications={getNotifications}
-            markAsRead={markAsReadNotification}
-            onNotificationClick={handleNotificationClick}
-          />
-          
-          <Routes>
-            <Route path="/" element={<Navigate to="/blacklist" replace />} />
-            <Route path="/calculator" element={<CalculatorPage />} />
-            <Route
-              path="/blacklist"
-              element={<BlackCatalogPage userId={userData.id} />}
-            />
-            <Route
-              path="/formatted"
-              element={<FormattedCatalogPage userId={userData.id} />}
-            />
-            <Route
-              path="/profile"
-              element={
-                <ProfilePage
-                  userName={userData.name}
-                  userPhone={userData.phone}
-                  subscriptionEndDate={subscriptionInfo.endDate}
-                  hasActiveSubscription={subscriptionInfo.hasActive}
-                />
-              }
-            />
-            <Route
-              path="/dossier/:id"
-              element={<BlackCatalogDossier userId={userData.id} item={undefined} onBack={() => navigate('/blacklist')}/>}
-            />
-          </Routes>
-        </Layout>
-      </SubscriptionGuard>
-    </SideMenuContext.Provider>
-  );
-};
-
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isModerated, setIsModerated] = useState<boolean>(true);
@@ -305,7 +216,6 @@ function App() {
 
   useEffect(() => {
     checkAuth();
-    // Проверяем, давал ли пользователь согласие ранее
     const hasConsented = localStorage.getItem('privacyConsent');
     if (hasConsented === 'true') {
       setShowPrivacyModal(false);
@@ -357,17 +267,27 @@ function App() {
   };
 
   const handlePrivacyDecline = () => {
-    // Если пользователь не согласен, можно либо выйти из аккаунта, либо просто закрыть модалку
-    // Вариант 1: просто закрываем и больше не показываем в этой сессии
     setShowPrivacyModal(false);
-    
-    // Вариант 2: разлогиниваем пользователя (раскомментировать если нужно)
-    // localStorage.removeItem('privacyConsent');
-    // setIsAuthenticated(false);
   };
 
   const toggleCollapsed = () => {
     setCollapsed((prev) => !prev);
+  };
+
+  const handleSubscriptionCheck = (status: any) => {
+    setSubscriptionInfo({
+      hasActive: status.hasActive,
+      hasPending: status.hasPending,
+      endDate: status.endDate,
+    });
+  };
+
+  const handleUserDataLoad = (data: {
+    name: string;
+    phone: string;
+    id: string;
+  }) => {
+    setUserData(data);
   };
 
   if (isLoading) {
@@ -430,16 +350,6 @@ function App() {
 
   return (
     <BrowserRouter>
-      <AuthenticatedApp
-        userData={userData}
-        subscriptionInfo={subscriptionInfo}
-        collapsed={collapsed}
-        toggleCollapsed={toggleCollapsed}
-        selectedSideMenuItem={selectedSideMenuItem}
-        setSelectedSideMenuItem={setSelectedSideMenuItem}
-        selectedTopMenuItem={selectedTopMenuItem}
-        setSelectedTopMenuItem={setSelectedTopMenuItem}
-      />
       <SideMenuContext.Provider
         value={{
           collapsed,
@@ -462,7 +372,7 @@ function App() {
             }}
           >
             <Routes>
-              <Route path="/" element={<Navigate to="/calculator" replace />} />
+              <Route path="/" element={<Navigate to="/blacklist" replace />} />
               <Route path="/calculator" element={<CalculatorPage />} />
               <Route
                 path="/blacklist"
@@ -483,17 +393,20 @@ function App() {
                   />
                 }
               />
+              <Route
+                path="/dossier/:id"
+                element={<BlackCatalogDossier userId={userData.id} item={undefined} onBack={() => {}} />}
+              />
             </Routes>
           </Layout>
         </SubscriptionGuard>
       </SideMenuContext.Provider>
 
-      {/* Модалка согласия */}
       <PrivacyModal
         isOpen={showPrivacyModal}
         onAccept={handlePrivacyAccept}
         onDecline={handlePrivacyDecline}
-        companyName="ООО WayPay"
+        companyName="ООО Вайпай"
       />
     </BrowserRouter>
   );
