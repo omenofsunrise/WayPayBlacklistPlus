@@ -17,10 +17,11 @@ import { subscriptionService } from "./api/Subscription/SubscriptionService";
 import SubscriptionPage from "./pages/SubscriptionPage";
 import SubscriptionPendingPage from "./components/subscribe/SubscriptionPending";
 import ProfileHeader from "./components/subscribe/ProfileHeader";
-import { Notifications } from "./components/Notifications";
+import { Notifications } from "./components/Notifications/Notifications";
 import useBlackCatalog from "./api/BlackCatalog/useBlackCatalog";
 import BlackCatalogDossier from "./components/BlackCatalogDossier";
 import PrivacyModal from "./components/PrivacyModal";
+import NotificationsPage from "./pages/NotificationsPage";
 
 const SubscriptionGuard: React.FC<{
   children: React.ReactNode;
@@ -382,6 +383,10 @@ function App() {
                 path="/formatted"
                 element={<FormattedCatalogPage userId={userData.id} />}
               />
+              <Route 
+                path="/notifications" 
+                element={<NotificationsPage />} 
+              />
               <Route
                 path="/profile"
                 element={
@@ -395,7 +400,13 @@ function App() {
               />
               <Route
                 path="/dossier/:id"
-                element={<BlackCatalogDossier userId={userData.id} item={undefined} onBack={() => {}} />}
+                element={
+                  <BlackCatalogDossier 
+                    userId={userData.id} 
+                    item={undefined} 
+                    onBack={() => window.history.back()} 
+                  />
+                }
               />
             </Routes>
           </Layout>

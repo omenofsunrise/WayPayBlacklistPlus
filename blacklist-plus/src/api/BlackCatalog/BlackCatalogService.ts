@@ -218,10 +218,14 @@ class BlackCatalogService {
     return response.count;
   }
 
-  async getNotifications(): Promise<NotificationsResponse> {
-    const response = await apiRequest<NotificationsResponse>(`${this.baseEndpoint}/notifications`, {
-      method: 'GET',
-    });
+  async getNotifications(pageToken?: string): Promise<NotificationsResponse> {
+    const queryParams = pageToken ? `?page_token=${encodeURIComponent(pageToken)}` : '';
+    const response = await apiRequest<NotificationsResponse>(
+      `${this.baseEndpoint}/notifications${queryParams}`, 
+      {
+        method: 'GET',
+      }
+    );
     return response;
   }
 

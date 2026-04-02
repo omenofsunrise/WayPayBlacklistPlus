@@ -23,7 +23,7 @@ interface UseBlackCatalogReturn {
   deleteEntry: (id: number) => void;
   searchEntries: (params: SearchParams) => Promise<SearchBlackCatalogResponse | null>;
   getTotalCount: () => Promise<number | null>;
-  getNotifications: () => Promise<NotificationsResponse | null>;
+  getNotifications: (pageToken?: string) => Promise<NotificationsResponse | null>;
   reset: () => void;
   clearError: () => void;
 }
@@ -166,20 +166,29 @@ const useBlackCatalog = (): UseBlackCatalogReturn => {
     }
   }, []);
 
-  const getNotifications = useCallback(async () => {
+  const getNotifications = useCallback(async (pageToken?: string) => {
     setIsLoading(true);
     setError(null);
     
     try {
-      const notes = await blackCatalogService.getNotifications();
-      setnotifications(notes);
+      const notes = await blackCatalogService.getNotifications(pageToken);
+      
+      if (pageToken && notifications) {
+        setnotifications(prev => ({
+          ...notes,
+          items: [...(prev?.notifications || []), ...notes.notifications]
+        }));
+      } else {
+        setnotifications(notes);
+      }
+      
       return notes;
     } catch (err) {
       return handleError(err);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [notifications]);
 
   const reset = useCallback(() => {
     setSearchResults(null);

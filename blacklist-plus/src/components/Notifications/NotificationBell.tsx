@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
-import type { NotificationsResponse } from '../api/BlackCatalog/blackCatalog';
+import type { NotificationsResponse } from '../../api/BlackCatalog/blackCatalog';
 
 const BellContainer = styled.div`
   position: relative;

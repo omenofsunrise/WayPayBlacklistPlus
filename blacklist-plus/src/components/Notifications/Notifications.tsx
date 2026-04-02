@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
-import type { Notification } from '../api/BlackCatalog/blackCatalog';
+import type { Notification } from '../../api/BlackCatalog/blackCatalog';
 import { useNavigate } from 'react-router-dom';
 
 const slideIn = keyframes`

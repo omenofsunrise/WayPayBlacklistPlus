@@ -4,7 +4,7 @@ import { BackButton as LibBackButton, DefaultButton, apiRequest, API_BASE_URL, P
 import type { BlackCatalogItem } from "../api/BlackCatalog/blackCatalog";
 import { blackCatalogService } from "../api/BlackCatalog/BlackCatalogService";
 import useBlackCatalog from "../api/BlackCatalog/useBlackCatalog";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 
 const DossierContainer = styled.div`
     background: none;
@@ -144,142 +144,6 @@ const InfoValue = styled.span`
     font-weight: 600;
 `;
 
-// const PassportSection = styled.div`
-//     display: grid;
-//     grid-template-columns: 1fr 1fr;
-//     gap: 24px;
-//     margin-top: 16px;
-
-//     @media (max-width: 768px) {
-//         grid-template-columns: 1fr;
-//     }
-// `;
-
-// const PassportPhotoSection = styled.div`
-//     margin-top: 16px;
-// `;
-
-// const PassportPhotoTitle = styled.h4`
-//     font-size: 14px;
-//     font-weight: 600;
-//     color: #374151;
-//     margin: 0;
-// `;
-
-// const PassportPhotoPlaceholder = styled.div`
-//     border: 1px dashed #d1d5db;
-//     border-radius: 6px;
-//     padding: 28px 16px;
-//     text-align: center;
-//     transition: border-color 0.2s;
-//     background: white;
-
-//     &:hover {
-//         border-color: #007D88;
-//     }
-
-//     @media (max-width: 480px) {
-//         padding: 18px 12px;
-//     }
-// `;
-
-// const PassportPhoto = styled.img`
-//     width: 100%;
-//     max-height: 240px;
-//     object-fit: cover;
-//     border-radius: 8px;
-//     border: 1px solid #e5e7eb;
-//     cursor: pointer;
-
-//     @media (max-width: 640px) {
-//         max-height: 320px;
-//     }
-// `;
-
-// const SpoilerMedia = styled.div<{ $revealed: boolean }>`
-//     position: relative;
-//     border-radius: 8px;
-//     overflow: hidden;
-
-//     ${PassportPhoto} {
-//         filter: ${({ $revealed }) => ($revealed ? "none" : "blur(18px)")};
-//         transform: ${({ $revealed }) => ($revealed ? "none" : "scale(1.03)")};
-//         transition: filter 0.2s ease, transform 0.2s ease;
-//     }
-// `;
-
-// const SpoilerOverlay = styled.button<{ $revealed: boolean }>`
-//     position: absolute;
-//     inset: 0;
-//     border: none;
-//     background: ${({ $revealed }) =>
-//         $revealed ? "transparent" : "rgba(17, 24, 39, 0.35)"};
-//     color: #fff;
-//     font-size: 12px;
-//     font-weight: 600;
-//     cursor: pointer;
-//     display: ${({ $revealed }) => ($revealed ? "none" : "flex")};
-//     align-items: center;
-//     justify-content: center;
-// `;
-
-// const PassportStatus = styled.span`
-//     font-size: 12px;
-//     color: #6b7280;
-// `;
-
-// const PassportHeaderRow = styled.div`
-//     display: flex;
-//     align-items: center;
-//     gap: 10px;
-//     margin-top: 6px;
-// `;
-
-// const PassportHideButton = styled.button`
-//     border: none;
-//     background: transparent;
-//     padding: 0;
-//     font-size: 12px;
-//     color: #0f766e;
-//     cursor: pointer;
-
-//     &:hover {
-//         text-decoration: underline;
-//     }
-// `;
-
-// const HiddenPassportInput = styled.input`
-//     display: none;
-// `;
-
-// const PassportActions = styled.div`
-//     display: flex;
-//     flex-direction: column;
-//     gap: 8px;
-//     margin-top: 12px;
-// `;
-
-// const PassportButtons = styled.div`
-//     display: flex;
-//     gap: 8px;
-//     flex-wrap: wrap;
-
-//     @media (max-width: 640px) {
-//         flex-direction: column;
-//         align-items: stretch;
-//     }
-// `;
-
-// const PassportHint = styled.div`
-//     font-size: 12px;
-//     color: #6b7280;
-// `;
-
-// const PassportError = styled.div`
-//     font-size: 12px;
-//     color: #b91c1c;
-// `;
-
 const CommentsSection = styled(Section)`
     grid-column: 1 / -1;
 `;
@@ -397,28 +261,6 @@ const CommentFormRow = styled.div`
     }
 `;
 
-// const CommentFileInput = styled.input`
-//     display: none;
-// `;
-
-// const CommentFilePicker = styled.label`
-//     display: inline-flex;
-//     align-items: center;
-//     gap: 8px;
-//     padding: 8px 12px;
-//     border-radius: 8px;
-//     border: 1px dashed #d1d5db;
-//     cursor: pointer;
-//     font-size: 12px;
-//     color: #6b7280;
-
-//     @media (max-width: 640px) {
-//         width: 100%;
-//         justify-content: center;
-//         text-align: center;
-//     }
-// `;
-
 const CommentError = styled.div`
     font-size: 12px;
     color: #b91c1c;
@@ -454,14 +296,15 @@ const InlineButton = styled.button`
 `;
 
 type BlackCatalogDossierProps = {
-    item?: BlackCatalogItem; // сделаем опциональным
-    onBack: () => void;
+    item?: BlackCatalogItem;
+    onBack?: () => void; // сделаем опциональным
     onRefresh?: (id: number) => Promise<void> | void;
     userId: string;
 };
 
 const BlackCatalogDossier = ({ item: propItem, onBack, userId }: BlackCatalogDossierProps) => {
     const { id: urlId } = useParams<{ id: string }>();
+    const navigate = useNavigate();
     const { searchEntries, isLoading: isLoadingCatalog } = useBlackCatalog();
     
     const [item, setItem] = useState<BlackCatalogItem | null>(propItem || null);
@@ -489,6 +332,15 @@ const BlackCatalogDossier = ({ item: propItem, onBack, userId }: BlackCatalogDos
     const [editId, setEditId] = useState<string | null>(null);
     const [editContent, setEditContent] = useState("");
     const maxFileSizeBytes = 12 * 1024 * 1024;
+
+    // Функция для навигации на страницу чёрного каталога
+    const handleBack = () => {
+        if (onBack) {
+            onBack();
+        } else {
+            navigate("/black-catalog");
+        }
+    };
 
     // Загрузка элемента по ID из URL, если не передан через props
     useEffect(() => {
@@ -804,7 +656,7 @@ const BlackCatalogDossier = ({ item: propItem, onBack, userId }: BlackCatalogDos
     if (isLoadingItem || isLoadingCatalog) {
         return (
             <DossierContainer>
-                <BackButton onClick={onBack}>
+                <BackButton onClick={handleBack}>
                     Назад к поиску
                 </BackButton>
                 <div style={{ textAlign: "center", padding: "40px" }}>
@@ -818,7 +670,7 @@ const BlackCatalogDossier = ({ item: propItem, onBack, userId }: BlackCatalogDos
     if (loadError || !item) {
         return (
             <DossierContainer>
-                <BackButton onClick={onBack}>
+                <BackButton onClick={handleBack}>
                     Назад к поиску
                 </BackButton>
                 <div style={{ textAlign: "center", padding: "40px", color: "#b91c1c" }}>
@@ -831,7 +683,7 @@ const BlackCatalogDossier = ({ item: propItem, onBack, userId }: BlackCatalogDos
     // Досье клиента: открывается при клике на карточку клиента.
     return (
         <DossierContainer>
-            <BackButton onClick={onBack}>
+            <BackButton onClick={handleBack}>
                 Назад к поиску
             </BackButton>
 
@@ -869,8 +721,6 @@ const BlackCatalogDossier = ({ item: propItem, onBack, userId }: BlackCatalogDos
                     </InfoGrid>
                 </Section>
 
-                {/* Здесь оставлен закомментированный код паспорта, если понадобится раскомментировать */}
-                
                 <CommentsSection>
                     <CommentsHeader>
                         <SectionTitle>Комментарии</SectionTitle>
@@ -894,13 +744,6 @@ const BlackCatalogDossier = ({ item: propItem, onBack, userId }: BlackCatalogDos
                             placeholder="Добавить комментарий"
                         />
                         <CommentFormRow>
-                            {/* <CommentFilePicker>
-                                <CommentFileInput
-                                    type="file"
-                                    onChange={(e) => setCommentFile(e.target.files?.[0] ?? null)}
-                                />
-                                {commentFile ? commentFile.name : "Прикрепить файл (до 12 МБ)"}
-                            </CommentFilePicker> */}
                             <DefaultButton
                                 type="button"
                                 onClick={handleCreateComment}
