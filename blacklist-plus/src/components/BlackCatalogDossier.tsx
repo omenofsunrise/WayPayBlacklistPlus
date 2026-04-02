@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { BackButton as LibBackButton, DefaultButton, apiRequest, API_BASE_URL, PhotoViewerModal } from "waypay_react_library";
 import type { BlackCatalogItem } from "../api/BlackCatalog/blackCatalog";
 import { blackCatalogService } from "../api/BlackCatalog/BlackCatalogService";
+import useBlackCatalog from "../api/BlackCatalog/useBlackCatalog";
+import { useParams } from "react-router-dom";
 
 const DossierContainer = styled.div`
     background: none;
@@ -452,26 +454,23 @@ const InlineButton = styled.button`
 `;
 
 type BlackCatalogDossierProps = {
-    item: BlackCatalogItem;
+    item?: BlackCatalogItem; // сделаем опциональным
     onBack: () => void;
     onRefresh?: (id: number) => Promise<void> | void;
     userId: string;
 };
 
-const BlackCatalogDossier = ({ item, onBack, userId }: BlackCatalogDossierProps) => {
-    // const mainInputRef = useRef<HTMLInputElement | null>(null);
-    // const registrationInputRef = useRef<HTMLInputElement | null>(null);
+const BlackCatalogDossier = ({ item: propItem, onBack, userId }: BlackCatalogDossierProps) => {
+    const { id: urlId } = useParams<{ id: string }>();
+    const { searchEntries, isLoading: isLoadingCatalog } = useBlackCatalog();
+    
+    const [item, setItem] = useState<BlackCatalogItem | null>(propItem || null);
+    const [isLoadingItem, setIsLoadingItem] = useState(false);
+    const [loadError, setLoadError] = useState<string | null>(null);
+    
     const [mainPassportUrl, setMainPassportUrl] = useState<string | null>(null);
     const [registrationPassportUrl, setRegistrationPassportUrl] = useState<string | null>(null);
-    // const [mainFile, setMainFile] = useState<File | null>(null);
-    // const [registrationFile, setRegistrationFile] = useState<File | null>(null);
-    // const [isUpdatingPassport, setIsUpdatingPassport] = useState(false);
-    // const [isDeletingPassport, setIsDeletingPassport] = useState(false);
-    // const [passportError, setPassportError] = useState<string | null>(null);
-    // const [isMainRevealed, setIsMainRevealed] = useState(false);
-    // const [isRegistrationRevealed, setIsRegistrationRevealed] = useState(false);
     const [isPhotoViewerOpen, setIsPhotoViewerOpen] = useState(false);
-    // const [photoViewerIndex, setPhotoViewerIndex] = useState(0);
     const [commentViewerUrl, setCommentViewerUrl] = useState<string | null>(null);
     const [comments, setComments] = useState<Array<{
         id: string;
@@ -490,6 +489,50 @@ const BlackCatalogDossier = ({ item, onBack, userId }: BlackCatalogDossierProps)
     const [editId, setEditId] = useState<string | null>(null);
     const [editContent, setEditContent] = useState("");
     const maxFileSizeBytes = 12 * 1024 * 1024;
+
+    // Загрузка элемента по ID из URL, если не передан через props
+    useEffect(() => {
+        const loadItemById = async () => {
+            if (propItem) {
+                setItem(propItem);
+                return;
+            }
+            
+            if (!urlId) {
+                setLoadError("ID не указан");
+                return;
+            }
+            
+            setIsLoadingItem(true);
+            setLoadError(null);
+            
+            try {
+                const id = parseInt(urlId, 10);
+                if (isNaN(id)) {
+                    throw new Error("Некорректный ID");
+                }
+                
+                // Используем searchEntries для получения конкретной записи по ID
+                const response = await searchEntries({
+                    id: id,
+                    page_size: 1
+                });
+                
+                if (response?.success && response.black_catalogs && response.black_catalogs.length > 0) {
+                    setItem(response.black_catalogs[0]);
+                } else {
+                    setLoadError("Запись не найдена");
+                }
+            } catch (error) {
+                console.error("Ошибка при загрузке записи:", error);
+                setLoadError(error instanceof Error ? error.message : "Ошибка при загрузке данных");
+            } finally {
+                setIsLoadingItem(false);
+            }
+        };
+        
+        loadItemById();
+    }, [propItem, urlId, searchEntries]);
 
     const isImageFile = (file?: { content_type?: string; filename?: string }) => {
         if (file?.content_type?.startsWith("image/")) return true;
@@ -515,7 +558,7 @@ const BlackCatalogDossier = ({ item, onBack, userId }: BlackCatalogDossierProps)
     };
 
     const debtStatus = (() => {
-        if (!item.debt_ending_at) return null;
+        if (!item?.debt_ending_at) return null;
         const endDate = new Date(item.debt_ending_at);
         if (Number.isNaN(endDate.getTime())) return null;
         const today = new Date();
@@ -535,6 +578,8 @@ const BlackCatalogDossier = ({ item, onBack, userId }: BlackCatalogDossierProps)
     })();
 
     useEffect(() => {
+        if (!item) return;
+        
         let isActive = true;
 
         const fetchPassportUrl = async (fileId: string, setter: (value: string | null) => void) => {
@@ -558,8 +603,6 @@ const BlackCatalogDossier = ({ item, onBack, userId }: BlackCatalogDossierProps)
 
         setMainPassportUrl(null);
         setRegistrationPassportUrl(null);
-        // setIsMainRevealed(false);
-        // setIsRegistrationRevealed(false);
 
         if (item.main_passport_page) {
             fetchPassportUrl(item.main_passport_page, setMainPassportUrl);
@@ -571,9 +614,11 @@ const BlackCatalogDossier = ({ item, onBack, userId }: BlackCatalogDossierProps)
         return () => {
             isActive = false;
         };
-    }, [item.main_passport_page, item.registration_passport_page]);
+    }, [item?.main_passport_page, item?.registration_passport_page, item]);
 
     useEffect(() => {
+        if (!item) return;
+        
         let isActive = true;
 
         const fetchComments = async () => {
@@ -596,79 +641,11 @@ const BlackCatalogDossier = ({ item, onBack, userId }: BlackCatalogDossierProps)
         return () => {
             isActive = false;
         };
-    }, [item.id]);
-
-    // const handleUploadPassport = async (kind: "main" | "registration") => {
-    //     const file = kind === "main" ? mainFile : registrationFile;
-    //     if (!file) return;
-    //     if (file.size > maxFileSizeBytes) {
-    //         setPassportError(
-    //             kind === "main"
-    //                 ? "Ошибка загрузки главной страницы: размер файла больше 12 МБ."
-    //                 : "Ошибка загрузки страницы регистрации: размер файла больше 12 МБ."
-    //         );
-    //         return;
-    //     }
-    //     setIsUpdatingPassport(true);
-    //     setPassportError(null);
-    //     try {
-    //         await blackCatalogService.setPassport({
-    //             black_catalog_id: String(item.id),
-    //             main_page: kind === "main" ? file : undefined,
-    //             registration_page: kind === "registration" ? file : undefined,
-    //         });
-    //         if (kind === "main") setMainFile(null);
-    //         if (kind === "registration") setRegistrationFile(null);
-    //         if (onRefresh) {
-    //             await onRefresh(item.id);
-    //         } else if (kind === "main" && item.main_passport_page) {
-    //             setMainPassportUrl(null);
-    //         } else if (kind === "registration" && item.registration_passport_page) {
-    //             setRegistrationPassportUrl(null);
-    //         }
-    //     } catch (error) {
-    //         const message = error instanceof Error ? error.message : "Ошибка загрузки паспорта";
-    //         setPassportError(
-    //             kind === "main"
-    //                 ? `Ошибка загрузки главной страницы: ${message}`
-    //                 : `Ошибка загрузки страницы регистрации: ${message}`
-    //         );
-    //     } finally {
-    //         setIsUpdatingPassport(false);
-    //     }
-    // };
-
-    // const handleDeletePassport = async (kind: "main" | "registration") => {
-    //     const fileId = kind === "main" ? item.main_passport_page : item.registration_passport_page;
-    //     if (!fileId) return;
-    //     setIsDeletingPassport(true);
-    //     setPassportError(null);
-    //     try {
-    //         await blackCatalogService.deletePassport({
-    //             black_catalog_id: String(item.id),
-    //             main_page_id: kind === "main" ? fileId : undefined,
-    //             registration_page_id: kind === "registration" ? fileId : undefined,
-    //         });
-    //         if (onRefresh) {
-    //             await onRefresh(item.id);
-    //         } else if (kind === "main") {
-    //             setMainPassportUrl(null);
-    //         } else {
-    //             setRegistrationPassportUrl(null);
-    //         }
-    //     } catch (error) {
-    //         const message = error instanceof Error ? error.message : "Ошибка удаления паспорта";
-    //         setPassportError(
-    //             kind === "main"
-    //                 ? `Ошибка удаления главной страницы: ${message}`
-    //                 : `Ошибка удаления страницы регистрации: ${message}`
-    //         );
-    //     } finally {
-    //         setIsDeletingPassport(false);
-    //     }
-    // };
+    }, [item?.id]);
 
     const handleCreateComment = async () => {
+        if (!item) return;
+        
         if (!commentContent.trim()) {
             setCommentError("Введите текст комментария.");
             return;
@@ -696,16 +673,13 @@ const BlackCatalogDossier = ({ item, onBack, userId }: BlackCatalogDossierProps)
         }
     };
 
-    // const openPhotoViewer = (index: number) => {
-    //     setPhotoViewerIndex(index);
-    //     setIsPhotoViewerOpen(true);
-    // };
-
     const openCommentViewer = (url: string) => {
         setCommentViewerUrl(url);
     };
 
     const handleDeleteComment = async (commentId: string) => {
+        if (!item) return;
+        
         setCommentError(null);
         try {
             await blackCatalogService.deleteComment(String(item.id), commentId);
@@ -733,8 +707,10 @@ const BlackCatalogDossier = ({ item, onBack, userId }: BlackCatalogDossierProps)
             await blackCatalogService.updateComment(editId, editContent.trim());
             setEditId(null);
             setEditContent("");
-            const response = await blackCatalogService.getComments(String(item.id), 20);
-            setComments(response.comments || []);
+            if (item) {
+                const response = await blackCatalogService.getComments(String(item.id), 20);
+                setComments(response.comments || []);
+            }
         } catch (error) {
             const message = error instanceof Error ? error.message : "Ошибка обновления комментария";
             setCommentError(message);
@@ -780,32 +756,32 @@ const BlackCatalogDossier = ({ item, onBack, userId }: BlackCatalogDossierProps)
                     ) : (
                         <CommentContent>{comment.content}</CommentContent>
                     )}
-                                            {comment.files && comment.files.length > 0 && (
-                                                <CommentFiles>
-                                                    {comment.files.map(file => (
-                                                        file.url ? (
-                                                            isImageFile(file) ? (
-                                                                <CommentImage
-                                                                    key={file.id}
-                                                                    src={file.url}
-                                                                    alt={file.filename || "Изображение"}
-                                                                    onClick={() => file.url && openCommentViewer(file.url)}
-                                                                />
-                                                            ) : (
-                                                                <CommentFile
-                                                                    key={file.id}
-                                                                    href={file.url}
-                                                                    target="_blank"
-                                                                    rel="noreferrer"
-                                                                >
-                                                                    {file.filename || "Файл"}
-                                                                </CommentFile>
-                                                            )
-                                                        ) : (
-                                                            <CommentMeta key={file.id}>
-                                                                {file.filename || "Файл"}
-                                                            </CommentMeta>
-                                                        )
+                    {comment.files && comment.files.length > 0 && (
+                        <CommentFiles>
+                            {comment.files.map(file => (
+                                file.url ? (
+                                    isImageFile(file) ? (
+                                        <CommentImage
+                                            key={file.id}
+                                            src={file.url}
+                                            alt={file.filename || "Изображение"}
+                                            onClick={() => file.url && openCommentViewer(file.url)}
+                                        />
+                                    ) : (
+                                        <CommentFile
+                                            key={file.id}
+                                            href={file.url}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                        >
+                                            {file.filename || "Файл"}
+                                        </CommentFile>
+                                    )
+                                ) : (
+                                    <CommentMeta key={file.id}>
+                                        {file.filename || "Файл"}
+                                    </CommentMeta>
+                                )
                             ))}
                         </CommentFiles>
                     )}
@@ -824,276 +800,135 @@ const BlackCatalogDossier = ({ item, onBack, userId }: BlackCatalogDossierProps)
         );
     };
 
+    // Отображение состояния загрузки
+    if (isLoadingItem || isLoadingCatalog) {
+        return (
+            <DossierContainer>
+                <BackButton onClick={onBack}>
+                    Назад к поиску
+                </BackButton>
+                <div style={{ textAlign: "center", padding: "40px" }}>
+                    Загрузка данных...
+                </div>
+            </DossierContainer>
+        );
+    }
+
+    // Отображение ошибки
+    if (loadError || !item) {
+        return (
+            <DossierContainer>
+                <BackButton onClick={onBack}>
+                    Назад к поиску
+                </BackButton>
+                <div style={{ textAlign: "center", padding: "40px", color: "#b91c1c" }}>
+                    {loadError || "Данные не найдены"}
+                </div>
+            </DossierContainer>
+        );
+    }
+
     // Досье клиента: открывается при клике на карточку клиента.
     return (
         <DossierContainer>
-                    <BackButton onClick={onBack}>
-                        Назад к поиску
-                    </BackButton>
+            <BackButton onClick={onBack}>
+                Назад к поиску
+            </BackButton>
 
-                    <DossierHeader>
-                        <div>
-                            <ClientName>{item.fullname}</ClientName>
-                            <ClientId>ID: {item.id}</ClientId>
-                            <BadgeRow>
-                            </BadgeRow>
-                        </div>
-                    </DossierHeader>
+            <DossierHeader>
+                <div>
+                    <ClientName>{item.fullname}</ClientName>
+                    <ClientId>ID: {item.id}</ClientId>
+                    <BadgeRow>
+                    </BadgeRow>
+                </div>
+            </DossierHeader>
 
-                    <DossierGrid>
-                        <Section>
-                            <SectionTitle>Общая информация</SectionTitle>
-                            <InfoGrid>
-                                <InfoItem>
-                                    <InfoLabel>Дата рождения</InfoLabel>
-                                    <InfoValue>{formatDateShort(item.birthdate)}</InfoValue>
-                                </InfoItem>
-                                <InfoItem>
-                                    <InfoLabel>Адрес</InfoLabel>
-                                    <InfoValue>{item.address || "Не указан"}</InfoValue>
-                                </InfoItem>
-                                <InfoItem>
-                                    <InfoLabel>Документ</InfoLabel>
-                                    <InfoValue>{item.doc || "Не указан"}</InfoValue>
-                                </InfoItem>
-                                {debtStatus && (
-                                    <InfoItem>
-                                        <InfoLabel>Оформление</InfoLabel>
-                                        <InfoValue>{debtStatus.text}</InfoValue>
-                                    </InfoItem>
-                                )}
-                            </InfoGrid>
-                        </Section>
+            <DossierGrid>
+                <Section>
+                    <SectionTitle>Общая информация</SectionTitle>
+                    <InfoGrid>
+                        <InfoItem>
+                            <InfoLabel>Дата рождения</InfoLabel>
+                            <InfoValue>{formatDateShort(item.birthdate)}</InfoValue>
+                        </InfoItem>
+                        <InfoItem>
+                            <InfoLabel>Адрес</InfoLabel>
+                            <InfoValue>{item.address || "Не указан"}</InfoValue>
+                        </InfoItem>
+                        <InfoItem>
+                            <InfoLabel>Документ</InfoLabel>
+                            <InfoValue>{item.doc || "Не указан"}</InfoValue>
+                        </InfoItem>
+                        {debtStatus && (
+                            <InfoItem>
+                                <InfoLabel>Оформление</InfoLabel>
+                                <InfoValue>{debtStatus.text}</InfoValue>
+                            </InfoItem>
+                        )}
+                    </InfoGrid>
+                </Section>
 
-                        {/* <Section>
-                            <SectionTitle>
-                                Паспорт
-                            </SectionTitle>
-                            <PassportSection>
-                                <PassportPhotoSection>
-                                    <PassportPhotoTitle>Основная страница</PassportPhotoTitle>
-                                    <PassportHeaderRow>
-                                        <PassportStatus>
-                                            {item.main_passport_page ? "Загружено" : "Не загружено"}
-                                        </PassportStatus>
-                                        {isMainRevealed && (
-                                            <PassportHideButton onClick={() => setIsMainRevealed(false)}>
-                                                Скрыть
-                                            </PassportHideButton>
-                                        )}
-                                    </PassportHeaderRow>
-                                    <HiddenPassportInput
-                                        ref={mainInputRef}
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={(e) => setMainFile(e.target.files?.[0] ?? null)}
-                                    />
-                                    {mainPassportUrl ? (
-                                        <SpoilerMedia $revealed={isMainRevealed}>
-                                            <PassportPhoto
-                                                src={mainPassportUrl}
-                                                alt="Основная страница паспорта"
-                                                onClick={() => openPhotoViewer(0)}
-                                            />
-                                            <SpoilerOverlay
-                                                type="button"
-                                                $revealed={isMainRevealed}
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    setIsMainRevealed(true);
-                                                }}
-                                            >
-                                                Нажмите, чтобы показать
-                                            </SpoilerOverlay>
-                                        </SpoilerMedia>
-                                    ) : (
-                                        <PassportPhotoPlaceholder>
-                                                <p style={{ margin: "0", color: "#6b7280", fontSize: "12px" }}>
-                                                    {item.main_passport_page
-                                                        ? "Нажмите на фото, чтобы открыть"
-                                                        : "Основная страница не загружена"}
-                                                </p>
-                                        </PassportPhotoPlaceholder>
-                                    )}
-                                    <PassportActions>
-                                        <PassportButtons>
-                                            <DefaultButton
-                                                type="button"
-                                                onClick={() => mainInputRef.current?.click()}
-                                            >
-                                                Выбрать файл
-                                            </DefaultButton>
-                                            <DefaultButton
-                                                type="button"
-                                                onClick={() => handleUploadPassport("main")}
-                                                disabled={!mainFile || isUpdatingPassport}
-                                            >
-                                                {mainPassportUrl ? "Обновить" : "Загрузить"}
-                                            </DefaultButton>
-                                            <DefaultButton
-                                                type="button"
-                                                onClick={() => handleDeletePassport("main")}
-                                                disabled={!item.main_passport_page || isDeletingPassport}
-                                            >
-                                                Удалить
-                                            </DefaultButton>
-                                            <DefaultButton
-                                                type="button"
-                                                onClick={() => setIsMainRevealed(false)}
-                                                disabled={!isMainRevealed}
-                                            >
-                                                Скрыть
-                                            </DefaultButton>
-                                        </PassportButtons>
-                                        <PassportHint>Максимальный размер файла: 12 МБ.</PassportHint>
-                                        {passportError?.includes("главной") && (
-                                            <PassportError>{passportError}</PassportError>
-                                        )}
-                                    </PassportActions>
-                                </PassportPhotoSection>
-                                <PassportPhotoSection>
-                                    <PassportPhotoTitle>Страница с регистрацией</PassportPhotoTitle>
-                                    <PassportHeaderRow>
-                                        <PassportStatus>
-                                            {item.registration_passport_page ? "Загружено" : "Не загружено"}
-                                        </PassportStatus>
-                                        {isRegistrationRevealed && (
-                                            <PassportHideButton onClick={() => setIsRegistrationRevealed(false)}>
-                                                Скрыть
-                                            </PassportHideButton>
-                                        )}
-                                    </PassportHeaderRow>
-                                    <HiddenPassportInput
-                                        ref={registrationInputRef}
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={(e) => setRegistrationFile(e.target.files?.[0] ?? null)}
-                                    />
-                                    {registrationPassportUrl ? (
-                                        <SpoilerMedia $revealed={isRegistrationRevealed}>
-                                            <PassportPhoto
-                                                src={registrationPassportUrl}
-                                                alt="Страница регистрации"
-                                                onClick={() => openPhotoViewer(mainPassportUrl ? 1 : 0)}
-                                            />
-                                            <SpoilerOverlay
-                                                type="button"
-                                                $revealed={isRegistrationRevealed}
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    setIsRegistrationRevealed(true);
-                                                }}
-                                            >
-                                                Нажмите, чтобы показать
-                                            </SpoilerOverlay>
-                                        </SpoilerMedia>
-                                    ) : (
-                                        <PassportPhotoPlaceholder>
-                                                <p style={{ margin: "0", color: "#6b7280", fontSize: "12px" }}>
-                                                    {item.registration_passport_page
-                                                        ? "Нажмите на фото, чтобы открыть"
-                                                        : "Страница с регистрацией не загружена"}
-                                                </p>
-                                        </PassportPhotoPlaceholder>
-                                    )}
-                                    <PassportActions>
-                                        <PassportButtons>
-                                            <DefaultButton
-                                                type="button"
-                                                onClick={() => registrationInputRef.current?.click()}
-                                            >
-                                                Выбрать файл
-                                            </DefaultButton>
-                                            <DefaultButton
-                                                type="button"
-                                                onClick={() => handleUploadPassport("registration")}
-                                                disabled={!registrationFile || isUpdatingPassport}
-                                            >
-                                                {registrationPassportUrl ? "Обновить" : "Загрузить"}
-                                            </DefaultButton>
-                                            <DefaultButton
-                                                type="button"
-                                                onClick={() => handleDeletePassport("registration")}
-                                                disabled={!item.registration_passport_page || isDeletingPassport}
-                                            >
-                                                Удалить
-                                            </DefaultButton>
-                                            <DefaultButton
-                                                type="button"
-                                                onClick={() => setIsRegistrationRevealed(false)}
-                                                disabled={!isRegistrationRevealed}
-                                            >
-                                                Скрыть
-                                            </DefaultButton>
-                                        </PassportButtons>
-                                        <PassportHint>Максимальный размер файла: 12 МБ.</PassportHint>
-                                        {passportError?.includes("регистрации") && (
-                                            <PassportError>{passportError}</PassportError>
-                                        )}
-                                    </PassportActions>
-                                </PassportPhotoSection>
-                            </PassportSection>
-                        </Section> */}
+                {/* Здесь оставлен закомментированный код паспорта, если понадобится раскомментировать */}
+                
+                <CommentsSection>
+                    <CommentsHeader>
+                        <SectionTitle>Комментарии</SectionTitle>
+                    </CommentsHeader>
+                    {isLoadingComments ? (
+                        <div>Загрузка комментариев...</div>
+                    ) : comments.length === 0 ? (
+                        <div>Комментариев пока нет</div>
+                    ) : (
+                        <CommentList>
+                            {comments
+                                .filter(comment => !comment.parent_id)
+                                .map(comment => renderComment(comment))}
+                        </CommentList>
+                    )}
 
-                        <CommentsSection>
-                            <CommentsHeader>
-                                <SectionTitle>Комментарии</SectionTitle>
-                            </CommentsHeader>
-                            {isLoadingComments ? (
-                                <div>Загрузка комментариев...</div>
-                            ) : comments.length === 0 ? (
-                                <div>Комментариев пока нет</div>
-                            ) : (
-                                <CommentList>
-                                    {comments
-                                        .filter(comment => !comment.parent_id)
-                                        .map(comment => renderComment(comment))}
-                                </CommentList>
-                            )}
-
-                            <CommentForm>
-                                <CommentInput
-                                    value={commentContent}
-                                    onChange={(e) => setCommentContent(e.target.value)}
-                                    placeholder="Добавить комментарий"
+                    <CommentForm>
+                        <CommentInput
+                            value={commentContent}
+                            onChange={(e) => setCommentContent(e.target.value)}
+                            placeholder="Добавить комментарий"
+                        />
+                        <CommentFormRow>
+                            {/* <CommentFilePicker>
+                                <CommentFileInput
+                                    type="file"
+                                    onChange={(e) => setCommentFile(e.target.files?.[0] ?? null)}
                                 />
-                                <CommentFormRow>
-                                    {/* <CommentFilePicker>
-                                        <CommentFileInput
-                                            type="file"
-                                            onChange={(e) => setCommentFile(e.target.files?.[0] ?? null)}
-                                        />
-                                        {commentFile ? commentFile.name : "Прикрепить файл (до 12 МБ)"}
-                                    </CommentFilePicker> */}
-                                    <DefaultButton
-                                        type="button"
-                                        onClick={handleCreateComment}
-                                        disabled={isSubmittingComment}
-                                    >
-                                        Добавить
-                                    </DefaultButton>
-                                </CommentFormRow>
-                                {commentError && <CommentError>{commentError}</CommentError>}
-                            </CommentForm>
-                        </CommentsSection>
-                    </DossierGrid>
-                    {isPhotoViewerOpen && (
-                        <PhotoViewerModal
-                            images={[mainPassportUrl, registrationPassportUrl].filter(
-                                (url): url is string => Boolean(url)
-                            )}
-                            // initialIndex={photoViewerIndex}
-                            initialIndex={2}
-                            onClose={() => setIsPhotoViewerOpen(false)}
-                        />
+                                {commentFile ? commentFile.name : "Прикрепить файл (до 12 МБ)"}
+                            </CommentFilePicker> */}
+                            <DefaultButton
+                                type="button"
+                                onClick={handleCreateComment}
+                                disabled={isSubmittingComment}
+                            >
+                                Добавить
+                            </DefaultButton>
+                        </CommentFormRow>
+                        {commentError && <CommentError>{commentError}</CommentError>}
+                    </CommentForm>
+                </CommentsSection>
+            </DossierGrid>
+            {isPhotoViewerOpen && (
+                <PhotoViewerModal
+                    images={[mainPassportUrl, registrationPassportUrl].filter(
+                        (url): url is string => Boolean(url)
                     )}
-                    {commentViewerUrl && (
-                        <PhotoViewerModal
-                            images={[commentViewerUrl]}
-                            initialIndex={0}
-                            onClose={() => setCommentViewerUrl(null)}
-                        />
-                    )}
+                    initialIndex={2}
+                    onClose={() => setIsPhotoViewerOpen(false)}
+                />
+            )}
+            {commentViewerUrl && (
+                <PhotoViewerModal
+                    images={[commentViewerUrl]}
+                    initialIndex={0}
+                    onClose={() => setCommentViewerUrl(null)}
+                />
+            )}
         </DossierContainer>
     );
 };

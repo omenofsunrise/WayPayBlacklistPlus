@@ -101,6 +101,7 @@ export interface Notification {
   is_read: boolean;
   user_id: string;
   created_at: Date;
+  entity_id: string;
 }
 
 export interface NotificationsResponse {

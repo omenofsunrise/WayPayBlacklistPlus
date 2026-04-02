@@ -17,7 +17,7 @@ interface UseBlackCatalogReturn {
   notifications: NotificationsResponse | null;
   createEntry: (data: BlackCatalogCreatePayload) => Promise<{ id: number; success: boolean } | null>;
   addDebt: (data: AddDebtRequest) => void;
-  markAsReadNotification: (id: number) => void;
+  markAsReadNotification: (id: number) => Promise<void>;
   deleteDebt: (id: number) => void;
   updateEntry: (id: number, data: BlackCatalogUpdatePayload) => Promise<{ id: number; success: boolean } | null>;
   deleteEntry: (id: number) => void;
@@ -160,7 +160,7 @@ const useBlackCatalog = (): UseBlackCatalogReturn => {
     try {
       await blackCatalogService.markAsReadNotification(id);
     } catch (err) {
-      return handleError(err);
+      handleError(err);
     } finally {
       setIsLoading(false);
     }

@@ -156,13 +156,11 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
           </div>
         </div>
 
-        {/* Кнопки действий */}
         <div style={{
           display: 'flex',
           gap: '12px',
           flexWrap: 'wrap'
         }}>
-          {subscriptionInfo.hasActive && (
             <button
               onClick={() => setShowSubscription(!showSubscription)}
               style={{
@@ -180,7 +178,6 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
             >
               {showSubscription ? 'Не продлевать' : 'Продлить подписку'}
             </button>
-          )}
 
           <button
             onClick={handleLogout}

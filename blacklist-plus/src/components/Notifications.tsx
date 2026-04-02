@@ -1,91 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 import type { Notification } from '../api/BlackCatalog/blackCatalog';
+import { useNavigate } from 'react-router-dom';
 
-const BellContainer = styled.div`
-  position: relative;
-  cursor: pointer;
-  padding: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-
-  &:hover {
-    transform: scale(1.05);
-  }
-
-  &:active {
-    transform: scale(0.95);
-  }
-`;
-
-const BellIcon = styled.span`
-  font-size: 24px;
-  color: #50555c;
-`;
-
-const Badge = styled.span`
-  position: absolute;
-  top: 0;
-  right: 0;
-  background: rgba(239, 68, 68, 1);
-  color: white;
-  border-radius: 50%;
-  width: 18px;
-  height: 18px;
-  font-size: 11px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-`;
-
-interface NotificationBellProps {
-  getNotifications: () => Promise<NotificationsResponse | null>;
-  onBellClick?: () => void;
-}
-
-export const NotificationBell: React.FC<NotificationBellProps> = ({ 
-  getNotifications, 
-  onBellClick 
-}) => {
-  const [unreadCount, setUnreadCount] = useState(0);
-
-  const loadUnreadCount = async () => {
-    try {
-      const response = await getNotifications();
-      if (response?.notifications) {
-        const count = response.notifications.filter(n => !n.is_read).length;
-        setUnreadCount(count);
-      }
-    } catch (error) {
-      console.error('Failed to load unread count:', error);
-    }
-  };
-
-  useEffect(() => {
-    loadUnreadCount();
-    
-    const interval = setInterval(loadUnreadCount, 30000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const handleClick = () => {
-    if (onBellClick) {
-      onBellClick();
-    }
-  };
-
-  return (
-    <BellContainer onClick={handleClick}>
-      <BellIcon>🔔</BellIcon>
-      {unreadCount > 0 && <Badge>{unreadCount > 9 ? '9+' : unreadCount}</Badge>}
-    </BellContainer>
-  );
-};
-
-// Notifications Container Components
 const slideIn = keyframes`
   from {
     transform: translateX(100%);
@@ -108,62 +25,42 @@ const slideOut = keyframes`
   }
 `;
 
-const NotificationsContainer = styled.div`
+const NotificationToast = styled.div<{ $isClosing?: boolean }>`
   position: fixed;
   top: 20px;
   right: 20px;
-  z-index: 9999;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  max-width: 400px;
-  width: 100%;
-  pointer-events: none;
-
-  @media (max-width: 768px) {
-    left: 20px;
-    right: 20px;
-    max-width: calc(100% - 40px);
-  }
-`;
-
-const NotificationItem = styled.div<{ $isClosing?: boolean }>`
   background: white;
   border-radius: 8px;
-  border: 1px solid rgba(209, 213, 219, 1);
-  padding: 16px;
+  border-left: 4px solid #007d88;
+  padding: 12px 16px;
+  min-width: 280px;
+  max-width: 380px;
   display: flex;
   align-items: flex-start;
   gap: 12px;
   cursor: pointer;
-  transition: all 0.2s ease;
-  pointer-events: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   animation: ${({ $isClosing }) => ($isClosing ? slideOut : slideIn)} 0.3s ease forwards;
-  position: relative;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 10000;
+  margin-bottom: 12px;
 
   &:hover {
     transform: translateX(-4px);
-    border-color: rgba(0, 125, 136, 1);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  }
-
-  &:active {
-    transform: scale(0.98);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
   }
 `;
 
 const NotificationIcon = styled.div`
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
   background-color: rgba(0, 125, 136, 0.1);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(0, 125, 136, 1);
-  font-size: 16px;
+  color: #007d88;
+  font-size: 14px;
 `;
 
 const NotificationContent = styled.div`
@@ -173,15 +70,47 @@ const NotificationContent = styled.div`
 const NotificationText = styled.p`
   margin: 0;
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.4;
   color: #333;
 `;
 
 const NotificationTime = styled.span`
-  font-size: 12px;
-  color: rgba(80, 85, 92, 1);
+  font-size: 11px;
+  color: #999;
   margin-top: 4px;
   display: block;
+`;
+
+const CloseIcon = styled.span`
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #999;
+  font-size: 18px;
+  margin-left: 8px;
+  
+  &:hover {
+    color: #666;
+  }
+`;
+
+const NotificationsStack = styled.div`
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none;
+  
+  > * {
+    pointer-events: auto;
+  }
 `;
 
 interface NotificationsResponse {
@@ -189,70 +118,21 @@ interface NotificationsResponse {
   next_page_token?: string;
 }
 
-export const useNotifications = (getNotificationsFn: () => Promise<NotificationsResponse | null>, markAsReadFn: (id: number) => Promise<void>) => {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [closingNotifications, setClosingNotifications] = useState<Set<number>>(new Set());
-  const [isLoading, setIsLoading] = useState(false);
-
-  const loadNotifications = async () => {
-    try {
-      setIsLoading(true);
-      const response = await getNotificationsFn();
-      if (response?.notifications) {
-        const unreadNotifications = response.notifications.filter(n => !n.is_read);
-        setNotifications(unreadNotifications);
-      }
-    } catch (error) {
-      console.error('Failed to load notifications:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const markAsRead = async (notificationId: number) => {
-    try {
-      await markAsReadFn(notificationId);
-      setNotifications(prev => prev.filter(n => n.id !== notificationId));
-    } catch (error) {
-      console.error('Failed to mark notification as read:', error);
-    }
-  };
-
-  const handleClose = async (notificationId: number) => {
-    setClosingNotifications(prev => new Set(prev).add(notificationId));
-    
-    setTimeout(async () => {
-      await markAsRead(notificationId);
-      setClosingNotifications(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(notificationId);
-        return newSet;
-      });
-    }, 300);
-  };
-
-  return {
-    notifications,
-    closingNotifications,
-    isLoading,
-    handleClose,
-    loadNotifications,
-    markAsRead,
-  };
-};
-
-// Individual Notification Display Component
-interface NotificationDisplayProps {
-  notification: Notification;
-  isClosing: boolean;
-  onClick: () => void;
+interface NotificationsProps {
+  getNotifications: () => Promise<NotificationsResponse | null>;
+  markAsRead: (id: number) => Promise<void>;
+  onNotificationClick?: (notification: Notification) => void;
 }
 
-const NotificationDisplay: React.FC<NotificationDisplayProps> = ({
-  notification,
-  isClosing,
-  onClick,
+export const Notifications: React.FC<NotificationsProps> = ({ 
+  getNotifications, 
+  markAsRead,
+  onNotificationClick 
 }) => {
+  const navigate = useNavigate();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [closingIds, setClosingIds] = useState<Set<number>>(new Set());
+
   const formatTime = (date?: Date | string) => {
     if (!date) return 'Только что';
     
@@ -270,70 +150,82 @@ const NotificationDisplay: React.FC<NotificationDisplayProps> = ({
     return notificationDate.toLocaleDateString('ru-RU');
   };
 
-  const handleClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onClick();
+  const loadNotifications = async () => {
+    try {
+      const response = await getNotifications();
+      if (response?.notifications) {
+        const unreadNotifications = response.notifications.filter(n => !n.is_read);
+        setNotifications(unreadNotifications);
+      }
+    } catch (error) {
+      console.error('Failed to load notifications:', error);
+    }
   };
 
-  return (
-    <NotificationItem $isClosing={isClosing} onClick={handleClick}>
-      <NotificationIcon>
-        <span>🔔</span>
-      </NotificationIcon>
-      <NotificationContent>
-        <NotificationText>{notification.content}</NotificationText>
-        <NotificationTime>
-          {formatTime(notification.created_at)}
-        </NotificationTime>
-      </NotificationContent>
-    </NotificationItem>
-  );
-};
+  const handleClose = async (notificationId: number) => {
+    setClosingIds(prev => new Set(prev).add(notificationId));
+    
+    setTimeout(async () => {
+      try {
+        await markAsRead(notificationId);
+        setNotifications(prev => prev.filter(n => n.id !== notificationId));
+        setClosingIds(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(notificationId);
+          return newSet;
+        });
+      } catch (error) {
+        console.error('Failed to mark notification as read:', error);
+      }
+    }, 300);
+  };
 
-interface NotificationsProps {
-  getNotifications: () => Promise<NotificationsResponse | null>;
-  markAsRead: (id: number) => Promise<void>;
-  onNotificationClick?: (notification: Notification) => void;
-}
-
-export const Notifications: React.FC<NotificationsProps> = ({ 
-  getNotifications, 
-  markAsRead,
-  onNotificationClick 
-}) => {
-  const { notifications, closingNotifications, handleClose, loadNotifications } = useNotifications(
-    getNotifications,
-    markAsRead
-  );
-
-  useEffect(() => {
-    loadNotifications();
-  }, []);
-
-  const handleNotificationClick = async (notification: Notification) => {
-    // Сначала отмечаем как прочитанное
+  const handleClick = async (notification: Notification) => {
     await handleClose(notification.id);
     
-    // Если есть callback, вызываем его
-    if (onNotificationClick) {
+    if (notification.entity_id) {
+      navigate(`/dossier/${notification.entity_id}`);
+    } else if (onNotificationClick) {
       onNotificationClick(notification);
     }
   };
+
+  useEffect(() => {
+    loadNotifications();
+    
+    const interval = setInterval(loadNotifications, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   if (notifications.length === 0) {
     return null;
   }
 
   return (
-    <NotificationsContainer>
+    <NotificationsStack>
       {notifications.map(notification => (
-        <NotificationDisplay
+        <NotificationToast 
           key={notification.id}
-          notification={notification}
-          isClosing={closingNotifications.has(notification.id)}
-          onClick={() => handleNotificationClick(notification)}
-        />
+          $isClosing={closingIds.has(notification.id)}
+          onClick={() => handleClick(notification)}
+        >
+          <NotificationIcon>
+            <span>🔔</span>
+          </NotificationIcon>
+          <NotificationContent>
+            <NotificationText>{notification.content}</NotificationText>
+            <NotificationTime>
+              {formatTime(notification.created_at)}
+            </NotificationTime>
+          </NotificationContent>
+          <CloseIcon onClick={(e) => {
+            e.stopPropagation();
+            handleClose(notification.id);
+          }}>
+            ×
+          </CloseIcon>
+        </NotificationToast>
       ))}
-    </NotificationsContainer>
+    </NotificationsStack>
   );
 };
