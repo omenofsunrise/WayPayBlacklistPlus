@@ -17,6 +17,7 @@ import { subscriptionService } from "./api/Subscription/SubscriptionService";
 import SubscriptionPage from "./pages/SubscriptionPage";
 import SubscriptionPendingPage from "./components/subscribe/SubscriptionPending";
 import ProfileHeader from "./components/subscribe/ProfileHeader";
+import PrivacyModal from "./components/PrivacyModal"; // Импортируем модалку
 
 const SubscriptionGuard: React.FC<{
   children: React.ReactNode;
@@ -211,9 +212,16 @@ function App() {
     hasActive: false,
     hasPending: false,
   });
+  
+  const [showPrivacyModal, setShowPrivacyModal] = useState<boolean>(false);
 
   useEffect(() => {
     checkAuth();
+    // Проверяем, давал ли пользователь согласие ранее
+    const hasConsented = localStorage.getItem('privacyConsent');
+    if (hasConsented === 'true') {
+      setShowPrivacyModal(false);
+    }
   }, []);
 
   const checkAuth = async () => {
@@ -251,7 +259,23 @@ function App() {
   };
 
   const handleLoginSuccess = () => {
+    setShowPrivacyModal(true);
     checkAuth();
+  };
+
+  const handlePrivacyAccept = () => {
+    localStorage.setItem('privacyConsent', 'true');
+    setShowPrivacyModal(false);
+  };
+
+  const handlePrivacyDecline = () => {
+    // Если пользователь не согласен, можно либо выйти из аккаунта, либо просто закрыть модалку
+    // Вариант 1: просто закрываем и больше не показываем в этой сессии
+    setShowPrivacyModal(false);
+    
+    // Вариант 2: разлогиниваем пользователя (раскомментировать если нужно)
+    // localStorage.removeItem('privacyConsent');
+    // setIsAuthenticated(false);
   };
 
   const toggleCollapsed = () => {
@@ -381,6 +405,14 @@ function App() {
           </Layout>
         </SubscriptionGuard>
       </SideMenuContext.Provider>
+
+      {/* Модалка согласия */}
+      <PrivacyModal
+        isOpen={showPrivacyModal}
+        onAccept={handlePrivacyAccept}
+        onDecline={handlePrivacyDecline}
+        companyName="ООО WayPay"
+      />
     </BrowserRouter>
   );
 }
