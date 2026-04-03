@@ -250,7 +250,7 @@ class BlackCatalogService {
       queryParams.append('mine', 'true');
     }
     if (params.id) {
-      queryParams.append('mine', 'true');
+      queryParams.append('id', params.id.toString());
     }
     if (params.page_token) {
       queryParams.append('page_token', params.page_token);
