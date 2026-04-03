@@ -43,12 +43,10 @@ const ProfileBlackCatalog: React.FC<ProfileBlackCatalogProps> = ({
   const loadMoreTriggerRef = useRef<HTMLDivElement | null>(null);
   
   const {
-    isLoading,
     error,
     searchEntries,
     deleteEntry,
     updateEntry,
-    getTotalCount,
   } = useBlackCatalog();
 
   const formatDateForAPI = (dateStr?: string): string => {
