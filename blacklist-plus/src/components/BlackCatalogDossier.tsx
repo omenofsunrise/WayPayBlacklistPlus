@@ -1,10 +1,11 @@
 import styled from "styled-components";
-import { useEffect, useState } from "react";
-import { BackButton as LibBackButton, DefaultButton, apiRequest, API_BASE_URL, PhotoViewerModal } from "waypay_react_library";
+import { useEffect, useState, useMemo } from "react";
+import { BackButton as LibBackButton, DefaultButton, PhotoViewerModal } from "waypay_react_library";
 import type { BlackCatalogItem } from "../api/BlackCatalog/blackCatalog";
 import { blackCatalogService } from "../api/BlackCatalog/BlackCatalogService";
 import useBlackCatalog from "../api/BlackCatalog/useBlackCatalog";
 import { useParams, useNavigate } from "react-router-dom";
+import { FaExclamationTriangle, FaClock, FaTrash } from "react-icons/fa";
 
 const DossierContainer = styled.div`
     background: none;
@@ -138,10 +139,14 @@ const InfoLabel = styled.span`
     margin-bottom: 4px;
 `;
 
-const InfoValue = styled.span`
+const InfoValue = styled.span<{ $warning?: boolean; $debt?: boolean }>`
     font-size: 13px;
-    color: #111827;
-    font-weight: 600;
+    color: ${props => {
+        if (props.$warning) return '#EF4444';
+        if (props.$debt) return '#B45309';
+        return '#111827';
+    }};
+    font-weight: ${props => (props.$warning || props.$debt) ? '600' : '600'};
 `;
 
 const CommentsSection = styled(Section)`
@@ -295,14 +300,101 @@ const InlineButton = styled.button`
     }
 `;
 
+const DebtsSection = styled.div`
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(209, 213, 219, 0.5);
+`;
+
+const DebtsContainer = styled.div`
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+`;
+
+const DebtBadge = styled.div<{ $expired?: boolean }>`
+    background: ${props => props.$expired ? '#9CA3AF' : '#FEF3C7'};
+    color: ${props => props.$expired ? '#4B5563' : '#B45309'};
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid ${props => props.$expired ? '#D1D5DB' : '#FDE68A'};
+    
+    svg {
+        font-size: 12px;
+    }
+`;
+
+const DeleteDebtButton = styled.button`
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 4px 6px;
+    margin-left: 6px;
+    color: #EF4444;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    
+    &:hover {
+        opacity: 1;
+        background-color: rgba(239, 68, 68, 0.15);
+        transform: scale(1.1);
+    }
+    
+    svg {
+        font-size: 11px;
+    }
+`;
+
+const StatusBadge = styled.div<{ $type: 'blacklist' | 'debt' }>`
+    background: ${({ $type }) => $type === 'blacklist' 
+        ? '#000000' 
+        : '#F59E0B'};
+    color: ${({ $type }) => $type === 'blacklist' ? '#EF4444' : 'white'};
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: ${({ $type }) => $type === 'blacklist' 
+        ? '0 2px 12px rgba(239, 68, 68, 0.5)' 
+        : '0 2px 12px rgba(245, 158, 11, 0.5)'};
+`;
+
 type BlackCatalogDossierProps = {
     item?: BlackCatalogItem;
-    onBack?: () => void; // сделаем опциональным
+    onBack?: () => void;
     onRefresh?: (id: number) => Promise<void> | void;
     userId: string;
+    onDeleteDebt?: (debtId: number) => Promise<void> | void;
 };
 
-const BlackCatalogDossier = ({ item: propItem, onBack, userId }: BlackCatalogDossierProps) => {
+const formatDate = (dateString?: string): string => {
+    if (!dateString) return 'Не указана';
+    
+    try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return dateString;
+        return date.toLocaleDateString('ru-RU', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+    } catch {
+        return dateString;
+    }
+};
+
+const BlackCatalogDossier = ({ item: propItem, onBack, userId, onDeleteDebt }: BlackCatalogDossierProps) => {
     const { id: urlId } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { searchEntries, isLoading: isLoadingCatalog } = useBlackCatalog();
@@ -310,10 +402,8 @@ const BlackCatalogDossier = ({ item: propItem, onBack, userId }: BlackCatalogDos
     const [item, setItem] = useState<BlackCatalogItem | null>(propItem || null);
     const [isLoadingItem, setIsLoadingItem] = useState(false);
     const [loadError, setLoadError] = useState<string | null>(null);
+    const [isDeletingDebt, setIsDeletingDebt] = useState<number | null>(null);
     
-    const [mainPassportUrl, setMainPassportUrl] = useState<string | null>(null);
-    const [registrationPassportUrl, setRegistrationPassportUrl] = useState<string | null>(null);
-    const [isPhotoViewerOpen, setIsPhotoViewerOpen] = useState(false);
     const [commentViewerUrl, setCommentViewerUrl] = useState<string | null>(null);
     const [comments, setComments] = useState<Array<{
         id: string;
@@ -332,6 +422,79 @@ const BlackCatalogDossier = ({ item: propItem, onBack, userId }: BlackCatalogDos
     const [editId, setEditId] = useState<string | null>(null);
     const [editContent, setEditContent] = useState("");
     const maxFileSizeBytes = 12 * 1024 * 1024;
+
+    // Анализ долгов
+    const activeDebts = useMemo(() => {
+        if (!item?.debts || !Array.isArray(item.debts)) return [];
+        
+        const today = new Date();
+        const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        
+        return item.debts.filter(debt => {
+            if (!debt.debt_ending_at) return false;
+            const endDate = new Date(debt.debt_ending_at);
+            if (isNaN(endDate.getTime())) return false;
+            const endDateStart = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+            return endDateStart >= todayStart;
+        });
+    }, [item?.debts]);
+
+    const expiredDebts = useMemo(() => {
+        if (!item?.debts || !Array.isArray(item.debts)) return [];
+        
+        const today = new Date();
+        const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        
+        return item.debts.filter(debt => {
+            if (!debt.debt_ending_at) return false;
+            const endDate = new Date(debt.debt_ending_at);
+            if (isNaN(endDate.getTime())) return false;
+            const endDateStart = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+            return endDateStart < todayStart;
+        });
+    }, [item?.debts]);
+
+    const hasActiveDebt = activeDebts.length > 0;
+
+    const cardStatus = useMemo(() => {
+        if (item?.is_swindler) return 'blacklist';
+        if (hasActiveDebt) return 'debt';
+        return 'blacklist';
+    }, [item?.is_swindler, hasActiveDebt]);
+
+    const allDebts = [...activeDebts, ...expiredDebts];
+
+    const canDeleteDebt = (debtCreatorId?: string): boolean => {
+        return !!userId && debtCreatorId === userId;
+    };
+
+    const handleDeleteDebt = async (debtId: number, e: React.MouseEvent) => {
+        e.stopPropagation();
+        
+        if (!onDeleteDebt) return;
+        
+        if (window.confirm('Вы уверены, что хотите удалить этот долг?')) {
+            try {
+                setIsDeletingDebt(debtId);
+                await onDeleteDebt(debtId);
+                // Обновляем данные после удаления долга
+                if (item) {
+                    const response = await searchEntries({
+                        id: item.id,
+                        page_size: 1
+                    });
+                    if (response?.success && response.black_catalogs && response.black_catalogs.length > 0) {
+                        setItem(response.black_catalogs[0]);
+                    }
+                }
+            } catch (error) {
+                console.error('Ошибка при удалении долга:', error);
+                alert('Не удалось удалить долг');
+            } finally {
+                setIsDeletingDebt(null);
+            }
+        }
+    };
 
     // Функция для навигации на страницу чёрного каталога
     const handleBack = () => {
@@ -364,7 +527,6 @@ const BlackCatalogDossier = ({ item: propItem, onBack, userId }: BlackCatalogDos
                     throw new Error("Некорректный ID");
                 }
                 
-                // Используем searchEntries для получения конкретной записи по ID
                 const response = await searchEntries({
                     id: id,
                     page_size: 1
@@ -398,75 +560,6 @@ const BlackCatalogDossier = ({ item: propItem, onBack, userId }: BlackCatalogDos
         if (Number.isNaN(date.getTime())) return value;
         return date.toLocaleDateString("ru-RU");
     };
-
-    const formatDateLong = (value: string) => {
-        const date = new Date(value);
-        if (Number.isNaN(date.getTime())) return value;
-        return date.toLocaleDateString("ru-RU", {
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-        });
-    };
-
-    const debtStatus = (() => {
-        if (!item?.debt_ending_at) return null;
-        const endDate = new Date(item.debt_ending_at);
-        if (Number.isNaN(endDate.getTime())) return null;
-        const today = new Date();
-        const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-        const endDateStart = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
-        const formatted = formatDateLong(item.debt_ending_at);
-        if (endDateStart >= todayStart) {
-            return {
-                isActive: true,
-                text: `Клиент оформлен до ${formatted}`,
-            };
-        }
-        return {
-            isActive: false,
-            text: `Был оформлен до ${formatted}`,
-        };
-    })();
-
-    useEffect(() => {
-        if (!item) return;
-        
-        let isActive = true;
-
-        const fetchPassportUrl = async (fileId: string, setter: (value: string | null) => void) => {
-            try {
-                const response = await apiRequest<{
-                    url?: string;
-                }>(`/black-catalog/file/passport/${fileId}`, { method: "GET" });
-                if (!isActive) return;
-                const normalizeUrl = (value?: string | null) => {
-                    if (!value) return null;
-                    if (value.startsWith("http")) return value;
-                    if (value.startsWith("/")) return `${API_BASE_URL}${value}`;
-                    return `${API_BASE_URL}/${value}`;
-                };
-                setter(normalizeUrl(response?.url));
-            } catch {
-                if (!isActive) return;
-                setter(null);
-            }
-        };
-
-        setMainPassportUrl(null);
-        setRegistrationPassportUrl(null);
-
-        if (item.main_passport_page) {
-            fetchPassportUrl(item.main_passport_page, setMainPassportUrl);
-        }
-        if (item.registration_passport_page) {
-            fetchPassportUrl(item.registration_passport_page, setRegistrationPassportUrl);
-        }
-
-        return () => {
-            isActive = false;
-        };
-    }, [item?.main_passport_page, item?.registration_passport_page, item]);
 
     useEffect(() => {
         if (!item) return;
@@ -680,7 +773,7 @@ const BlackCatalogDossier = ({ item: propItem, onBack, userId }: BlackCatalogDos
         );
     }
 
-    // Досье клиента: открывается при клике на карточку клиента.
+    // Досье клиента
     return (
         <DossierContainer>
             <BackButton onClick={handleBack}>
@@ -692,6 +785,10 @@ const BlackCatalogDossier = ({ item: propItem, onBack, userId }: BlackCatalogDos
                     <ClientName>{item.fullname}</ClientName>
                     <ClientId>ID: {item.id}</ClientId>
                     <BadgeRow>
+                        <StatusBadge $type={cardStatus}>
+                            <FaExclamationTriangle size={14} />
+                            {cardStatus === 'blacklist' ? 'Чёрный список' : 'Есть оформления'}
+                        </StatusBadge>
                     </BadgeRow>
                 </div>
             </DossierHeader>
@@ -702,23 +799,61 @@ const BlackCatalogDossier = ({ item: propItem, onBack, userId }: BlackCatalogDos
                     <InfoGrid>
                         <InfoItem>
                             <InfoLabel>Дата рождения</InfoLabel>
-                            <InfoValue>{formatDateShort(item.birthdate)}</InfoValue>
+                            <InfoValue $warning={cardStatus === 'blacklist'} $debt={cardStatus === 'debt'}>
+                                {formatDateShort(item.birthdate)}
+                            </InfoValue>
                         </InfoItem>
                         <InfoItem>
                             <InfoLabel>Адрес</InfoLabel>
-                            <InfoValue>{item.address || "Не указан"}</InfoValue>
+                            <InfoValue $warning={cardStatus === 'blacklist'} $debt={cardStatus === 'debt'}>
+                                {item.address || "Не указан"}
+                            </InfoValue>
                         </InfoItem>
                         <InfoItem>
                             <InfoLabel>Документ</InfoLabel>
-                            <InfoValue>{item.doc || "Не указан"}</InfoValue>
+                            <InfoValue $warning={cardStatus === 'blacklist'} $debt={cardStatus === 'debt'}>
+                                {item.doc || "Не указан"}
+                            </InfoValue>
                         </InfoItem>
-                        {debtStatus && (
-                            <InfoItem>
-                                <InfoLabel>Оформление</InfoLabel>
-                                <InfoValue>{debtStatus.text}</InfoValue>
-                            </InfoItem>
-                        )}
                     </InfoGrid>
+
+                    {allDebts.length > 0 && (
+                        <DebtsSection>
+                            <SectionTitle>Оформления</SectionTitle>
+                            <DebtsContainer>
+                                {activeDebts.map(debt => (
+                                    <DebtBadge key={debt.id} $expired={false}>
+                                        <FaExclamationTriangle size={12} />
+                                        до {formatDate(debt.debt_ending_at)}
+                                        {canDeleteDebt(debt.creator_id) && onDeleteDebt && (
+                                            <DeleteDebtButton 
+                                                onClick={(e) => handleDeleteDebt(debt.id, e)}
+                                                disabled={isDeletingDebt === debt.id}
+                                                title="Удалить оформление"
+                                            >
+                                                {isDeletingDebt === debt.id ? '...' : <FaTrash size={10} />}
+                                            </DeleteDebtButton>
+                                        )}
+                                    </DebtBadge>
+                                ))}
+                                {expiredDebts.map(debt => (
+                                    <DebtBadge key={debt.id} $expired={true}>
+                                        <FaClock size={12} />
+                                        просрочено {formatDate(debt.debt_ending_at)}
+                                        {canDeleteDebt(debt.creator_id) && onDeleteDebt && (
+                                            <DeleteDebtButton 
+                                                onClick={(e) => handleDeleteDebt(debt.id, e)}
+                                                disabled={isDeletingDebt === debt.id}
+                                                title="Удалить оформление"
+                                            >
+                                                {isDeletingDebt === debt.id ? '...' : <FaTrash size={10} />}
+                                            </DeleteDebtButton>
+                                        )}
+                                    </DebtBadge>
+                                ))}
+                            </DebtsContainer>
+                        </DebtsSection>
+                    )}
                 </Section>
 
                 <CommentsSection>
@@ -756,15 +891,6 @@ const BlackCatalogDossier = ({ item: propItem, onBack, userId }: BlackCatalogDos
                     </CommentForm>
                 </CommentsSection>
             </DossierGrid>
-            {isPhotoViewerOpen && (
-                <PhotoViewerModal
-                    images={[mainPassportUrl, registrationPassportUrl].filter(
-                        (url): url is string => Boolean(url)
-                    )}
-                    initialIndex={2}
-                    onClose={() => setIsPhotoViewerOpen(false)}
-                />
-            )}
             {commentViewerUrl && (
                 <PhotoViewerModal
                     images={[commentViewerUrl]}
