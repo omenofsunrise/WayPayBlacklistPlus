@@ -1,8 +1,9 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useMemo } from 'react';
 import styled from 'styled-components';
-import { FaIdCard, FaEllipsisV, FaMapMarkerAlt, FaBirthdayCake, FaExclamationTriangle } from 'react-icons/fa';
+import { FaIdCard, FaEllipsisV, FaMapMarkerAlt, FaBirthdayCake, FaExclamationTriangle, FaClock, FaTrash } from 'react-icons/fa';
+import type { BlackCatalogItem } from '../api/BlackCatalog/blackCatalog';
 
-const Card = styled.div<{ $isBlacklisted?: boolean; $hasActiveDebt?: boolean }>`
+const Card = styled.div<{ $status: 'blacklist' | 'debt' | 'none' }>`
   background: white;
   border-radius: 12px;
   border: 1px solid rgba(209, 213, 219, 1);
@@ -13,12 +14,12 @@ const Card = styled.div<{ $isBlacklisted?: boolean; $hasActiveDebt?: boolean }>`
   transition: transform 0.2s, box-shadow 0.2s;
   position: relative;
 
-  ${props => props.$isBlacklisted && `
+  ${props => props.$status === 'blacklist' && `
     border-color: #EF4444;
     background: linear-gradient(135deg, #ffffff 0%, #fff5f5 100%);
   `}
 
-  ${props => props.$hasActiveDebt && !props.$isBlacklisted && `
+  ${props => props.$status === 'debt' && `
     border-color: #F59E0B;
     background: linear-gradient(135deg, #ffffff 0%, #fffbeb 100%);
   `}
@@ -58,7 +59,7 @@ const CardTitle = styled.h3`
   }
 `;
 
-const CardTitleText = styled.span<{ $hasBlackBadge?: boolean, $hasDebtBadge?: boolean }>`
+const CardTitleText = styled.span<{ $hasBlackBadge?: boolean; $hasDebtBadge?: boolean }>`
   display: inline-block;
   ${props => props.$hasBlackBadge && `
     margin-left: 170px;
@@ -189,15 +190,59 @@ const LeftBadge = styled.div<{ $type: 'blacklist' | 'debt' }>`
   z-index: 10;
 `;
 
-export interface BlackCatalogItem {
-  id: number;
-  fullname: string;
-  doc: string;
-  address: string;
-  birthdate: string;
-  is_swindler?: boolean;
-  debt_ending_at?: string;
-}
+const DebtsSection = styled.div`
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(209, 213, 219, 0.5);
+`;
+
+const DebtsContainer = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+`;
+
+const DebtBadge = styled.div<{ $expired?: boolean }>`
+  background: ${props => props.$expired ? '#9CA3AF' : '#FEF3C7'};
+  color: ${props => props.$expired ? '#4B5563' : '#B45309'};
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid ${props => props.$expired ? '#D1D5DB' : '#FDE68A'};
+  position: relative;
+  
+  svg {
+    font-size: 12px;
+  }
+`;
+
+const DeleteDebtButton = styled.button`
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px 6px;
+  margin-left: 6px;
+  color: #EF4444;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  
+  &:hover {
+    opacity: 1;
+    background-color: rgba(239, 68, 68, 0.15);
+    transform: scale(1.1);
+  }
+  
+  svg {
+    font-size: 11px;
+  }
+`;
 
 interface BlackCatalogCardProps {
   item: BlackCatalogItem;
@@ -205,9 +250,13 @@ interface BlackCatalogCardProps {
   onDelete: (item: BlackCatalogItem) => void;
   onRightClick: (e: React.MouseEvent, item: BlackCatalogItem) => void;
   onOpenDossier: (item: BlackCatalogItem) => void;
+  onAddDebt?: (item: BlackCatalogItem) => void;
+  onDeleteDebt?: (debtId: number) => Promise<void> | void;
   showMenu?: boolean;
   allowEdit?: boolean;
   allowDelete?: boolean;
+  allowAddDebt?: boolean;
+  userId?: string;
 }
 
 const formatDate = (dateString: string): string => {
@@ -231,27 +280,86 @@ const BlackCatalogCard: React.FC<BlackCatalogCardProps> = ({
   onDelete, 
   onRightClick,
   onOpenDossier,
+  onAddDebt,
+  onDeleteDebt,
   showMenu = true,
   allowEdit = true,
   allowDelete = true,
+  allowAddDebt = true,
+  userId,
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState<number | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const isCurrentlyDebt = (() => {
-    if (!item.debt_ending_at) return false;
-    const endDate = new Date(item.debt_ending_at);
-    if (Number.isNaN(endDate.getTime())) return false;
+  const handleAddDebtClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsMenuOpen(false);
+    if (allowAddDebt && onAddDebt) {
+      onAddDebt(item);
+    }
+  };
+
+  const handleDeleteDebtClick = async (e: React.MouseEvent, debtId: number) => {
+    e.stopPropagation();
+    e.preventDefault();
+    
+    if (!onDeleteDebt) return;
+    
+    // Подтверждение удаления
+    if (window.confirm('Вы уверены, что хотите удалить этот долг?')) {
+      try {
+        setIsDeleting(debtId);
+        await onDeleteDebt(debtId);
+      } catch (error) {
+        console.error('Ошибка при удалении долга:', error);
+        alert('Не удалось удалить долг');
+      } finally {
+        setIsDeleting(null);
+      }
+    }
+  };
+
+  const activeDebts = useMemo(() => {
+    if (!item.debts || !Array.isArray(item.debts)) return [];
+    
     const today = new Date();
     const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const endDateStart = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
-    return endDateStart >= todayStart;
-  })();
+    
+    return item.debts.filter(debt => {
+      if (!debt.debt_ending_at) return false;
+      const endDate = new Date(debt.debt_ending_at);
+      if (isNaN(endDate.getTime())) return false;
+      const endDateStart = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+      return endDateStart >= todayStart;
+    });
+  }, [item.debts]);
 
-  const isBlackList = (() => {
-    if (!item.debt_ending_at) return true;
-    return false;
-  })();
+  const expiredDebts = useMemo(() => {
+    if (!item.debts || !Array.isArray(item.debts)) return [];
+    
+    const today = new Date();
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    
+    return item.debts.filter(debt => {
+      if (!debt.debt_ending_at) return false;
+      const endDate = new Date(debt.debt_ending_at);
+      if (isNaN(endDate.getTime())) return false;
+      const endDateStart = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+      return endDateStart < todayStart;
+    });
+  }, [item.debts]);
+
+  const hasActiveDebt = activeDebts.length > 0;
+  
+  const cardStatus = useMemo(() => {
+    if (item.is_swindler) return 'blacklist';
+    if (hasActiveDebt) return 'debt';
+    return 'blacklist';
+  }, [item.is_swindler, hasActiveDebt]);
+
+  const badgeText = cardStatus === 'blacklist' ? 'Чёрный список' : 'Оформлен';
+  const badgeType = cardStatus === 'blacklist' ? 'blacklist' : 'debt';
   
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -295,35 +403,31 @@ const BlackCatalogCard: React.FC<BlackCatalogCardProps> = ({
     onRightClick(e, item);
   };
 
+  const allDebts = [...activeDebts, ...expiredDebts];
+
+  const canDeleteDebt = (debtCreatorId?: string): boolean => {
+    return !!userId && debtCreatorId === userId;
+  };
+
   return (
     <Card 
       onClick={handleCardClick}
       onContextMenu={handleRightClick}
-      $isBlacklisted={isBlackList}
-      $hasActiveDebt={isCurrentlyDebt}
+      $status={cardStatus}
     >
-      {isBlackList && (
-        <LeftBadge $type="blacklist">
-          <FaExclamationTriangle size={14} />
-          Чёрный список
-        </LeftBadge>
-      )}
-      
-      {isCurrentlyDebt && (
-        <LeftBadge $type="debt">
-          <FaExclamationTriangle size={14} />
-          Оформлен
-        </LeftBadge>
-      )}
+      <LeftBadge $type={badgeType}>
+        <FaExclamationTriangle size={14} />
+        {badgeText}
+      </LeftBadge>
       
       <CardContent>
         <CardTitle>
-          <CardTitleText $hasBlackBadge={isBlackList} $hasDebtBadge={isCurrentlyDebt}>
+          <CardTitleText $hasBlackBadge={cardStatus === 'blacklist'} $hasDebtBadge={cardStatus === 'debt'}>
             {item.fullname || 'Не указано'}
           </CardTitleText>
         </CardTitle>
         
-        {showMenu && (allowEdit || allowDelete) && (
+        {showMenu && (allowEdit || allowDelete || allowAddDebt) && (
           <>
             <MenuButton onClick={handleMenuClick}>
               <FaEllipsisV size={16} />
@@ -331,6 +435,9 @@ const BlackCatalogCard: React.FC<BlackCatalogCardProps> = ({
 
             <ContextMenu $isVisible={isMenuOpen} ref={menuRef}>
               {allowEdit && <MenuItem onClick={handleEditClick}>Редактировать</MenuItem>}
+              {allowAddDebt && onAddDebt && (
+                <MenuItem onClick={handleAddDebtClick}>Добавить долг</MenuItem>
+              )}
               {allowDelete && (
                 <MenuItem className="danger" onClick={handleDeleteClick}>Удалить</MenuItem>
               )}
@@ -344,7 +451,7 @@ const BlackCatalogCard: React.FC<BlackCatalogCardProps> = ({
               <IconWrapper><FaIdCard size={12} /></IconWrapper>
               ID
             </InfoLabel>
-            <InfoValue $warning={isBlackList} $debt={isCurrentlyDebt}>
+            <InfoValue $warning={cardStatus === 'blacklist'} $debt={cardStatus === 'debt'}>
               {item.id}
             </InfoValue>
           </InfoItem>
@@ -354,8 +461,8 @@ const BlackCatalogCard: React.FC<BlackCatalogCardProps> = ({
               <IconWrapper><FaBirthdayCake size={12} /></IconWrapper>
               Дата рождения
             </InfoLabel>
-            <InfoValue $warning={isBlackList} $debt={isCurrentlyDebt}>
-              {formatDate(item.birthdate)}
+            <InfoValue $warning={cardStatus === 'blacklist'} $debt={cardStatus === 'debt'}>
+              {formatDate(item.birthdate || '')}
             </InfoValue>
           </InfoItem>
           
@@ -364,7 +471,7 @@ const BlackCatalogCard: React.FC<BlackCatalogCardProps> = ({
               <IconWrapper><FaIdCard size={12} /></IconWrapper>
               Документ
             </InfoLabel>
-            <InfoValue $warning={isBlackList} $debt={isCurrentlyDebt}>
+            <InfoValue $warning={cardStatus === 'blacklist'} $debt={cardStatus === 'debt'}>
               {item.doc || 'Не указан'}
             </InfoValue>
           </InfoItem>
@@ -374,11 +481,48 @@ const BlackCatalogCard: React.FC<BlackCatalogCardProps> = ({
               <IconWrapper><FaMapMarkerAlt size={12} /></IconWrapper>
               Адрес
             </InfoLabel>
-            <InfoValue $warning={isBlackList} $debt={isCurrentlyDebt}>
+            <InfoValue $warning={cardStatus === 'blacklist'} $debt={cardStatus === 'debt'}>
               {item.address || 'Не указан'}
             </InfoValue>
           </InfoItem>
         </InfoGrid>
+
+        {allDebts.length > 0 && (
+          <DebtsSection>
+            <DebtsContainer>
+              {activeDebts.map(debt => (
+                <DebtBadge key={debt.id} $expired={false}>
+                  <FaExclamationTriangle size={12} />
+                  до {formatDate(debt.debt_ending_at)}
+                  {canDeleteDebt(debt.creator_id) && (
+                    <DeleteDebtButton 
+                      onClick={(e) => handleDeleteDebtClick(e, debt.id)}
+                      disabled={isDeleting === debt.id}
+                      title="Удалить долг"
+                    >
+                      {isDeleting === debt.id ? '...' : <FaTrash size={10} />}
+                    </DeleteDebtButton>
+                  )}
+                </DebtBadge>
+              ))}
+              {expiredDebts.map(debt => (
+                <DebtBadge key={debt.id} $expired={true}>
+                  <FaClock size={12} />
+                  просрочен {formatDate(debt.debt_ending_at)}
+                  {canDeleteDebt(debt.creator_id) && (
+                    <DeleteDebtButton 
+                      onClick={(e) => handleDeleteDebtClick(e, debt.id)}
+                      disabled={isDeleting === debt.id}
+                      title="Удалить долг"
+                    >
+                      {isDeleting === debt.id ? '...' : <FaTrash size={10} />}
+                    </DeleteDebtButton>
+                  )}
+                </DebtBadge>
+              ))}
+            </DebtsContainer>
+          </DebtsSection>
+        )}
       </CardContent>
     </Card>
   );

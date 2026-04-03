@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom"; // Добавьте этот импорт
 import useBlackCatalog from "../api/BlackCatalog/useBlackCatalog";
 import type { Notification } from "../api/BlackCatalog/blackCatalog";
-import { Container, EmptyStateContainer, EmptyStateIcon, EmptyStateText, EmptyStateTitle, LoadingContainer } from "../components/BlackCatalogPageContent/styles";
+import { Container, EmptyStateContainer, EmptyStateText, EmptyStateTitle, LoadingContainer } from "../components/BlackCatalogPageContent/styles";
 import { Header, LoadingSpinner, MarkAsReadButton, NotificationCard, NotificationContent, NotificationDate, NotificationHeader, NotificationsList } from "../components/Notifications/style";
 import { CustomTitle } from "waypay_react_library";
 
@@ -109,16 +109,6 @@ const NotificationsPage: React.FC = () => {
     await loadNotifications(false);
   };
 
-  const handleMarkAllAsRead = async () => {
-    if (!notifications?.notifications) return;
-    
-    const unreadNotifications = notifications.notifications.filter(n => !n.is_read);
-    for (const notification of unreadNotifications) {
-      await markAsReadNotification(notification.id);
-    }
-    await loadNotifications(false);
-  };
-
   // Добавьте этот обработчик для клика по уведомлению
   const handleNotificationClick = async (notification: Notification) => {
     // Если уведомление не прочитано, отмечаем его как прочитанное
@@ -133,8 +123,6 @@ const NotificationsPage: React.FC = () => {
     }
     // Или можно добавить другую логику перехода по умолчанию
   };
-
-  const unreadCount = notifications?.notifications?.filter(n => !n.is_read).length || 0;
 
   if (isInitialLoading) {
     return (
@@ -159,7 +147,6 @@ const NotificationsPage: React.FC = () => {
 
       {allNotifications.length === 0 ? (
         <EmptyStateContainer>
-          <EmptyStateIcon>🔔</EmptyStateIcon>
           <EmptyStateTitle>Нет уведомлений</EmptyStateTitle>
           <EmptyStateText>
             Здесь будут отображаться все уведомления о новых записях и изменениях

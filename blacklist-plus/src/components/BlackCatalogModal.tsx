@@ -215,7 +215,7 @@ export const BlackCatalogModal: React.FC<BlackCatalogModalProps> = ({
         main_page: null,
         registration_page: null,
         is_swindler: Boolean(editingItem.is_swindler),
-        debt_ending_at: showDebtSection ? normalizeIncomingDate(editingItem.debt_ending_at) : '',
+        debt_ending_at: '',
       });
     } else {
       setFormData({
@@ -281,7 +281,9 @@ export const BlackCatalogModal: React.FC<BlackCatalogModalProps> = ({
         comment: formData.comment || '',
         main_page: formData.main_page || null,
         registration_page: formData.registration_page || null,
-        is_swindler: formData.is_swindler,
+        is_swindler: editingItem !== null 
+          ? editingItem.is_swindler!
+          : !showDebtSection,
         debt_ending_at: showDebtSection && formData.debt_ending_at
           ? formatDateForAPI(formData.debt_ending_at)
           : '',

@@ -35,6 +35,7 @@ import {
   WildInputContainer,
 } from "./styles";
 import MobileBottomSheetPortal from "../Portal";
+import AddDebtModal from "../AddDebtModal";
 
 const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
   texts,
@@ -112,6 +113,8 @@ const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
   const [isMobileSheetOpen, setIsMobileSheetOpen] = useState(false);
   const [addMenuPosition, setAddMenuPosition] = useState<{ x: number; y: number } | null>(null);
   const [selectedAddOption, setSelectedAddOption] = useState<'blacklist' | 'completed' | null>(null);
+  const [isAddDebtModalOpen, setIsAddDebtModalOpen] = useState(false);
+  const [selectedDebtItem, setSelectedDebtItem] = useState<BlackCatalogItem | null>(null);
   
   const addButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -124,6 +127,8 @@ const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
     deleteEntry,
     searchEntries,
     getTotalCount,
+    addDebt,
+    deleteDebt
   } = useBlackCatalog();
 
   const [contextMenu, setContextMenu] = useState<{
@@ -191,6 +196,47 @@ const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
     setHasSearched(true);
   }, [nameFilter, searchEntries]);
 
+  const handleAddDebt = (item: BlackCatalogItem) => {
+    setSelectedDebtItem(item);
+    setIsAddDebtModalOpen(true);
+  };
+
+  const handleSaveDebt = async (debtEndingAt: Date) => {
+    if (!selectedDebtItem) return;
+    
+    try {
+      await addDebt({
+        blacklist_id: selectedDebtItem.id,
+        debt_ending_at: debtEndingAt,
+      });
+      
+      // Обновляем данные после добавления долга
+      if (hasSearched) {
+        await loadBlacklist();
+      }
+      
+      // Если открыто досье, обновляем его
+      if (selectedItemDossier?.id === selectedDebtItem.id) {
+        const params: { name?: string } = {};
+        if (nameFilter && nameFilter.length >= 5) {
+          params.name = nameFilter;
+        }
+        const response = await searchEntries(params);
+        if (response?.black_catalogs) {
+          const updatedItem = response.black_catalogs.find(
+            (entry) => entry.id === selectedDebtItem.id
+          );
+          if (updatedItem) {
+            setSelectedItemDossier(updatedItem);
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Ошибка при добавлении долга:', err);
+      throw err;
+    }
+  };
+
   const handleFilterChange = (value: string) => {
     setNameFilter(value);
   };
@@ -231,6 +277,19 @@ const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
     },
     [contextMenu, userId, allowEdit]
   );
+
+  const handleDeleteDebt = async (debtId: number) => {
+    try {
+      await deleteDebt(debtId);
+      
+      if (hasSearched) {
+        await loadBlacklist();
+      }
+    } catch (err) {
+      console.error('Ошибка при удалении долга:', err);
+      alert('Не удалось удалить долг');
+    }
+  };
 
   const closeContextMenu = useCallback(() => {
     setContextMenu(null);
@@ -333,6 +392,7 @@ const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
           birthdate: formatDateForAPI(itemData.birthdate),
           comment: itemData.comment?.trim() || undefined,
           main_page: itemData.main_page || undefined,
+          is_swindler: itemData.debt_ending_at ? false : true,
           registration_page: itemData.registration_page || undefined,
           debt_ending_at: itemData.debt_ending_at
             ? formatDateForAPI(itemData.debt_ending_at)
@@ -444,11 +504,15 @@ const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
               item={item}
               onEdit={() => canEdit && handleEditItem(item)}
               onDelete={() => handleDeleteFromBlackCatalog(item)}
+              onDeleteDebt={handleDeleteDebt}
               onRightClick={(e) => handleCardRightClick(e, item)}
               onOpenDossier={handleOpenDossier}
               showMenu={isSuperAdminCompany()}
               allowEdit={canEditItem(item)}
               allowDelete={canEditItem(item)}
+              allowAddDebt={true}
+              onAddDebt={handleAddDebt}
+              userId={userId}
             />
           );
         })}
@@ -553,6 +617,12 @@ const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
             {allowEdit && contextMenu.item && canEditItem(contextMenu.item) && (
               <MenuItem onClick={() => handleContextMenuAction('edit')}>Редактировать</MenuItem>
             )}
+            {contextMenu.item && (
+              <MenuItem onClick={() => {
+                handleAddDebt(contextMenu.item!);
+                closeContextMenu();
+              }}>Добавить долг</MenuItem>
+            )}
             <MenuItem danger onClick={() => handleContextMenuAction('delete')}>Удалить</MenuItem>
           </ContextMenu>
         </>
@@ -606,6 +676,16 @@ const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
           </MobileBottomSheetOption>
         </MobileBottomSheetPortal>
       )}
+
+      <AddDebtModal
+        isOpen={isAddDebtModalOpen}
+        onClose={() => {
+          setIsAddDebtModalOpen(false);
+          setSelectedDebtItem(null);
+        }}
+        onSave={handleSaveDebt}
+        itemName={selectedDebtItem?.fullname || ''}
+      />
     </div>
   );
 };

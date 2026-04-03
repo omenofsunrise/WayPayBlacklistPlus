@@ -1,15 +1,21 @@
+export interface Debt {
+  id: number;
+  debt_ending_at: string;
+  payed: boolean;
+  creator_id: string;
+  blacklist_id: number;
+}
+
 export interface BlackCatalogItem {
   id: number;
   fullname: string;
-  doc: string;
-  address: string;
-  birthdate: string;
+  doc?: string;
+  address?: string;
+  birthdate?: string;
   comment?: string;
   is_swindler?: boolean;
-  debt_ending_at?: string;
-  main_passport_page?: string;
-  registration_passport_page?: string;
   creator_id?: string;
+  debts: Debt[] | null;
 }
 
 export interface BlackCatalogCreatePayload {
@@ -97,7 +103,7 @@ export interface AddDebtRequest {
 
 export interface Notification {
   id: number;
-  content: string
+  content: string;
   is_read: boolean;
   user_id: string;
   created_at: Date;
