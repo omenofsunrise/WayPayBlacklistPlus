@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, memo, useMemo } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import {
   AuthPage,
@@ -188,6 +188,44 @@ const SubscriptionGuard: React.FC<{
   return <>{children}</>;
 };
 
+// Мемоизированные компоненты
+const MemoizedNotifications = memo(Notifications);
+const MemoizedLayout = memo(Layout);
+
+// Компонент роутов который не будет пересоздаваться
+const AppRoutes = memo(({ userId, userName, userPhone, subscriptionEndDate, hasActiveSubscription }: any) => {
+  return (
+    <Routes>
+      <Route path="/" element={<Navigate to="/blacklist" replace />} />
+      <Route path="/calculator" element={<CalculatorPage />} />
+      <Route path="/blacklist" element={<BlackCatalogPage userId={userId} />} />
+      <Route path="/formatted" element={<FormattedCatalogPage userId={userId} />} />
+      <Route path="/notifications" element={<NotificationsPage />} />
+      <Route
+        path="/profile"
+        element={
+          <ProfilePage
+            userName={userName}
+            userPhone={userPhone}
+            subscriptionEndDate={subscriptionEndDate}
+            hasActiveSubscription={hasActiveSubscription}
+          />
+        }
+      />
+      <Route
+        path="/dossier/:id"
+        element={
+          <BlackCatalogDossier 
+            userId={userId} 
+            item={undefined} 
+            onBack={() => window.history.back()} 
+          />
+        }
+      />
+    </Routes>
+  );
+});
+
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isModerated, setIsModerated] = useState<boolean>(true);
@@ -219,68 +257,84 @@ function App() {
   
   const [unreadNotifications, setUnreadNotifications] = useState<any[]>([]);
   
-  const intervalRef = useRef<number | null>(null);
+  const timeoutRef = useRef<number | null>(null);
   const isMountedRef = useRef<boolean>(true);
+  const isUpdatingRef = useRef<boolean>(false);
 
-  // Стабильная функция загрузки уведомлений без зависимостей
+  // Функция загрузки уведомлений БЕЗ потери фокуса
   const loadUnreadNotifications = useCallback(async () => {
-    if (!isMountedRef.current) return;
+    if (!isMountedRef.current || isUpdatingRef.current) return;
+    
+    isUpdatingRef.current = true;
     
     try {
       const response = await getNotifications();
       if (response?.notifications && isMountedRef.current) {
-        const unread = response.notifications.filter(n => !n.is_read);
-        setUnreadNotifications(unread);
+        const unread = response.notifications.filter((n: any) => !n.is_read);
+        
+        // Используем функциональное обновление чтобы не зависеть от текущего состояния
+        setUnreadNotifications((prev) => {
+          // Проверяем, изменился ли список
+          const prevIds = prev.map(n => n.id).sort().join(',');
+          const newIds = unread.map(n => n.id).sort().join(',');
+          
+          if (prevIds !== newIds) {
+            return unread;
+          }
+          return prev; // Возвращаем предыдущее состояние если нет изменений
+        });
       }
     } catch (error) {
       console.error("Ошибка при загрузке уведомлений:", error);
+    } finally {
+      isUpdatingRef.current = false;
     }
   }, [getNotifications]);
 
-  // Отдельный эффект для интервала с правильными зависимостями
+  // Настройка интервала с использованием setTimeout и сохранением фокуса
   useEffect(() => {
-    // Очищаем предыдущий интервал если есть
-    if (intervalRef.current) {
-      window.clearInterval(intervalRef.current);
-      intervalRef.current = null;
+    if (!isAuthenticated || !isModerated || !subscriptionInfo.hasActive) {
+      return;
     }
 
-    // Запускаем интервал только если пользователь авторизован и есть активная подписка
-    if (isAuthenticated && isModerated && subscriptionInfo.hasActive) {
-      // Первая загрузка
-      loadUnreadNotifications();
+    // Первая загрузка
+    loadUnreadNotifications();
+
+    // Рекурсивный setTimeout вместо setInterval
+    const scheduleUpdate = () => {
+      if (!isMountedRef.current) return;
       
-      // Запускаем интервал раз в 7 секунд
-      intervalRef.current = window.setInterval(() => {
-        loadUnreadNotifications();
-      }, 7000);
-    }
-    
+      timeoutRef.current = setTimeout(async () => {
+        await loadUnreadNotifications();
+        scheduleUpdate(); // Планируем следующее обновление
+      }, 10000); // 10 секунд
+    };
+
+    scheduleUpdate();
+
     return () => {
-      if (intervalRef.current) {
-        window.clearInterval(intervalRef.current);
-        intervalRef.current = null;
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
       }
     };
-  }, [isAuthenticated, isModerated, subscriptionInfo.hasActive]); // Убираем loadUnreadNotifications из зависимостей
+  }, [isAuthenticated, isModerated, subscriptionInfo.hasActive, loadUnreadNotifications]);
 
-  // Очистка при размонтировании
   useEffect(() => {
     isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
-      if (intervalRef.current) {
-        window.clearInterval(intervalRef.current);
-        intervalRef.current = null;
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
       }
     };
   }, []);
 
-  const handleNotificationClick = async (notification: any) => {
+  const handleNotificationClick = useCallback(async (notification: any) => {
     await markAsReadNotification(notification.id);
-    // После отметки о прочтении сразу обновляем список
     await loadUnreadNotifications();
-  };
+  }, [markAsReadNotification, loadUnreadNotifications]);
 
   useEffect(() => {
     checkAuth();
@@ -358,6 +412,22 @@ function App() {
     setUserData(data);
   };
 
+  // Мемоизируем пропсы для роутов
+  const routeProps = useMemo(() => ({
+    userId: userData.id,
+    userName: userData.name,
+    userPhone: userData.phone,
+    subscriptionEndDate: subscriptionInfo.endDate,
+    hasActiveSubscription: subscriptionInfo.hasActive,
+  }), [userData.id, userData.name, userData.phone, subscriptionInfo.endDate, subscriptionInfo.hasActive]);
+
+  // Мемоизируем данные для Layout
+  const layoutUserInfo = useMemo(() => ({
+    name: userData.name,
+    phone: userData.phone,
+    licenseEndDate: subscriptionInfo.endDate,
+  }), [userData.name, userData.phone, subscriptionInfo.endDate]);
+
   if (isLoading) {
     return (
       <div
@@ -432,58 +502,16 @@ function App() {
           onSubscriptionCheck={handleSubscriptionCheck}
           onUserDataLoad={handleUserDataLoad}
         >
-          <Layout
-            userInfo={{
-              name: userData.name,
-              phone: userData.phone,
-              licenseEndDate: subscriptionInfo.endDate,
-            }}
-          >
+          <MemoizedLayout userInfo={layoutUserInfo}>
             {unreadNotifications.length > 0 && (
-              <Notifications
+              <MemoizedNotifications
                 getNotifications={getNotifications}
                 markAsRead={markAsReadNotification}
                 onNotificationClick={handleNotificationClick}
               />
             )}
-            <Routes>
-              <Route path="/" element={<Navigate to="/blacklist" replace />} />
-              <Route path="/calculator" element={<CalculatorPage />} />
-              <Route
-                path="/blacklist"
-                element={<BlackCatalogPage userId={userData.id} />}
-              />
-              <Route
-                path="/formatted"
-                element={<FormattedCatalogPage userId={userData.id} />}
-              />
-              <Route 
-                path="/notifications" 
-                element={<NotificationsPage />} 
-              />
-              <Route
-                path="/profile"
-                element={
-                  <ProfilePage
-                    userName={userData.name}
-                    userPhone={userData.phone}
-                    subscriptionEndDate={subscriptionInfo.endDate}
-                    hasActiveSubscription={subscriptionInfo.hasActive}
-                  />
-                }
-              />
-              <Route
-                path="/dossier/:id"
-                element={
-                  <BlackCatalogDossier 
-                    userId={userData.id} 
-                    item={undefined} 
-                    onBack={() => window.history.back()} 
-                  />
-                }
-              />
-            </Routes>
-          </Layout>
+            <AppRoutes {...routeProps} />
+          </MemoizedLayout>
         </SubscriptionGuard>
       </SideMenuContext.Provider>
 

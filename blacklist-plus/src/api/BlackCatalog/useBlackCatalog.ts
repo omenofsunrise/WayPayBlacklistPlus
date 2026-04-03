@@ -188,7 +188,7 @@ const useBlackCatalog = (): UseBlackCatalogReturn => {
     } finally {
       setIsLoading(false);
     }
-  }, [notifications]);
+  }, []);
 
   const reset = useCallback(() => {
     setSearchResults(null);
