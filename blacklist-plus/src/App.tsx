@@ -379,7 +379,7 @@ function App() {
   };
 
   const handleLoginSuccess = () => {
-    setShowPrivacyModal(true);
+    // setShowPrivacyModal(true);
     checkAuth();
   };
 
