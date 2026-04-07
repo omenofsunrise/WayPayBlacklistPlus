@@ -50,6 +50,7 @@ interface UserInfo {
   name: string;
   phone: string;
   licenseEndDate?: string;
+  isTestUser?: boolean;
 }
 
 interface LayoutProps {
@@ -128,7 +129,7 @@ const Layout: React.FC<LayoutProps> = ({ children, userInfo }) => {
             <UserName>{userInfo.name}</UserName>
             <UserPhone>{userInfo.phone}</UserPhone>
             
-            {userInfo.licenseEndDate && (
+            {!userInfo.isTestUser && userInfo.licenseEndDate && (
               <LicenseInfo>
                 <LicenseDate>
                   до {formatDate(userInfo.licenseEndDate)}

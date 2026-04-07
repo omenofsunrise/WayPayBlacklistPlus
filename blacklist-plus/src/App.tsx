@@ -22,6 +22,7 @@ import useBlackCatalog from "./api/BlackCatalog/useBlackCatalog";
 import BlackCatalogDossier from "./components/BlackCatalogDossier";
 import PrivacyModal from "./components/PrivacyModal";
 import NotificationsPage from "./pages/NotificationsPage";
+import { isTestUserId } from "./utils/testUser";
 
 const SubscriptionGuard: React.FC<{
   children: React.ReactNode;
@@ -75,6 +76,17 @@ const SubscriptionGuard: React.FC<{
         };
         setUserData(userData);
         onUserDataLoad(userData);
+
+        if (isTestUserId(userData.id)) {
+          const newStatus = {
+            hasActive: true,
+            hasPending: false,
+          };
+          setSubscriptionStatus(newStatus);
+          onSubscriptionCheck(newStatus);
+          setIsChecking(false);
+          return;
+        }
       }
 
       await checkSubscriptionStatus();
@@ -205,6 +217,7 @@ const AppRoutes = memo(({ userId, userName, userPhone, subscriptionEndDate, hasA
         path="/profile"
         element={
           <ProfilePage
+            userId={userId}
             userName={userName}
             userPhone={userPhone}
             subscriptionEndDate={subscriptionEndDate}
@@ -412,6 +425,18 @@ function App() {
     setUserData(data);
   };
 
+  const isTestUser = useMemo(() => isTestUserId(userData.id), [userData.id]);
+
+  useEffect(() => {
+    if (isTestUser) {
+      setSubscriptionInfo({
+        hasActive: true,
+        hasPending: false,
+        endDate: undefined,
+      });
+    }
+  }, [isTestUser]);
+
   // Мемоизируем пропсы для роутов
   const routeProps = useMemo(() => ({
     userId: userData.id,
@@ -426,7 +451,8 @@ function App() {
     name: userData.name,
     phone: userData.phone,
     licenseEndDate: subscriptionInfo.endDate,
-  }), [userData.name, userData.phone, subscriptionInfo.endDate]);
+    isTestUser,
+  }), [userData.name, userData.phone, subscriptionInfo.endDate, isTestUser]);
 
   if (isLoading) {
     return (

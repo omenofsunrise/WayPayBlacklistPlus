@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { authStorage } from 'waypay_react_library';
 import SubscriptionBlock from '../components/subscribe/SubscriptionBlock';
 import ProfileBlackCatalog from '../components/ProfileBlackCatalog';
+import { isTestUserId } from '../utils/testUser';
 
 interface ProfilePageProps {
+  userId: string;
   userName: string;
   userPhone: string;
   subscriptionEndDate?: string;
@@ -12,6 +14,7 @@ interface ProfilePageProps {
 }
 
 const ProfilePage: React.FC<ProfilePageProps> = ({ 
+  userId,
   userName, 
   userPhone, 
   subscriptionEndDate,
@@ -32,6 +35,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
     endDate: subscriptionEndDate,
     tariffType: 'blacklist_plus'
   });
+  const isTestUser = isTestUserId(userId);
 
   useEffect(() => {
     setUserData({
@@ -141,7 +145,18 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
             borderRadius: '8px',
             border: '1px solid #007D8820'
           }}>
-            {subscriptionInfo.hasActive && (
+            {isTestUser && (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <span style={{ color: '#333', fontWeight: 600 }}>
+                  До конца альфа тестирования программа бесплатная!
+                </span>
+              </div>
+            )}
+            {!isTestUser && subscriptionInfo.hasActive && (
               <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -161,6 +176,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
           gap: '12px',
           flexWrap: 'wrap'
         }}>
+          {!isTestUser && (
             <button
               onClick={() => setShowSubscription(!showSubscription)}
               style={{
@@ -178,6 +194,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
             >
               {showSubscription ? 'Не продлевать' : 'Продлить подписку'}
             </button>
+          )}
 
           <button
             onClick={handleLogout}
@@ -202,7 +219,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
       </div>
 
       {/* Блок продления подписки */}
-      {showSubscription && (
+      {!isTestUser && showSubscription && (
         <div style={{
           animation: 'slideDown 0.3s ease-out',
           marginBottom: '80px'
