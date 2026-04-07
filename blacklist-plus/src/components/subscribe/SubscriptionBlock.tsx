@@ -83,7 +83,7 @@ const SubscriptionBlock: React.FC<SubscriptionBlockProps> = ({
       promoPrice: 150,
       label: '1 месяц', 
       pricePerDay: '20.00',
-      promoPricePerDay: '0.03',
+      promoPricePerDay: '5',
     },
     { days: 90, price: 1764, label: '3 месяца', discount: '2%', pricePerDay: '19.60' },
     { days: 180, price: 3456, label: '6 месяцев', discount: '4%', pricePerDay: '19.20' },
