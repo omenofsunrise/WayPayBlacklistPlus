@@ -392,7 +392,9 @@ function App() {
   };
 
   const handleLoginSuccess = () => {
-    // setShowPrivacyModal(true);
+    if (isTestUserId()) {
+      setShowPrivacyModal(true);
+    }
     checkAuth();
   };
 
