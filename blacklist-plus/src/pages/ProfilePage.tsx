@@ -152,7 +152,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                 alignItems: 'center'
               }}>
                 <span style={{ color: '#333', fontWeight: 600 }}>
-                  До конца альфа тестирования программа бесплатная!
+                  
                 </span>
               </div>
             )}
