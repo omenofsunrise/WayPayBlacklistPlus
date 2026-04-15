@@ -1,7 +1,6 @@
 import React from 'react';
-interface BackButtonProps {
+type BackButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
     children: React.ReactNode;
-    onClick?: () => void;
-}
+};
 declare const BackButtonComponent: React.FC<BackButtonProps>;
 export default BackButtonComponent;

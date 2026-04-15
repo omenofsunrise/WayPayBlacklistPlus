@@ -478,6 +478,7 @@ function App() {
         userType="blacklist_plus"
         enableRegistration={true}
         title="Регистрация / Авторизация"
+        enableSupport={false}
       />
     );
   }
