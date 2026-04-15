@@ -247,7 +247,8 @@ const BlackCatalogPageContent: React.FC<BlackCatalogPageContentProps> = ({
       || userId === 'e57d8bdf-77f2-4e07-b54a-4044754da41d'  // Второй номер Ибрагима
       || userId === '01eb28db-609b-4906-9423-aa4b65f622cf'  // Микиев Турпал 
       || userId === '221bf643-573e-4e61-be7b-8557d462743f' // Элипханов Идрис
-      || userId === '354ab5e9-3446-4380-811e-ff93df5d2f01') // Кирилл
+      || userId === '354ab5e9-3446-4380-811e-ff93df5d2f01' // Кирилл
+      || userId === 'a8f2d5a2-48d8-45ae-8dd7-de43de1d8fd4')// Элипханов Исаак Якубович
       return true;
 
       console.log(userId);
