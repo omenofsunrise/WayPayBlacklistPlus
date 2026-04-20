@@ -74,15 +74,15 @@ const Layout: React.FC<LayoutProps> = ({ children, userInfo }) => {
   }, []);
 
   const menuItems = [
-    // ...(!isTestUserId() 
-    //   ? [{
-    //       key: 'calculator',
-    //       label: 'Калькулятор',
-    //       icon: <CalculatorIcon />,
-    //       onClick: () => navigate('/calculator'),
-    //     }] 
-    //   : []
-    // ),
+    ...(!isTestUserId() 
+      ? [{
+          key: 'calculator',
+          label: 'Калькулятор',
+          icon: <CalculatorIcon />,
+          onClick: () => navigate('/calculator'),
+        }] 
+      : []
+    ),
     {
       key: 'blacklist',
       label: 'Чёрный список',
