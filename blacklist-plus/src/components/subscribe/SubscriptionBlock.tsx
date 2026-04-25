@@ -72,7 +72,7 @@ const SubscriptionBlock: React.FC<SubscriptionBlockProps> = ({
     }
     
     const today = new Date();
-    const promoEndDate = new Date('2026-04-25');
+    const promoEndDate = new Date('2026-08-25');
     return today <= promoEndDate;
   };
 
