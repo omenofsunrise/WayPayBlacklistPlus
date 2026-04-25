@@ -10,7 +10,6 @@ interface SubscriptionPageProps {
   name: string;
   phone: string;
   onPaymentSuccess?: () => void;
-  licence?: string | undefined;
 }
 
 const SubscriptionPage: React.FC<SubscriptionPageProps> = ({
@@ -18,7 +17,6 @@ const SubscriptionPage: React.FC<SubscriptionPageProps> = ({
   name,
   phone,
   onPaymentSuccess,
-  licence
 }) => {
   const [hasActiveSubscription, setHasActiveSubscription] = useState<boolean>(false);
   const [expirationDate, setExpirationDate] = useState<Date | null>(null);

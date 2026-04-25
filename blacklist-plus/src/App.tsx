@@ -28,12 +28,7 @@ const SubscriptionGuard: React.FC<{
   children: React.ReactNode;
   onSubscriptionCheck: (status: any) => void;
   onUserDataLoad: (data: { name: string; phone: string; id: string }) => void;
-  subscriptionInfo?: {
-    hasActive: boolean;
-    hasPending: boolean;
-    endDate?: string;
-  };
-}> = ({ children, onSubscriptionCheck, onUserDataLoad, subscriptionInfo }) => {
+}> = ({ children, onSubscriptionCheck, onUserDataLoad }) => {
   const [subscriptionStatus, setSubscriptionStatus] = useState<{
     hasActive: boolean;
     hasPending: boolean;
@@ -198,7 +193,6 @@ const SubscriptionGuard: React.FC<{
         name={userData.name}
         phone={userData.phone}
         onPaymentSuccess={handlePaymentSuccess}
-        licence={subscriptionInfo?.endDate}
       />
     );
   }
@@ -534,7 +528,6 @@ function App() {
         <SubscriptionGuard
           onSubscriptionCheck={handleSubscriptionCheck}
           onUserDataLoad={handleUserDataLoad}
-          subscriptionInfo={subscriptionInfo}
         >
           <MemoizedLayout userInfo={layoutUserInfo}>
             {unreadNotifications.length > 0 && (
