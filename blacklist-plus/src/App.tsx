@@ -28,7 +28,12 @@ const SubscriptionGuard: React.FC<{
   children: React.ReactNode;
   onSubscriptionCheck: (status: any) => void;
   onUserDataLoad: (data: { name: string; phone: string; id: string }) => void;
-}> = ({ children, onSubscriptionCheck, onUserDataLoad }) => {
+  subscriptionInfo?: {
+    hasActive: boolean;
+    hasPending: boolean;
+    endDate?: string;
+  };
+}> = ({ children, onSubscriptionCheck, onUserDataLoad, subscriptionInfo }) => {
   const [subscriptionStatus, setSubscriptionStatus] = useState<{
     hasActive: boolean;
     hasPending: boolean;
@@ -193,6 +198,7 @@ const SubscriptionGuard: React.FC<{
         name={userData.name}
         phone={userData.phone}
         onPaymentSuccess={handlePaymentSuccess}
+        licence={subscriptionInfo?.endDate}
       />
     );
   }
@@ -200,11 +206,9 @@ const SubscriptionGuard: React.FC<{
   return <>{children}</>;
 };
 
-// Мемоизированные компоненты
 const MemoizedNotifications = memo(Notifications);
 const MemoizedLayout = memo(Layout);
 
-// Компонент роутов который не будет пересоздаваться
 const AppRoutes = memo(({ userId, userName, userPhone, subscriptionEndDate, hasActiveSubscription }: any) => {
   return (
     <Routes>
@@ -530,6 +534,7 @@ function App() {
         <SubscriptionGuard
           onSubscriptionCheck={handleSubscriptionCheck}
           onUserDataLoad={handleUserDataLoad}
+          subscriptionInfo={subscriptionInfo}
         >
           <MemoizedLayout userInfo={layoutUserInfo}>
             {unreadNotifications.length > 0 && (

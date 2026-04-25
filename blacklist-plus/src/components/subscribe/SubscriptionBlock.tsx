@@ -38,7 +38,7 @@ interface MobileStyles {
 }
 
 const SubscriptionBlock: React.FC<SubscriptionBlockProps> = ({ 
-  tariffType, 
+  tariffType,
   onPaymentSuccess,
   disablePromo = false,
   title = 'Оформление подписки'

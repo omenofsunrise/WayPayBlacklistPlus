@@ -10,6 +10,7 @@ interface SubscriptionPageProps {
   name: string;
   phone: string;
   onPaymentSuccess?: () => void;
+  licence?: string | undefined;
 }
 
 const SubscriptionPage: React.FC<SubscriptionPageProps> = ({
@@ -17,13 +18,16 @@ const SubscriptionPage: React.FC<SubscriptionPageProps> = ({
   name,
   phone,
   onPaymentSuccess,
+  licence
 }) => {
   const [hasActiveSubscription, setHasActiveSubscription] = useState<boolean>(false);
   const [expirationDate, setExpirationDate] = useState<Date | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [status, setStatus] = useState<string | undefined>('');
 
   useEffect(() => {
     loadSubscriptionInfo();
+    checkSubscriptionStatus();
     
     document.body.style.overflow = 'auto';
     document.documentElement.style.overflow = 'auto';
@@ -58,6 +62,14 @@ const SubscriptionPage: React.FC<SubscriptionPageProps> = ({
     }
   };
 
+  const checkSubscriptionStatus = async () => {
+    try {
+      const status = await subscriptionService.getStatus(tariffType);
+      setStatus(status.status);
+    } catch {
+    }
+  };
+
   return (
     <div style={{
       padding: 0,
@@ -88,6 +100,7 @@ const SubscriptionPage: React.FC<SubscriptionPageProps> = ({
               <SubscriptionBlock 
                 tariffType={tariffType}
                 onPaymentSuccess={handlePaymentSuccess}
+                disablePromo={status === 'expired'}
               />
               
               <SubscriptionInfo 
