@@ -135,11 +135,6 @@ export const AddDebtModal: React.FC<AddDebtModalProps> = ({
     today.setHours(0, 0, 0, 0);
     parsedDate.setHours(0, 0, 0, 0);
 
-    if (parsedDate < today) {
-      setValidationError('Дата окончания долга не может быть в прошлом');
-      return false;
-    }
-
     return true;
   };
 

@@ -1,6 +1,6 @@
 import React, { useRef, useState, useMemo } from 'react';
 import styled from 'styled-components';
-import { FaIdCard, FaEllipsisV, FaMapMarkerAlt, FaBirthdayCake, FaExclamationTriangle, FaClock, FaTrash } from 'react-icons/fa';
+import { FaIdCard, FaEllipsisV, FaMapMarkerAlt, FaBirthdayCake, FaExclamationTriangle, FaTrash } from 'react-icons/fa';
 import type { BlackCatalogItem } from '../api/BlackCatalog/blackCatalog';
 
 const Card = styled.div<{ $status: 'blacklist' | 'debt' | 'none' }>`
@@ -202,9 +202,9 @@ const DebtsContainer = styled.div`
   gap: 10px;
 `;
 
-const DebtBadge = styled.div<{ $expired?: boolean }>`
-  background: ${props => props.$expired ? '#9CA3AF' : '#FEF3C7'};
-  color: ${props => props.$expired ? '#4B5563' : '#B45309'};
+const DebtBadge = styled.div`
+  background: #FEF3C7;
+  color: #B45309;
   padding: 6px 12px;
   border-radius: 8px;
   font-size: 13px;
@@ -212,7 +212,7 @@ const DebtBadge = styled.div<{ $expired?: boolean }>`
   display: flex;
   align-items: center;
   gap: 8px;
-  border: 1px solid ${props => props.$expired ? '#D1D5DB' : '#FDE68A'};
+  border: 1px solid #FDE68A;
   position: relative;
   
   svg {
@@ -306,7 +306,6 @@ const BlackCatalogCard: React.FC<BlackCatalogCardProps> = ({
     
     if (!onDeleteDebt) return;
     
-    // Подтверждение удаления
     if (window.confirm('Вы уверены, что хотите удалить этот долг?')) {
       try {
         setIsDeleting(debtId);
@@ -320,6 +319,7 @@ const BlackCatalogCard: React.FC<BlackCatalogCardProps> = ({
     }
   };
 
+  // Только активные долги (срок не истёк)
   const activeDebts = useMemo(() => {
     if (!item.debts || !Array.isArray(item.debts)) return [];
     
@@ -335,29 +335,20 @@ const BlackCatalogCard: React.FC<BlackCatalogCardProps> = ({
     });
   }, [item.debts]);
 
-  const expiredDebts = useMemo(() => {
-    if (!item.debts || !Array.isArray(item.debts)) return [];
-    
-    const today = new Date();
-    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    
-    return item.debts.filter(debt => {
-      if (!debt.debt_ending_at) return false;
-      const endDate = new Date(debt.debt_ending_at);
-      if (isNaN(endDate.getTime())) return false;
-      const endDateStart = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
-      return endDateStart < todayStart;
-    });
-  }, [item.debts]);
-
   const hasActiveDebt = activeDebts.length > 0;
   
+  // Статус карточки: blacklist только если is_swindler = true
+  // debt только если есть активные долги, но нет is_swindler
+  // none если нет ничего
   const cardStatus = useMemo(() => {
     if (item.is_swindler) return 'blacklist';
     if (hasActiveDebt) return 'debt';
-    return 'blacklist';
+    return 'none';
   }, [item.is_swindler, hasActiveDebt]);
 
+  // Показываем бейдж только если статус blacklist или debt
+  const showBadge = cardStatus !== 'none';
+  
   const badgeText = cardStatus === 'blacklist' ? 'Чёрный список' : 'Оформлен';
   const badgeType = cardStatus === 'blacklist' ? 'blacklist' : 'debt';
   
@@ -403,8 +394,6 @@ const BlackCatalogCard: React.FC<BlackCatalogCardProps> = ({
     onRightClick(e, item);
   };
 
-  const allDebts = [...activeDebts, ...expiredDebts];
-
   const canDeleteDebt = (debtCreatorId?: string): boolean => {
     return !!userId && debtCreatorId === userId;
   };
@@ -415,10 +404,12 @@ const BlackCatalogCard: React.FC<BlackCatalogCardProps> = ({
       onContextMenu={handleRightClick}
       $status={cardStatus}
     >
-      <LeftBadge $type={badgeType}>
-        <FaExclamationTriangle size={14} />
-        {badgeText}
-      </LeftBadge>
+      {showBadge && (
+        <LeftBadge $type={badgeType}>
+          <FaExclamationTriangle size={14} />
+          {badgeText}
+        </LeftBadge>
+      )}
       
       <CardContent>
         <CardTitle>
@@ -487,28 +478,13 @@ const BlackCatalogCard: React.FC<BlackCatalogCardProps> = ({
           </InfoItem>
         </InfoGrid>
 
-        {allDebts.length > 0 && (
+        {activeDebts.length > 0 && (
           <DebtsSection>
             <DebtsContainer>
               {activeDebts.map(debt => (
-                <DebtBadge key={debt.id} $expired={false}>
+                <DebtBadge key={debt.id}>
                   <FaExclamationTriangle size={12} />
                   до {formatDate(debt.debt_ending_at)}
-                  {canDeleteDebt(debt.creator_id) && (
-                    <DeleteDebtButton 
-                      onClick={(e) => handleDeleteDebtClick(e, debt.id)}
-                      disabled={isDeleting === debt.id}
-                      title="Удалить долг"
-                    >
-                      {isDeleting === debt.id ? '...' : <FaTrash size={10} />}
-                    </DeleteDebtButton>
-                  )}
-                </DebtBadge>
-              ))}
-              {expiredDebts.map(debt => (
-                <DebtBadge key={debt.id} $expired={true}>
-                  <FaClock size={12} />
-                  просрочен {formatDate(debt.debt_ending_at)}
                   {canDeleteDebt(debt.creator_id) && (
                     <DeleteDebtButton 
                       onClick={(e) => handleDeleteDebtClick(e, debt.id)}
