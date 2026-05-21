@@ -22,6 +22,7 @@ import useBlackCatalog from "./api/BlackCatalog/useBlackCatalog";
 import BlackCatalogDossier from "./components/BlackCatalogDossier";
 import PrivacyModal from "./components/PrivacyModal";
 import NotificationsPage from "./pages/NotificationsPage";
+import MaintenancePage from "./pages/MaintenancePage";
 import { isTestUserId } from "./utils/testUser";
 
 const SubscriptionGuard: React.FC<{
@@ -453,6 +454,10 @@ function App() {
     licenseEndDate: subscriptionInfo.endDate,
     isTestUser,
   }), [userData.name, userData.phone, subscriptionInfo.endDate, isTestUser]);
+
+  if (window.location.pathname === "/maintenance") {
+    return <MaintenancePage />;
+  }
 
   if (isLoading) {
     return (
