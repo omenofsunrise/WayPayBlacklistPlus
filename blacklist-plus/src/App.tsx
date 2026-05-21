@@ -455,7 +455,9 @@ function App() {
     isTestUser,
   }), [userData.name, userData.phone, subscriptionInfo.endDate, isTestUser]);
 
+  if (window.location.pathname === "/maintenance") {
     return <MaintenancePage />;
+  }
 
   if (isLoading) {
     return (
