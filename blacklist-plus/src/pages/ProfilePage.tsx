@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { authStorage } from 'waypay_react_library';
 import SubscriptionBlock from '../components/subscribe/SubscriptionBlock';
 import ProfileBlackCatalog from '../components/ProfileBlackCatalog';
+import GiftSubscriptionBlock from '../components/gifts/GiftSubscriptionBlock';
 import { isTestUserId } from '../utils/testUser';
 
 interface ProfilePageProps {
@@ -22,6 +23,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
 }) => {
   const navigate = useNavigate();
   const [showSubscription, setShowSubscription] = useState(false);
+  const [showGift, setShowGift] = useState(false);
   const [userData, setUserData] = useState<{ name: string; phone: string }>({
     name: userName || '',
     phone: userPhone || ''
@@ -195,6 +197,26 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
             </button>
           )}
 
+          {!isTestUser && (
+            <button
+              onClick={() => setShowGift(!showGift)}
+              style={{
+                padding: '12px 24px',
+                backgroundColor: showGift ? '#f0f0f0' : '#25CBA1',
+                color: showGift ? '#333' : 'white',
+                border: showGift ? '1px solid #ddd' : 'none',
+                borderRadius: '8px',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                transition: 'all 0.3s',
+                flex: '1 1 auto'
+              }}
+            >
+              {showGift ? 'Скрыть подарки' : 'Подарить подписку'}
+            </button>
+          )}
+
           <button
             onClick={handleLogout}
             style={{
@@ -221,7 +243,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
       {!isTestUser && showSubscription && (
         <div style={{
           animation: 'slideDown 0.3s ease-out',
-          marginBottom: '80px'
+          marginBottom: '24px'
         }}>
           <SubscriptionBlock
             tariffType="blacklist_plus"
@@ -231,6 +253,16 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
             disablePromo={true}
             title='Продление подписки'
           />
+        </div>
+      )}
+
+      {/* Блок подарка подписки */}
+      {!isTestUser && showGift && (
+        <div style={{
+          animation: 'slideDown 0.3s ease-out',
+          marginBottom: '80px'
+        }}>
+          <GiftSubscriptionBlock onPaymentSuccess={handlePaymentSuccess} />
         </div>
       )}
 
