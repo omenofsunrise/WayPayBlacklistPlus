@@ -237,6 +237,43 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
             Выйти из аккаунта
           </button>
         </div>
+
+        <a
+          href="https://wa.me/79899242424"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            marginTop: '16px',
+            padding: '12px',
+            backgroundColor: '#F9FAFA',
+            borderRadius: '8px',
+            border: '1px solid #25D36633',
+            textDecoration: 'none',
+            color: '#333',
+          }}
+        >
+          <div style={{
+            width: '36px',
+            height: '36px',
+            borderRadius: '50%',
+            backgroundColor: '#25D366',
+            color: 'white',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '18px',
+            flexShrink: 0,
+          }}>
+            ✆
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: '13px', color: '#666' }}>Техподдержка (WhatsApp)</div>
+            <div style={{ fontWeight: 'bold', color: '#25D366' }}>+7 (989) 924-24-24</div>
+          </div>
+        </a>
       </div>
 
       {/* Блок продления подписки */}
