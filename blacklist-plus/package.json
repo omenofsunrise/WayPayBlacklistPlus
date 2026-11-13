@@ -17,7 +17,7 @@
     "react-icons": "^5.5.0",
     "react-router-dom": "^7.13.1",
     "styled-components": "^6.3.11",
-    "waypay_react_library": "github:omenofsunrise/waypay_react_library"
+    "waypay_react_library": "github:omenofsunrise/waypay_react_library#71df28d"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
